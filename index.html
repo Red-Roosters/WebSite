@@ -4,19 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Red Roosters - قائمة الطعام</title>
-
-    <!-- Open Graph tags -->
     <meta property="og:title" content="منيو ريد روستر 🐓">
-    <meta property="og:description" content="أروق ديك في مصر - عروض Back to School، برجر، ساندوتشات، صواني، وعروض حصرية">
     <meta property="og:image" content="https://i.ibb.co/5xh70cWh/Whats-App-Image-2026-07-25-at-8-21-17-PM.jpg">
-    <meta property="og:image:width" content="1080">
-    <meta property="og:image:height" content="1350">
-    <meta property="og:url" content="https://red-roosters.github.io/Menu/">
-    <meta property="og:type" content="website">
-    <meta name="twitter:card" content="summary_large_image">
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -1023,6 +1012,243 @@
             .school-banner { padding: 28px 20px; }
             .school-banner h2 { font-size: 1.7rem; }
         }
+/* ══ CART & CHECKOUT ══ */
+.order-btn-wrap { display: none !important; } /* شيلنا زرار الواتساب العائم القديم */
+
+.cart-fab {
+    position: fixed; bottom: 24px; right: 24px; z-index: 2000;
+    display: flex; align-items: center; gap: 10px;
+    background: linear-gradient(135deg, var(--red), var(--red-dark));
+    color: #fff; border: none; cursor: pointer;
+    font-family: 'Tajawal', sans-serif; font-size: 1.05rem; font-weight: 900;
+    padding: 14px 22px; border-radius: 50px;
+    box-shadow: 0 6px 28px rgba(217,43,43,0.45); transition: all .25s;
+}
+.cart-fab:hover { transform: translateY(-3px) scale(1.04); }
+.cart-count {
+    display: none; align-items: center; justify-content: center;
+    min-width: 22px; height: 22px; padding: 0 6px; border-radius: 50px;
+    background: var(--gold); color: #3a0000; font-size: .78rem; font-weight: 900;
+}
+.cart-head-btn {
+    position: relative; background: var(--gray-light); border: none; cursor: pointer;
+    font-size: 1.3rem; width: 44px; height: 44px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.cart-head-btn .cart-count { position: absolute; top: -4px; left: -4px; }
+
+.add-cart-btn {
+    background: linear-gradient(135deg, #00C853, #00897B); color: #fff; border: none;
+    padding: 9px 18px; border-radius: 50px; cursor: pointer;
+    font-family: 'Cairo', sans-serif; font-size: .9rem; font-weight: 700;
+    display: inline-flex; align-items: center; gap: 6px; transition: all .25s; white-space: nowrap;
+}
+.add-cart-btn:hover { background: linear-gradient(135deg, #00E676, #00BFA5); transform: translateY(-2px); }
+.add-cart-btn:active { transform: scale(.95); }
+
+.rr-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,.55); z-index: 3000;
+    opacity: 0; pointer-events: none; transition: opacity .3s; backdrop-filter: blur(3px);
+}
+.rr-overlay.open { opacity: 1; pointer-events: auto; }
+body.no-scroll { overflow: hidden; }
+
+/* Drawer */
+.cart-drawer {
+    position: fixed; top: 0; bottom: 0; left: 0; width: 420px; max-width: 100%;
+    background: var(--cream); z-index: 3100; display: flex; flex-direction: column;
+    transform: translateX(-100%); transition: transform .35s ease; box-shadow: var(--shadow-lg);
+}
+.cart-drawer.open { transform: translateX(0); }
+.drawer-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 22px; background: var(--white); border-bottom: 3px solid var(--red);
+}
+.drawer-head h3 { font-family: 'Tajawal', sans-serif; font-size: 1.3rem; font-weight: 900; }
+.x-btn { background: var(--gray-light); border: none; width: 38px; height: 38px; border-radius: 50%; font-size: 1.1rem; cursor: pointer; }
+.x-btn:hover { background: var(--red); color: #fff; }
+.drawer-body { flex: 1; overflow-y: auto; padding: 16px 18px; }
+.cart-empty { text-align: center; color: var(--gray); padding: 60px 20px; font-size: 1.05rem; }
+.cart-empty span { display: block; font-size: 3.5rem; margin-bottom: 10px; }
+.cart-line {
+    background: var(--white); border-radius: var(--radius-sm); padding: 14px 16px; margin-bottom: 10px;
+    box-shadow: var(--shadow-sm); display: flex; flex-direction: column; gap: 10px;
+}
+.cart-line-top { display: flex; justify-content: space-between; gap: 10px; }
+.cart-line-name { font-weight: 700; line-height: 1.4; }
+.cart-line-del { background: none; border: none; cursor: pointer; font-size: 1.1rem; color: var(--gray); }
+.cart-line-del:hover { color: var(--red); }
+.cart-line-bottom { display: flex; align-items: center; justify-content: space-between; }
+.qty { display: inline-flex; align-items: center; gap: 4px; background: var(--gray-light); border-radius: 50px; padding: 3px; }
+.qty button { width: 32px; height: 32px; border: none; border-radius: 50%; background: #fff; font-size: 1.2rem; font-weight: 900; cursor: pointer; color: var(--red); }
+.qty button:hover { background: var(--red); color: #fff; }
+.qty span { min-width: 28px; text-align: center; font-weight: 900; }
+.cart-line-price { font-family: 'Tajawal', sans-serif; font-weight: 900; color: var(--red); font-size: 1.1rem; }
+.drawer-foot { padding: 16px 22px 20px; background: var(--white); border-top: 1px solid rgba(0,0,0,.08); }
+.sum-row { display: flex; justify-content: space-between; margin-bottom: 6px; color: #444; }
+.sum-row.total { font-family: 'Tajawal', sans-serif; font-size: 1.25rem; font-weight: 900; color: var(--charcoal); margin-top: 8px; padding-top: 8px; border-top: 2px dashed rgba(217,43,43,.25); }
+.rr-btn {
+    width: 100%; border: none; cursor: pointer; padding: 14px; border-radius: 50px; margin-top: 12px;
+    font-family: 'Tajawal', sans-serif; font-size: 1.1rem; font-weight: 900; color: #fff;
+    background: linear-gradient(135deg, var(--red), var(--red-dark)); transition: all .25s;
+}
+.rr-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(217,43,43,.4); }
+.rr-btn.wa { background: linear-gradient(135deg, #00C853, #00897B); }
+.rr-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+/* Checkout modal */
+.checkout-modal {
+    position: fixed; top: 50%; left: 50%; z-index: 3100; width: 640px; max-width: calc(100% - 24px);
+    max-height: calc(100% - 24px); background: var(--cream); border-radius: 24px; overflow: hidden;
+    display: flex; flex-direction: column; box-shadow: var(--shadow-lg);
+    transform: translate(-50%, -46%); opacity: 0; pointer-events: none; transition: all .3s;
+}
+.checkout-modal.open { transform: translate(-50%, -50%); opacity: 1; pointer-events: auto; }
+.checkout-body { overflow-y: auto; padding: 20px 22px; }
+.form-title { font-weight: 900; color: var(--red); margin: 6px 0 12px; font-size: 1.05rem; }
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.form-grid .full { grid-column: 1 / -1; }
+.field label { display: block; font-size: .85rem; font-weight: 700; margin-bottom: 4px; color: #444; }
+.field label i { color: var(--red); font-style: normal; }
+.field input, .field select, .field textarea {
+    width: 100%; padding: 11px 14px; border: 2px solid rgba(0,0,0,.1); border-radius: 12px;
+    font-family: 'Cairo', sans-serif; font-size: .95rem; background: #fff; color: var(--charcoal); transition: border .2s;
+}
+.field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: var(--red); }
+.field.err input, .field.err select { border-color: #e11d48; background: #fff5f6; }
+.field .msg { display: none; color: #e11d48; font-size: .78rem; margin-top: 3px; }
+.field.err .msg { display: block; }
+.order-summary { background: #fff; border-radius: 14px; padding: 14px 16px; margin-top: 18px; box-shadow: var(--shadow-sm); }
+.order-summary .mini { font-size: .88rem; color: #555; display: flex; justify-content: space-between; gap: 10px; padding: 2px 0; }
+.pay-note { background: #FFF3CD; border: 1px solid var(--gold); border-radius: 12px; padding: 10px 14px; font-size: .88rem; color: #7A5800; margin-top: 12px; }
+
+.rr-toast {
+    position: fixed; bottom: 90px; left: 50%; transform: translate(-50%, 20px); z-index: 3300;
+    background: #111; color: #fff; padding: 10px 22px; border-radius: 50px; font-weight: 700; font-size: .9rem;
+    opacity: 0; pointer-events: none; transition: all .3s; max-width: 90%; text-align: center;
+}
+.rr-toast.show { opacity: 1; transform: translate(-50%, 0); }
+
+@media (max-width: 640px) {
+    .form-grid { grid-template-columns: 1fr; }
+    .cart-fab { bottom: 16px; right: 14px; padding: 12px 18px; }
+    .scroll-top { bottom: 16px; left: 14px; }
+}
+/* ══ Combobox المنطقة ══ */
+.combo { position: relative; }
+.combo-list {
+    display: none; position: absolute; top: calc(100% + 4px); right: 0; left: 0; z-index: 50;
+    background: #fff; border: 2px solid var(--red); border-radius: 12px;
+    max-height: 220px; overflow-y: auto; box-shadow: var(--shadow-md);
+}
+.combo-list.open { display: block; }
+.combo-item {
+    display: flex; justify-content: space-between; gap: 10px; padding: 10px 14px;
+    cursor: pointer; font-size: .92rem; border-bottom: 1px solid rgba(0,0,0,.05);
+}
+.combo-item:last-child { border-bottom: none; }
+.combo-item:hover, .combo-item.hl { background: #FFF1F1; }
+.combo-item b { color: var(--red); white-space: nowrap; }
+.combo-empty { padding: 14px; text-align: center; color: var(--gray); font-size: .9rem; }
+.field.err .combo input { border-color: #e11d48; background: #fff5f6; }
+
+/* ══ بوب أب الصنف ══ */
+.item-modal { width: 460px; }
+.im-price { font-family: 'Tajawal', sans-serif; font-size: 1.4rem; font-weight: 900; color: var(--red); margin-bottom: 4px; }
+.im-qty { margin-bottom: 6px; }
+.opt-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.opt-row button {
+    border: 2px solid rgba(0,0,0,.1); background: #fff; border-radius: 50px;
+    padding: 8px 18px; font-family: 'Cairo', sans-serif; font-weight: 700; font-size: .9rem;
+    cursor: pointer; transition: all .2s; color: var(--charcoal);
+}
+.opt-row button:hover { border-color: var(--red); }
+.opt-row button.sel { background: var(--red); border-color: var(--red); color: #fff; }
+.opt-row.multi button.sel { background: #FFF1F1; color: var(--red-dark); }
+.opt-row.multi button.sel::before { content: '✓ '; }
+
+/* ══ تفاصيل السلة + الكوبون ══ */
+.cart-line-opts { font-size: .82rem; color: var(--gray); line-height: 1.5; }
+.cart-line-opts b { color: var(--red); }
+.coupon-row { display: flex; gap: 8px; margin-bottom: 10px; }
+.coupon-row input {
+    flex: 1; padding: 10px 14px; border: 2px dashed rgba(217,43,43,.4); border-radius: 12px;
+    font-family: 'Cairo', sans-serif; font-size: .9rem; text-transform: uppercase;
+}
+.coupon-row input:focus { outline: none; border-color: var(--red); }
+.coupon-row button {
+    border: none; background: var(--charcoal); color: #fff; border-radius: 12px; padding: 0 18px;
+    font-family: 'Cairo', sans-serif; font-weight: 700; cursor: pointer;
+}
+.coupon-msg { font-size: .8rem; margin: -4px 0 8px; min-height: 1em; }
+.coupon-msg.ok { color: #0B6E4F; } .coupon-msg.bad { color: #e11d48; }
+.sum-row.disc { color: #0B6E4F; font-weight: 700; }
+@media (max-width: 640px) { .item-modal { width: calc(100% - 24px); } }
+/* ══ اختيارات العروض ══ */
+.choice-group { margin-bottom: 6px; padding: 10px 12px; border-radius: 14px; border: 2px solid transparent; }
+.choice-group .req { color: var(--red); font-style: normal; }
+.choice-group.err { border-color: #e11d48; background: #fff5f6; }
+.choice-group .opt-row button.sel::before { content: '✓ '; }
+/* ══ بوب أب العرض ══ */
+.promo-modal {
+    position: fixed; top: 50%; left: 50%; z-index: 3100; width: 400px; max-width: calc(100% - 24px);
+    background: linear-gradient(160deg, #FFF8F0, #FFE9E0); border-radius: 26px; padding: 30px 26px 24px;
+    text-align: center; box-shadow: var(--shadow-lg); border: 3px solid var(--red);
+    transform: translate(-50%, -46%); opacity: 0; pointer-events: none; transition: all .3s;
+}
+.promo-modal.open { transform: translate(-50%, -50%); opacity: 1; pointer-events: auto; }
+.promo-x { position: absolute; top: 12px; left: 12px; }
+.promo-emoji { font-size: 3rem; line-height: 1; }
+.promo-badge {
+    display: inline-block; margin: 8px 0 10px; padding: 6px 22px; border-radius: 50px;
+    background: linear-gradient(135deg, #FFD700, #FF8C00); color: #3a0000;
+    font-family: 'Tajawal', sans-serif; font-weight: 900; font-size: 1.6rem;
+}
+.promo-modal h3 { font-family: 'Tajawal', sans-serif; font-size: 1.3rem; font-weight: 900; color: var(--red-dark); margin-bottom: 8px; }
+.promo-modal p { color: #555; font-size: .98rem; margin-bottom: 12px; }
+.promo-code {
+    display: inline-block; padding: 8px 26px; border: 2px dashed var(--red); border-radius: 12px;
+    font-family: 'Tajawal', sans-serif; font-weight: 900; font-size: 1.4rem; letter-spacing: 3px; color: var(--red);
+}
+/* ══ شريط الإعلانات المتحرك ══ */
+.promo-ticker {
+    display: flex; align-items: center; overflow: hidden; direction: ltr;
+    background: linear-gradient(135deg, #0F1F5C, #1E40AF 55%, #2563EB);
+    border-radius: 16px; margin-bottom: 24px; height: 52px;
+    box-shadow: 0 6px 20px rgba(37,99,235,.3); cursor: pointer;
+}
+.ticker-label {
+    flex-shrink: 0; height: 100%; display: flex; align-items: center; gap: 6px;
+    padding: 0 18px; background: linear-gradient(135deg, #FFC627, #F5A623); color: #0F1F5C;
+    font-family: 'Tajawal', sans-serif; font-weight: 900; font-size: .95rem; direction: rtl;
+    position: relative; z-index: 2;
+}
+.ticker-track { flex: 1; overflow: hidden; position: relative; }
+.ticker-move {
+    display: inline-flex; white-space: nowrap; width: max-content;
+    animation: tickerScroll 28s linear infinite;
+}
+.promo-ticker:hover .ticker-move { animation-play-state: paused; }
+.ticker-item {
+    direction: rtl; color: #fff; font-weight: 700; font-size: 1rem; padding: 0 40px;
+    display: inline-flex; align-items: center; gap: 10px;
+}
+.ticker-item b {
+    background: #FFC627; color: #0F1F5C; padding: 2px 12px; border-radius: 50px;
+    font-family: 'Tajawal', sans-serif; font-weight: 900; letter-spacing: 2px;
+}
+@keyframes tickerScroll {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-50%); }
+}
+@media (max-width: 640px) {
+    .promo-ticker { height: 46px; border-radius: 12px; }
+    .ticker-label { padding: 0 12px; font-size: .85rem; }
+    .ticker-item { font-size: .9rem; padding: 0 28px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .ticker-move { animation-duration: 80s !important; }
+}
     </style>
 </head>
 <body>
@@ -1093,6 +1319,21 @@
 
     <!-- HOME -->
     <section id="home" class="section active">
+<div class="promo-ticker" id="promoTicker" title="اضغط لنسخ الكود">
+    <div class="ticker-label">📢 عرض الافتتاح</div>
+    <div class="ticker-track">
+        <div class="ticker-move">
+            <span class="ticker-item">🎉 خصم 20% على طلبك بمناسبة افتتاح موقع ريد روستر — استخدم كود <b>RED20</b> 🔥</span>
+            <span class="ticker-item">🎉 خصم 20% على طلبك بمناسبة افتتاح موقع ريد روستر — استخدم كود <b>RED20</b> 🔥</span>
+            <span class="ticker-item">🎉 خصم 20% على طلبك بمناسبة افتتاح موقع ريد روستر — استخدم كود <b>RED20</b> 🔥</span>
+            <span class="ticker-item">🎉 خصم 20% على طلبك بمناسبة افتتاح موقع ريد روستر — استخدم كود <b>RED20</b> 🔥</span>
+            <span class="ticker-item">🎉 خصم 20% على طلبك بمناسبة افتتاح موقع ريد روستر — استخدم كود <b>RED20</b> 🔥</span>
+            <span class="ticker-item">🎉 خصم 20% على طلبك بمناسبة افتتاح موقع ريد روستر — استخدم كود <b>RED20</b> 🔥</span>
+            <span class="ticker-item">🎉 خصم 20% على طلبك بمناسبة افتتاح موقع ريد روستر — استخدم كود <b>RED20</b> 🔥</span>
+            <span class="ticker-item">🎉 خصم 20% على طلبك بمناسبة افتتاح موقع ريد روستر — استخدم كود <b>RED20</b> 🔥</span>
+        </div>
+    </div>
+</div>
         <div class="hero">
             <div class="hero-text">
                 <h1>أروق ديك<br>في مصر 🐓</h1>
@@ -1907,7 +2148,102 @@
         اطلب الآن 🛒
     </a>
 </div>
+<div class="rr-overlay" id="rrOverlay"></div>
 
+<!-- السلة -->
+<aside class="cart-drawer" id="cartDrawer" aria-label="سلة الطلبات">
+    <div class="drawer-head">
+        <h3>🛒 سلة الطلبات</h3>
+        <button class="x-btn" data-close aria-label="إغلاق">✕</button>
+    </div>
+    <div class="drawer-body" id="cartBody"></div>
+    <div class="drawer-foot" id="cartFoot">
+        <div class="sum-row total"><span>الإجمالي (بدون التوصيل)</span><span id="cartSubtotal">0 ج.م</span></div>
+        <button class="rr-btn" id="goCheckout">متابعة الطلب ←</button>
+    </div>
+</aside>
+
+<!-- إتمام الطلب -->
+<div class="checkout-modal" id="checkoutModal" role="dialog" aria-label="إتمام الطلب">
+    <div class="drawer-head">
+        <h3>📝 بيانات التوصيل</h3>
+        <button class="x-btn" data-close aria-label="إغلاق">✕</button>
+    </div>
+    <form class="checkout-body" id="checkoutForm" novalidate>
+        <div class="form-title">👤 بيانات العميل</div>
+        <div class="form-grid">
+            <div class="field full"><label>الاسم بالكامل <i>*</i></label><input id="f_name" autocomplete="name"><div class="msg">من فضلك اكتب اسمك</div></div>
+            <div class="field"><label>رقم الموبايل <i>*</i></label><input id="f_phone" type="tel" inputmode="numeric" placeholder="01xxxxxxxxx" autocomplete="tel"><div class="msg">اكتب رقم موبايل صحيح (11 رقم)</div></div>
+            <div class="field"><label>رقم إضافي</label><input id="f_phone2" type="tel" inputmode="numeric" placeholder="اختياري"><div class="msg">الرقم الإضافي غير صحيح</div></div>
+        </div>
+
+        <div class="form-title" style="margin-top:20px">📍 العنوان بالتفصيل</div>
+        <div class="form-grid">
+            <div class="field full">
+    <label>المنطقة <i>*</i></label>
+    <div class="combo">
+        <input id="f_area_q" type="text" placeholder="اكتب أول حروف المنطقة... (مثال: طوابق)" autocomplete="off" role="combobox" aria-expanded="false">
+        <input id="f_area" type="hidden">
+        <div class="combo-list" id="areaList" role="listbox"></div>
+    </div>
+    <div class="msg">اختار المنطقة من القائمة</div>
+</div>
+            <div class="field full"><label>اسم الشارع <i>*</i></label><input id="f_street"><div class="msg">اكتب اسم الشارع</div></div>
+            <div class="field"><label>المحطة / أقرب محطة</label><input id="f_station" placeholder="اختياري"></div>
+            <div class="field"><label>رقم العمارة <i>*</i></label><input id="f_building"><div class="msg">اكتب رقم العمارة</div></div>
+            <div class="field"><label>الدور <i>*</i></label><input id="f_floor"><div class="msg">اكتب رقم الدور</div></div>
+            <div class="field"><label>الشقة <i>*</i></label><input id="f_apt"><div class="msg">اكتب رقم الشقة</div></div>
+            <div class="field full"><label>علامة مميزة <i>*</i></label><input id="f_landmark" placeholder="مثال: أمام مستشفى ... / جنب صيدلية ..."><div class="msg">اكتب علامة مميزة تسهّل الوصول</div></div>
+            <div class="field full"><label>ملاحظات على الطلب</label><textarea id="f_notes" rows="2" placeholder="مثال: ناشفيل حار، من غير صوص..."></textarea></div>
+        </div>
+
+        <div class="order-summary" id="checkoutSummary"></div>
+        <div class="pay-note">💵 الدفع كاش عند الاستلام. الطلب بيتبعت على واتساب وهنأكده معاك.</div>
+        <button type="submit" class="rr-btn wa">إرسال الطلب على واتساب 🚀</button>
+    </form>
+</div>
+<!-- بوب أب اختيار الصنف -->
+<div class="checkout-modal item-modal" id="itemModal" role="dialog" aria-label="اختيار الصنف">
+    <div class="drawer-head">
+        <h3 id="im_title">الصنف</h3>
+        <button class="x-btn" data-close aria-label="إغلاق">✕</button>
+    </div>
+    <div class="checkout-body">
+        <div class="im-price" id="im_price"></div>
+
+        <div class="form-title">الكمية</div>
+                <div class="qty im-qty">
+            <button type="button" id="im_inc">+</button>
+            <span id="im_qty">1</span>
+            <button type="button" id="im_dec">−</button>
+        </div>
+
+        <div id="im_choices"></div>
+
+        <div id="im_type_wrap">
+            <div class="form-title" id="im_type_title">النوع</div>
+            <div class="opt-row" id="im_type"></div>
+        </div>
+        <div class="form-title">تعديلات سريعة</div>
+        <div class="opt-row multi" id="im_chips"></div>
+
+        <div class="field" style="margin-top:14px">
+            <label>ملاحظات خاصة بالصنف</label>
+            <textarea id="im_note" rows="2" placeholder="مثال: من غير صوص، قطعة زيادة كريسبي..."></textarea>
+        </div>
+        <button type="button" class="rr-btn" id="im_add">🛒 أضف للسلة — <span id="im_total"></span></button>
+    </div>
+</div>
+<div class="promo-modal" id="promoModal" role="dialog" aria-label="عرض الافتتاح">
+    <button class="x-btn promo-x" id="promoClose" aria-label="إغلاق">✕</button>
+    <div class="promo-emoji">🎉</div>
+    <div class="promo-badge">خصم 20%</div>
+    <h3>بمناسبة تشغيل موقع ريد روستر</h3>
+    <p>حالياً خصم <b>20%</b> على طلبك. استخدم الكود واطلب دلوقتي!</p>
+    <div class="promo-code">RED20</div>
+    <button type="button" class="rr-btn" id="promoGo">يلا نطلب 🛒</button>
+</div>
+<div class="rr-toast" id="rrToast"></div>
 <footer>
     <p>&copy; 2026 <strong>Red Roosters</strong> — جميع الحقوق محفوظة</p>
 </footer>
@@ -1938,6 +2274,544 @@
         document.getElementById('scrollTop').classList.toggle('visible', window.scrollY > 400);
     });
     document.addEventListener('DOMContentLoaded', () => { showSection('home'); });
+</script>
+<script>
+(function () {
+    /* ═══ إعدادات: عدّل هنا ═══ */
+    const CONFIG = {
+        phone: '201023278000',
+        minOrder: 0,
+
+        // ⏰ ساعات العمل (خليها enabled:true لتفعيلها). لو الإغلاق بعد منتصف الليل اكتب close أصغر من open
+        hours: { enabled: false, open: '12:00', close: '02:00', tz: 'Africa/Cairo' },
+
+        // 🎟️ الكوبونات: percent = نسبة %, fixed = مبلغ ثابت, min = أقل مجموع للطلب (اختياري)
+        coupons: {
+            'RED20':   { type: 'percent', value: 20 },
+            'WELCOME': { type: 'fixed',   value: 20, min: 150 }
+        },
+
+        areas: [
+            { name: 'الطالبية التأمين الصحي', fee: 55 },
+            { name: 'العمرانية الشرقية', fee: 65 },
+            { name: 'العمرانية الغربية', fee: 55 },
+            { name: 'المحولات - الهرم', fee: 45 },
+            { name: 'المريوطية - هرم 1', fee: 35 },
+            { name: 'المريوطية - هرم 2', fee: 45 },
+            { name: 'المريوطية - هرم 3', fee: 55 },
+            { name: 'المساحة - فيصل', fee: 50 },
+            { name: 'اللبيني - فيصل', fee: 35 },
+            { name: 'اللبيني - هرم', fee: 40 },
+            { name: 'ترعة عبد العال', fee: 55 },
+            { name: 'حدائق الأهرام - بوابة أولى', fee: 55 },
+            { name: 'حدائق الأهرام - بوابة ثانية جديدة', fee: 55 },
+            { name: 'حدائق الأهرام - بوابة ثالثة (ثانية قديمة)', fee: 55 },
+            { name: 'حدائق الأهرام - بوابة رابعة', fee: 55 },
+            { name: 'حدائق الأهرام - مساكن الضباط', fee: 55 },
+            { name: 'شارع العمدة', fee: 45 },
+            { name: 'شارع المستشفى', fee: 30 },
+            { name: 'شارع سهل حمزة', fee: 35 },
+            { name: 'فيصل - أول فيصل', fee: 55 },
+            { name: 'فيصل - آخر فيصل', fee: 35 },
+            { name: 'فيصل - التعاون 2', fee: 40 },
+            { name: 'فيصل - الطالبية', fee: 45 },
+            { name: 'فيصل - الطوابق', fee: 35 },
+            { name: 'فيصل - الطوابق التاني', fee: 35 },
+            { name: 'فيصل - العشرين 1', fee: 45 },
+            { name: 'فيصل - الكوم الأخضر', fee: 35 },
+            { name: 'فيصل - الملكة نازلي', fee: 50 },
+            { name: 'فيصل - المريوطية 2', fee: 35 },
+            { name: 'فيصل - المريوطية 3', fee: 30 },
+            { name: 'فيصل - المطبعة 2', fee: 45 },
+            { name: 'فيصل - حسن محمد', fee: 40 },
+            { name: 'فيصل - حسن محمد 2', fee: 40 },
+            { name: 'فيصل - طريق المنشية البكاري', fee: 40 },
+            { name: 'فيصل - كعبيش', fee: 35 },
+            { name: 'فيصل - كوم بكار 2', fee: 40 },
+            { name: 'الهرم - ترسا', fee: 40 },
+            { name: 'الهرم - التعاون', fee: 40 },
+            { name: 'الهرم - الثلاثيني 2', fee: 40 },
+            { name: 'الهرم - العروبة', fee: 45 },
+            { name: 'الهرم - العريش', fee: 30 },
+            { name: 'الهرم - المجزر الآلي', fee: 45 },
+            { name: 'الهرم - المنصورية', fee: 45 },
+            { name: 'الهرم - ويمبي', fee: 45 },
+            { name: 'الهرم - تربية رياضية', fee: 50 },
+            { name: 'الهرم - مشعل', fee: 40 },
+            { name: 'الهرم - نزلة السمان', fee: 45 },
+            { name: 'الهرم - الرماية', fee: 45 }
+        ]
+    };
+    // أقسام مفيهاش اختيار "حار/عادي"
+    const NO_SPICE_SECTIONS = ['sides-drinks', 'appetizers', 'beef-sandwiches', 'kids-meals'];
+      const NO_CHIPS_SECTIONS = ['sides-drinks'];
+    const QUICK_CHIPS = ['بدون صوص', 'بدون خضار', 'بدون مخلل', 'بدون بصل', 'بدون جبنة', 'صوص زيادة'];
+    const NASH_LEVELS = [
+        { v: 'Mild',  t: '🟢 Mild — خفيف' },
+        { v: 'Hot',   t: '🟠 Hot — حار' },
+        { v: 'Extra', t: '🔴 Extra — حار جداً' }
+    ];
+
+    const $ = id => document.getElementById(id);
+    const fmt = n => n + ' ج.م';
+    const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const toEn = s => String(s).replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+    const LS = {
+        get(k, d) { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch (e) { return d; } },
+        set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+    };
+    // تطبيع النص العربي للبحث (يتجاهل التشكيل والهمزات والتاء المربوطة)
+       const norm = s => toEn(String(s)).toLowerCase()
+        .replace(/[\u064B-\u065F\u0670\u0640]/g, '')
+        .replace(/[أإآ]/g, 'ا').replace(/ى/g, 'ي').replace(/ة/g, 'ه')
+        .replace(/\s+/g, ' ').trim();
+
+    // أصناف بيف داخل أقسام تانية (بالاسم)
+    const NO_SPICE_NAMES = ['كومبو الروقان', 'عرض الفسحة 3'].map(s => norm(s));
+    let cart = LS.get('rr_cart', []);
+    let coupon = null; // { code, def }
+    /* ═══ اختيارات العروض ═══ */
+    const CHICKEN  = ['تركي ميلت', 'وايلد مشروم', 'تشيلي جان', 'سموكي تشيكن', 'مانجو فاير']; // كل الدجاج عدا المايتي زينجر
+    const BEEF     = ['كلاسيك كينج', 'مشروم كراون', 'بيكون ستار', 'ريد وار', 'رويال بايت', 'ميكسكانو']; // عدا تاستي لورد وبيف تاشيو
+    const TWISTER  = ['تويستر تشيكن', 'فاهيتا'];
+    const SUPREME  = ['زينجر سوبريم', 'فيليه سوبريم'];
+    const RIZO = ['ريزو استربس باربكيو', 'ريزو فاهيتا باربكيو', 'ريزو استربس سبايسي تايجر', 'ريزو فاهيتا سبايسي'];
+    const CHOICES_RAW = {
+        'كلاسيك الروقان':   [{ title: 'ساندوتش التشيكن', options: CHICKEN }],
+        'كومبو الروقان':    [{ title: 'ساندوتش البرجر',  options: BEEF }],
+        'عرض الروقان 1':    [{ title: 'اختار نوع الدجاج', options: ['2 قطعة دجاج', '4 قطعة استربس'] }],
+        'عرض الروقان 2':    [{ title: 'ساندوتش التشيكن', options: CHICKEN }],
+        'عرض الروقان 3':    [{ title: 'التويستر', options: TWISTER }],
+        'عرض الروقان 5':    [{ title: 'التويستر', options: TWISTER }, { title: 'السوبريم', options: SUPREME }],
+        'دابل راب':         [{ title: 'الراب الأول', options: TWISTER }, { title: 'الراب التاني', options: TWISTER }],
+        'عرض اللانش بوكس 1': [{ title: 'التويستر', options: TWISTER }],
+                'عرض الفسحة 2':     [
+            { title: 'ساندوتش التشيكن', options: CHICKEN },
+            { title: 'التويستر',        options: TWISTER },
+            { title: 'السوبريم',        options: SUPREME }
+        ],
+        'عرض الفسحة 3':     [
+            { title: 'ساندوتش البيف الأول',  options: BEEF },
+            { title: 'ساندوتش البيف التاني', options: BEEF }
+        ],
+        'عرض الريزو':       [{ title: 'نوع الريزو', options: RIZO }],
+        'عرض الروقان 4':    [{ title: 'نوع الريزو', options: RIZO }],
+        'عرض الرايقين':     [{ title: 'الريزو الأول', options: RIZO }, { title: 'الريزو التاني', options: RIZO }, { title: 'الريزو التالت', options: RIZO }],
+        'ملوك الروقان':     [{ title: 'الريزو الأول', options: RIZO }, { title: 'الريزو التاني', options: RIZO }],
+        'عرض اللانش بوكس 2': [{ title: 'نوع الريزو', options: RIZO }],
+        'ملك الروقان':      [{ title: 'نوع الريزو', options: RIZO }],
+        'عرض الروقان 6':    [{ title: 'نوع الريزو', options: RIZO }],
+    };
+    // مفاتيح مطبّعة عشان الأرقام العربي (١) والإنجليزي (1) يشتغلوا سوا
+    const CHOICES = {};
+    Object.keys(CHOICES_RAW).forEach(k => CHOICES[norm(k)] = CHOICES_RAW[k]);
+    /* ═══ ساعات العمل ═══ */
+    function isOpenNow() {
+        const h = CONFIG.hours;
+        if (!h.enabled) return true;
+        let now;
+        try {
+            now = new Intl.DateTimeFormat('en-GB', { timeZone: h.tz, hour: '2-digit', minute: '2-digit', hour12: false }).format(new Date());
+        } catch (e) { const d = new Date(); now = d.getHours() + ':' + d.getMinutes(); }
+        const m = t => { const [a, b] = t.split(':').map(Number); return a * 60 + b; };
+        const n = m(now), o = m(h.open), c = m(h.close);
+        return o <= c ? (n >= o && n < c) : (n >= o || n < c);
+    }
+    const closedMsg = () => `⏰ إحنا مقفولين دلوقتي. مواعيد الشغل من ${CONFIG.hours.open} إلى ${CONFIG.hours.close}`;
+
+    /* ═══ الحسابات ═══ */
+    const subtotal = () => cart.reduce((s, i) => s + i.price * i.qty, 0);
+    function discount() {
+        if (!coupon) return 0;
+        const sub = subtotal(), d = coupon.def;
+        if (d.min && sub < d.min) return 0;
+        const v = d.type === 'percent' ? Math.round(sub * d.value / 100) : d.value;
+        return Math.min(v, sub);
+    }
+
+    /* ═══ السلة ═══ */
+    function addItem(o) {
+        const full = o.label ? `${o.name} (${o.label})` : o.name;
+        const opts = o.opts || [];
+        const key = [full, o.price, opts.join(','), o.note || ''].join('|');
+        const it = cart.find(i => i.key === key);
+        if (it) it.qty += o.qty; else cart.push({ key, name: full, price: o.price, qty: o.qty, opts, note: o.note || '' });
+        LS.set('rr_cart', cart); render(); toast('✅ تمت إضافة ' + full);
+    }
+
+    function render() {
+        const count = cart.reduce((s, i) => s + i.qty, 0);
+        document.querySelectorAll('.cart-count').forEach(e => { e.textContent = count; e.style.display = count ? 'flex' : 'none'; });
+        const body = $('cartBody');
+        if (!cart.length) {
+            body.innerHTML = '<div class="cart-empty"><span>🛒</span>السلة فاضية.. ضيف أكلتك المفضلة!</div>';
+            $('cartFoot').style.display = 'none';
+            return;
+        }
+        $('cartFoot').style.display = '';
+        body.innerHTML = cart.map((i, idx) => {
+            const extras = [...(i.opts || [])];
+            const optsHtml = (extras.length || i.note)
+                ? `<div class="cart-line-opts">${extras.length ? '<b>' + esc(extras.join(' • ')) + '</b>' : ''}${i.note ? (extras.length ? '<br>' : '') + '📝 ' + esc(i.note) : ''}</div>` : '';
+            return `
+            <div class="cart-line">
+                <div class="cart-line-top">
+                    <div><div class="cart-line-name">${esc(i.name)}</div>${optsHtml}</div>
+                    <button class="cart-line-del" data-act="del" data-i="${idx}" aria-label="حذف">🗑️</button>
+                </div>
+                <div class="cart-line-bottom">
+                    <div class="qty">
+                        <button data-act="inc" data-i="${idx}">+</button>
+                        <span>${i.qty}</span>
+                        <button data-act="dec" data-i="${idx}">−</button>
+                    </div>
+                    <div class="cart-line-price">${fmt(i.price * i.qty)}</div>
+                </div>
+            </div>`;
+        }).join('');
+        const d = discount();
+        $('cartDiscRow').style.display = d ? '' : 'none';
+        $('cartDisc').textContent = '− ' + fmt(d);
+        $('cartSubtotal').textContent = fmt(subtotal() - d);
+        if (coupon) refreshCouponMsg();
+    }
+
+    $('cartBody').addEventListener('click', e => {
+        const b = e.target.closest('[data-act]'); if (!b) return;
+        const i = +b.dataset.i, act = b.dataset.act;
+        if (act === 'inc') cart[i].qty++;
+        if (act === 'dec') { cart[i].qty--; if (cart[i].qty <= 0) cart.splice(i, 1); }
+        if (act === 'del') cart.splice(i, 1);
+        LS.set('rr_cart', cart); render();
+    });
+
+    /* ═══ الكوبون (بيتضاف تلقائي في السلة) ═══ */
+    const foot = $('cartFoot');
+    const cRow = document.createElement('div');
+    cRow.innerHTML = `
+        <div class="coupon-row"><input id="couponInput" placeholder="كود الخصم 🎟️" autocomplete="off"><button type="button" id="couponBtn">تطبيق</button></div>
+        <div class="coupon-msg" id="couponMsg"></div>
+        <div class="sum-row disc" id="cartDiscRow" style="display:none"><span>🎟️ خصم الكوبون</span><span id="cartDisc"></span></div>`;
+    foot.insertBefore(cRow, foot.firstChild);
+    if (!Object.keys(CONFIG.coupons).length) cRow.querySelector('.coupon-row').style.display = 'none';
+
+    function setCouponMsg(t, ok) { const m = $('couponMsg'); m.textContent = t; m.className = 'coupon-msg ' + (ok ? 'ok' : 'bad'); }
+    function refreshCouponMsg() {
+        const d = coupon.def;
+        if (d.min && subtotal() < d.min) setCouponMsg(`الكوبون يحتاج طلب بقيمة ${fmt(d.min)} أو أكتر`, false);
+        else setCouponMsg(`✅ تم تطبيق ${coupon.code}`, true);
+    }
+    $('couponBtn').addEventListener('click', () => {
+        const code = $('couponInput').value.trim().toUpperCase();
+        if (!code) { coupon = null; setCouponMsg('', true); render(); return; }
+        const def = CONFIG.coupons[code];
+        if (!def) { coupon = null; setCouponMsg('❌ الكوبون غير صحيح', false); render(); return; }
+        coupon = { code, def }; render();
+    });
+
+    /* ═══ فتح/قفل ═══ */
+    function openEl(id) { $(id).classList.add('open'); $('rrOverlay').classList.add('open'); document.body.classList.add('no-scroll'); }
+    function closeAll() {
+        ['cartDrawer', 'checkoutModal', 'itemModal', 'rrOverlay'].forEach(id => $(id).classList.remove('open'));
+        document.body.classList.remove('no-scroll');
+    }
+    document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', closeAll));
+    $('rrOverlay').addEventListener('click', closeAll);
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeAll(); });
+    function openCart() { closeAll(); openEl('cartDrawer'); }
+
+    /* ═══ زراير السلة (عائم + الهيدر) ═══ */
+    const fab = document.createElement('button');
+    fab.className = 'cart-fab';
+    fab.innerHTML = '🛒 السلة <span class="cart-count"></span>';
+    fab.onclick = openCart;
+    document.body.appendChild(fab);
+
+    const headBtn = document.createElement('button');
+    headBtn.className = 'cart-head-btn';
+    headBtn.setAttribute('aria-label', 'السلة');
+    headBtn.innerHTML = '🛒<span class="cart-count"></span>';
+    headBtn.onclick = openCart;
+    const hb = $('hamburger');
+    hb.parentNode.insertBefore(headBtn, hb);
+
+    /* ═══ بوب أب الصنف ═══ */
+    let cur = null;
+    const imType = $('im_type'), imChips = $('im_chips');
+    const imChoices = $('im_choices');
+    imChoices.addEventListener('click', e => {
+        const b = e.target.closest('button'); if (!b) return;
+        const g = b.closest('.choice-group');
+        g.querySelectorAll('button').forEach(x => x.classList.remove('sel'));
+        b.classList.add('sel'); g.classList.remove('err');
+    });
+    function paintQty() {
+        $('im_qty').textContent = cur.qty;
+        $('im_total').textContent = fmt(cur.price * cur.qty);
+    }
+    function openItem(o) {
+        cur = { ...o, qty: 1 };
+        $('im_title').textContent = o.label ? `${o.name} (${o.label})` : o.name;
+        $('im_price').textContent = fmt(o.price);
+        $('im_note').value = '';
+
+        // النوع: ناشفيل (درجة الحرارة) أو حار/عادي أو مفيش
+        const list = o.nash ? NASH_LEVELS.map(x => ({ v: x.v, t: x.t }))
+                   : o.spice ? [{ v: 'عادي', t: 'عادي' }, { v: 'حار 🌶️', t: 'حار 🌶️' }] : [];
+        $('im_type_wrap').style.display = list.length ? '' : 'none';
+        $('im_type_title').textContent = o.nash ? '🔥 درجة الناشفيل' : 'النوع';
+        imType.innerHTML = list.map((x, i) => `<button type="button" data-v="${esc(x.v)}" class="${i === 0 ? 'sel' : ''}">${esc(x.t)}</button>`).join('');
+
+        const noChips = NO_CHIPS_SECTIONS.includes(o.sec);
+imChips.innerHTML = noChips ? '' : QUICK_CHIPS.map(c => `<button type="button" data-v="${esc(c)}">${esc(c)}</button>`).join('');
+imChips.previousElementSibling.style.display = noChips ? 'none' : '';
+        const groups = CHOICES[norm(o.name)] || [];
+        imChoices.innerHTML = groups.map(g => `
+            <div class="choice-group" data-title="${esc(g.title)}">
+                <div class="form-title">${esc(g.title)} <i class="req">*</i></div>
+                <div class="opt-row">${g.options.map(x => `<button type="button" data-v="${esc(x)}">${esc(x)}</button>`).join('')}</div>
+            </div>`).join('');
+        paintQty(); closeAll(); openEl('itemModal');
+    }
+    imType.addEventListener('click', e => {
+        const b = e.target.closest('button'); if (!b) return;
+        imType.querySelectorAll('button').forEach(x => x.classList.remove('sel')); b.classList.add('sel');
+    });
+    imChips.addEventListener('click', e => { const b = e.target.closest('button'); if (b) b.classList.toggle('sel'); });
+    $('im_inc').onclick = () => { cur.qty++; paintQty(); };
+    $('im_dec').onclick = () => { if (cur.qty > 1) { cur.qty--; paintQty(); } };
+    $('im_add').onclick = () => {
+        const opts = [];
+        let missing = null;
+        imChoices.querySelectorAll('.choice-group').forEach(g => {
+            const s = g.querySelector('button.sel');
+            if (!s) { g.classList.add('err'); missing = missing || g; }
+            else opts.push(g.dataset.title + ': ' + s.dataset.v);
+        });
+        if (missing) {
+            toast('من فضلك اختار: ' + missing.dataset.title);
+            missing.scrollIntoView({ block: 'center', behavior: 'smooth' });
+            return;
+        }
+        const t = imType.querySelector('button.sel'); if (t) opts.push(cur.nash ? 'ناشفيل ' + t.dataset.v : t.dataset.v);
+        imChips.querySelectorAll('button.sel').forEach(b => opts.push(b.dataset.v));
+        addItem({ name: cur.name, label: cur.label, price: cur.price, qty: cur.qty, opts, note: $('im_note').value.trim() });
+        closeAll();
+    };
+    /* ═══ اختيار المنطقة (بحث) ═══ */
+    const areaQ = $('f_area_q'), areaVal = $('f_area'), areaList = $('areaList');
+    let hlIdx = -1, shown = [];
+
+    function setArea(i) {
+        areaVal.value = i;
+        areaQ.value = CONFIG.areas[i].name;
+        areaList.classList.remove('open'); areaQ.setAttribute('aria-expanded', 'false');
+        areaQ.parentNode.parentNode.classList.remove('err');
+        renderSummary();
+    }
+    function paintList() {
+        const q = norm(areaQ.value);
+        const words = q.split(' ').filter(Boolean);
+        shown = CONFIG.areas.map((a, i) => ({ a, i }))
+            .filter(x => { const n = norm(x.a.name); return words.every(w => n.includes(w)); });
+        hlIdx = shown.length ? 0 : -1;
+        areaList.innerHTML = shown.length
+            ? shown.map((x, k) => `<div class="combo-item${k === 0 ? ' hl' : ''}" data-i="${x.i}" role="option"><span>${esc(x.a.name)}</span><b>${x.a.fee} ج.م</b></div>`).join('')
+            : '<div class="combo-empty">مفيش منطقة بالاسم ده 🤔</div>';
+        areaList.classList.add('open'); areaQ.setAttribute('aria-expanded', 'true');
+    }
+    function moveHl(d) {
+        const items = areaList.querySelectorAll('.combo-item'); if (!items.length) return;
+        items[hlIdx]?.classList.remove('hl');
+        hlIdx = (hlIdx + d + items.length) % items.length;
+        items[hlIdx].classList.add('hl'); items[hlIdx].scrollIntoView({ block: 'nearest' });
+    }
+    areaQ.addEventListener('focus', paintList);
+    areaQ.addEventListener('input', () => { areaVal.value = ''; renderSummary(); paintList(); });
+    areaQ.addEventListener('keydown', e => {
+        if (e.key === 'ArrowDown') { e.preventDefault(); moveHl(1); }
+        else if (e.key === 'ArrowUp') { e.preventDefault(); moveHl(-1); }
+        else if (e.key === 'Enter' && areaList.classList.contains('open')) {
+            e.preventDefault(); if (shown[hlIdx]) setArea(shown[hlIdx].i);
+        }
+    });
+    // mousedown بدل click عشان الـ blur ما يقفلش القائمة قبل الاختيار
+    areaList.addEventListener('mousedown', e => {
+        const it = e.target.closest('.combo-item'); if (!it) return;
+        e.preventDefault(); setArea(+it.dataset.i);
+    });
+    document.addEventListener('click', e => { if (!e.target.closest('.combo')) areaList.classList.remove('open'); });
+
+    /* ═══ إتمام الطلب ═══ */
+    const fields = ['name', 'phone', 'phone2', 'street', 'station', 'building', 'floor', 'apt', 'landmark'];
+    const saved = LS.get('rr_customer', {});
+    fields.forEach(f => { if (saved[f]) $('f_' + f).value = saved[f]; });
+    if (saved.area !== undefined && CONFIG.areas[saved.area]) { areaVal.value = saved.area; areaQ.value = CONFIG.areas[saved.area].name; }
+
+    const curFee = () => areaVal.value === '' ? null : CONFIG.areas[+areaVal.value].fee;
+
+    function renderSummary() {
+        const fee = curFee(), sub = subtotal(), d = discount();
+        $('checkoutSummary').innerHTML =
+            cart.map(i => `<div class="mini"><span>${i.qty} × ${esc(i.name)}${(i.opts && i.opts.length) ? ' <small>(' + esc(i.opts.join('، ')) + ')</small>' : ''}${i.note ? ' <small>📝 ' + esc(i.note) + '</small>' : ''}</span><span>${fmt(i.price * i.qty)}</span></div>`).join('') +
+            `<div class="sum-row" style="margin-top:10px"><span>المجموع</span><span>${fmt(sub)}</span></div>` +
+            (d ? `<div class="sum-row disc"><span>🎟️ خصم (${esc(coupon.code)})</span><span>− ${fmt(d)}</span></div>` : '') +
+            `<div class="sum-row"><span>التوصيل</span><span>${fee === null ? 'اختار المنطقة' : fmt(fee)}</span></div>` +
+            `<div class="sum-row total"><span>الإجمالي</span><span>${fmt(sub - d + (fee || 0))}</span></div>`;
+    }
+
+    $('goCheckout').addEventListener('click', () => {
+        if (!isOpenNow()) { toast(closedMsg()); return; }
+        if (CONFIG.minOrder && subtotal() < CONFIG.minOrder) { toast(`أقل قيمة للطلب ${fmt(CONFIG.minOrder)}`); return; }
+        closeAll(); renderSummary(); openEl('checkoutModal');
+    });
+
+    const phoneOk = v => /^01[0125]\d{8}$/.test(toEn(v).replace(/\D/g, ''));
+
+    function validate() {
+        let ok = true, first = null;
+        const need = { name: v => v.trim().length > 1, phone: phoneOk, street: v => v.trim(), building: v => v.trim(), floor: v => v.trim(), apt: v => v.trim(), landmark: v => v.trim() };
+        Object.keys(need).forEach(k => {
+            const el = $('f_' + k), good = !!need[k](el.value);
+            el.parentNode.classList.toggle('err', !good);
+            if (!good) { ok = false; first = first || el; }
+        });
+        const p2 = $('f_phone2'), p2ok = !p2.value.trim() || phoneOk(p2.value);
+        p2.parentNode.classList.toggle('err', !p2ok);
+        if (!p2ok) { ok = false; first = first || p2; }
+        const aok = areaVal.value !== '';
+        areaQ.parentNode.parentNode.classList.toggle('err', !aok);
+        if (!aok) { ok = false; first = first || areaQ; }
+        if (first) first.focus();
+        return ok;
+    }
+
+    $('checkoutForm').addEventListener('submit', e => {
+        e.preventDefault();
+        if (!cart.length) { toast('السلة فاضية'); return; }
+        if (!isOpenNow()) { toast(closedMsg()); return; }
+        if (!validate()) return;
+
+        const v = id => $(id).value.trim();
+        const area = CONFIG.areas[+areaVal.value];
+        const sub = subtotal(), d = discount(), total = sub - d + area.fee;
+        const num = id => toEn(v(id));
+
+        const itemLines = [];
+        cart.forEach((i, n) => {
+            itemLines.push(`${n + 1}. ${i.name} × ${i.qty} = ${i.price * i.qty} ج.م`);
+            const extra = [...(i.opts || [])];
+            if (extra.length) itemLines.push('    ↳ ' + extra.join(' | '));
+            if (i.note) itemLines.push('    ↳ 📝 ' + i.note);
+        });
+
+        const lines = [
+            '🐓 *طلب جديد - Red Roosters*',
+            '━━━━━━━━━━━━━━',
+            '👤 *الاسم:* ' + v('f_name'),
+            '📞 *الموبايل:* ' + num('f_phone'),
+            v('f_phone2') ? '📱 *رقم إضافي:* ' + num('f_phone2') : null,
+            '',
+            '📍 *العنوان*',
+            '• المنطقة: ' + area.name,
+            '• الشارع: ' + v('f_street'),
+            v('f_station') ? '• المحطة: ' + v('f_station') : null,
+            '• رقم العمارة: ' + v('f_building'),
+            '• الدور: ' + v('f_floor'),
+            '• الشقة: ' + v('f_apt'),
+            '• علامة مميزة: ' + v('f_landmark'),
+            '',
+            '🛒 *الطلبات*',
+            ...itemLines,
+            '',
+            '━━━━━━━━━━━━━━',
+            '💰 المجموع: ' + sub + ' ج.م',
+            d ? '🎟️ خصم (' + coupon.code + '): − ' + d + ' ج.م' : null,
+            '🛵 التوصيل (' + area.name + '): ' + area.fee + ' ج.م',
+            '✅ *الإجمالي: ' + total + ' ج.م*',
+            '💵 الدفع: كاش عند الاستلام',
+            v('f_notes') ? '\n📝 *ملاحظات عامة:* ' + v('f_notes') : null
+        ].filter(l => l !== null).join('\n');
+
+        const data = { area: +areaVal.value };
+        fields.forEach(f => data[f] = v('f_' + f));
+        LS.set('rr_customer', data);
+
+        window.open('https://wa.me/' + CONFIG.phone + '?text=' + encodeURIComponent(lines), '_blank');
+
+        cart = []; coupon = null; $('couponInput').value = ''; setCouponMsg('', true);
+        LS.set('rr_cart', cart); render(); closeAll();
+        toast('تم تجهيز طلبك ✅ اضغط إرسال في الواتساب لتأكيده');
+    });
+
+    /* ═══ Toast ═══ */
+    let tt;
+    function toast(msg) {
+        const t = $('rrToast'); t.textContent = msg; t.classList.add('show');
+        clearTimeout(tt); tt = setTimeout(() => t.classList.remove('show'), 2600);
+    }
+
+    /* ═══ زراير "أضف للسلة" على كل الكروت — بتفتح البوب أب ═══ */
+    const TYPES = [
+        { sel: '.card',              name: '.card-name',             price: '.price-badge',      foot: '.card-footer' },
+        { sel: '.siniya-card',       name: '.siniya-card-name',      price: '.siniya-price',     foot: '.siniya-card-footer' },
+        { sel: '.siniya-featured',   name: '.siniya-featured-name',  price: '.siniya-price',     foot: '.siniya-card-footer' },
+        { sel: '.school-featured',   name: '.school-featured-name',  price: '.price-badge',      foot: '.card-footer' },
+        { sel: '.zsb-banner',        name: 'h2',                     price: '.zsb-price',        foot: '.zsb-price-row' },
+        { sel: '.power-deal-banner', name: 'h2',                     price: '.power-deal-price', foot: '.power-deal-price-row' }
+    ];
+    const LABELS = { S: 'صغير', M: 'وسط', L: 'كبير' };
+    const cleanName = el => {
+        const c = el.cloneNode(true);
+        c.querySelectorAll('span').forEach(s => s.remove());
+            return c.textContent.replace(/[\u{1F300}-\u{1FAFF}\u2600-\u27BF]/gu, '').replace(/\s+/g, ' ').trim();
+    };
+    const parsePrices = t => {
+        const m = [...t.matchAll(/([A-Za-z]+)\s*(\d+)/g)];
+        if (m.length > 1) return m.map(x => ({ label: LABELS[x[1].toUpperCase()] || x[1], price: +x[2] }));
+        const n = t.match(/\d+/);
+        return n ? [{ label: '', price: +n[0] }] : [];
+    };
+
+    TYPES.forEach(T => document.querySelectorAll(T.sel).forEach(box => {
+        if (box.dataset.cart) return;
+        const nEl = box.querySelector(T.name), pEl = box.querySelector(T.price), ft = box.querySelector(T.foot);
+        if (!nEl || !pEl || !ft) return;
+        const prices = parsePrices(pEl.textContent);
+        if (!prices.length) return;
+        box.dataset.cart = '1';
+        const name = cleanName(nEl);
+        const sec = (box.closest('section') || {}).id || '';
+        const nash = sec === 'nashville' || !!box.querySelector('.nashville') || /ناش/.test(name);
+        const spice = !nash && !NO_SPICE_SECTIONS.includes(sec) && !NO_SPICE_NAMES.includes(norm(name));
+        ft.querySelectorAll('a[href*="wa.me"]').forEach(a => a.remove());
+        prices.forEach(p => {
+            const b = document.createElement('button');
+            b.type = 'button';
+            b.className = 'add-cart-btn';
+            b.textContent = '🛒 أضف للسلة' + (p.label ? ' — ' + p.label : '');
+            b.onclick = () => openItem({ name, price: p.price, label: p.label, nash, spice, sec });
+            ft.appendChild(b);
+        });
+    }));
+    /* ═══ بوب أب الخصم عند فتح الموقع ═══ */
+    const promo = $('promoModal');
+    function closePromo() { promo.classList.remove('open'); $('rrOverlay').classList.remove('open'); document.body.classList.remove('no-scroll'); }
+    setTimeout(() => { promo.classList.add('open'); $('rrOverlay').classList.add('open'); document.body.classList.add('no-scroll'); }, 600);
+    $('promoClose').onclick = closePromo;
+    $('promoGo').onclick = closePromo;
+    $('rrOverlay').addEventListener('click', closePromo);
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closePromo(); });
+
+    /* ═══ نسخ كود الخصم من الشريط ═══ */
+    $('promoTicker').addEventListener('click', () => {
+        const done = () => toast('✅ تم نسخ كود RED20');
+        if (navigator.clipboard) navigator.clipboard.writeText('RED20').then(done, done);
+        else done();
+    });
+
+    render();
+})();
 </script>
 </body>
 </html>
