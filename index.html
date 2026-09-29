@@ -564,7 +564,84 @@
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(0,180,120,0.4);
         }
+/* ── FEATURED SINIYA (كارت عريض) ── */
+.siniya-featured {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    background: var(--white);
+    border-radius: 28px;
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+    border: 2px solid rgba(192,57,43,0.25);
+    margin-bottom: 32px;
+    position: relative;
+    transition: all 0.3s;
+}
+.siniya-featured:hover {
+    box-shadow: 0 16px 48px rgba(192,57,43,0.25);
+    border-color: var(--red);
+}
+.siniya-featured-img-wrap {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: linear-gradient(135deg, #FFF1E6, #FFE0D6);
+    min-height: 360px;
+}
+.siniya-featured-img {
+    width: 100%;
+    max-width: 480px;
+    height: auto;
+    max-height: 420px;
+    object-fit: contain;
+    display: block;
+    border-radius: 18px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+    transition: transform 0.4s ease;
+}
+.siniya-featured:hover .siniya-featured-img { transform: scale(1.03); }
+.siniya-featured-badge {
+    position: absolute; top: 18px; right: 18px; z-index: 2;
+    background: linear-gradient(135deg, #FFD700, #FF8C00);
+    color: #3a0000;
+    font-family: 'Tajawal', sans-serif;
+    font-size: 0.85rem; font-weight: 900;
+    padding: 7px 18px; border-radius: 50px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+}
+.siniya-featured-body {
+    padding: 40px 44px;
+    display: flex; flex-direction: column; justify-content: center;
+    background: linear-gradient(135deg, #FFF8F0, #FFFFFF);
+}
+.siniya-featured-eyebrow {
+    color: var(--red); font-size: 0.8rem; font-weight: 900;
+    letter-spacing: 2px; margin-bottom: 10px;
+}
+.siniya-featured-name {
+    font-family: 'Tajawal', sans-serif;
+    font-size: 2.6rem; font-weight: 900;
+    color: var(--charcoal); line-height: 1.15; margin-bottom: 4px;
+}
+.siniya-featured-name-en {
+    font-size: 0.95rem; color: var(--gray); margin-bottom: 20px; display: block;
+}
+.siniya-featured .siniya-includes { margin-bottom: 26px; }
+.siniya-featured .siniya-includes li { font-size: 1.05rem; padding: 6px 0; }
+.siniya-featured .siniya-includes li::before { font-size: 1.1rem; }
+.siniya-featured .siniya-price { font-size: 1.9rem; padding: 10px 30px; }
+.siniya-featured .siniya-order-btn { font-size: 1.05rem; padding: 13px 26px; }
 
+@media (max-width: 900px) {
+    .siniya-featured { grid-template-columns: 1fr; }
+    .siniya-featured-img-wrap { min-height: auto; padding: 20px; }
+    .siniya-featured-img { max-width: 360px; max-height: 340px; }
+    .siniya-featured-body { padding: 28px 24px; }
+    .siniya-featured-name { font-size: 2rem; }
+}
         /* Siniya info banner */
         .siniya-info-banner {
             background: linear-gradient(135deg, #FFF5F5, #FFE8E8);
@@ -765,7 +842,86 @@
             transition: all 0.25s;
         }
         .school-cta:hover { background: linear-gradient(135deg, #00E676, #00BFA5); transform: translateY(-2px); }
+/* ── SCHOOL FEATURED (كروت عريضة) ── */
+.school-featured-list { display: flex; flex-direction: column; gap: 24px; margin-bottom: 8px; }
+.school-featured {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    background: var(--white);
+    border-radius: 28px;
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+    border: 2px solid rgba(37,99,235,0.25);
+    transition: all 0.3s;
+}
+.school-featured:hover {
+    border-color: #2563EB;
+    box-shadow: 0 16px 48px rgba(37,99,235,0.22);
+}
+.school-featured.reverse .school-featured-img-wrap { order: 2; }
+.school-featured-img-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    min-height: 320px;
+    overflow: hidden;
+    background: linear-gradient(135deg, #E8F0FF, #FFF3C4);
+}
+.school-featured-img {
+    width: 100%;
+    max-width: 460px;
+    height: auto;
+    max-height: 380px;
+    object-fit: contain;
+    display: block;
+    border-radius: 18px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+    transition: transform 0.4s ease;
+}
+.school-featured:hover .school-featured-img { transform: scale(1.03); }
+.school-featured-badge {
+    position: absolute; top: 16px; right: 16px; z-index: 2;
+    background: linear-gradient(135deg, #1E40AF, #2563EB);
+    color: #fff;
+    font-size: 0.78rem; font-weight: 900;
+    padding: 6px 16px; border-radius: 50px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+}
+.school-featured-body {
+    padding: 36px 40px;
+    display: flex; flex-direction: column; justify-content: center;
+    background: linear-gradient(135deg, #F4F8FF, #FFFFFF);
+}
+.school-featured-name {
+    font-family: 'Tajawal', sans-serif;
+    font-size: 2.1rem; font-weight: 900;
+    color: var(--charcoal); line-height: 1.2; margin-bottom: 4px;
+}
+.school-featured-name-en { font-size: 0.9rem; color: var(--gray); display: block; margin-bottom: 16px; }
+.school-featured-divider {
+    height: 1px; border: none; margin-bottom: 14px;
+    background: linear-gradient(90deg, rgba(37,99,235,0.3), transparent);
+}
+.school-featured-title {
+    font-size: 0.78rem; font-weight: 900; color: #1E40AF;
+    letter-spacing: 1px; margin-bottom: 10px;
+}
+.school-featured-includes { list-style: none; margin-bottom: 24px; }
+.school-featured-includes li { font-size: 1.05rem; color: #333; padding: 5px 0; line-height: 1.5; }
+.school-featured .price-badge { font-size: 1.6rem; padding: 8px 26px; }
+.school-featured .school-cta { font-size: 1.05rem; padding: 12px 24px; }
+.school-cta svg { width: 18px; height: 18px; fill: currentColor; }
 
+@media (max-width: 900px) {
+    .school-featured { grid-template-columns: 1fr; }
+    .school-featured.reverse .school-featured-img-wrap { order: 0; }
+    .school-featured-img-wrap { min-height: auto; padding: 20px; }
+    .school-featured-img { max-width: 360px; max-height: 320px; }
+    .school-featured-body { padding: 26px 22px; }
+    .school-featured-name { font-size: 1.7rem; }
+}
         /* ── INFO CARDS ── */
         .info-card { background: var(--white); border-radius: var(--radius); padding: 28px 32px; box-shadow: var(--shadow-sm); margin-bottom: 20px; border-right: 4px solid var(--red); }
         .info-card h3 { font-family: 'Tajawal', sans-serif; font-size: 1.3rem; font-weight: 900; color: var(--red); margin-bottom: 14px; }
@@ -870,7 +1026,9 @@
     </style>
 </head>
 <body>
-
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="wa-icon" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></symbol>
+</svg>
 <header>
     <div class="header-inner">
         <div class="logo-wrap">
@@ -1034,95 +1192,151 @@
             </div>
         </div>
 
-       <p class="offer-section-title school-offer-title">💥 عروض الـ 99 جنيه</p>
-<div class="menu-grid">
-    <div class="card school-item">
-        <div class="card-img-placeholder school-ph">
-            <img src="https://i.postimg.cc/L66sgZwC/lunch-1.jpg" alt="عرض اللانش بوكس ١" loading="lazy">
+<p class="offer-section-title school-offer-title">💥 عروض الـ 99 جنيه</p>
+<div class="school-featured-list">
+
+    <div class="school-featured">
+        <div class="school-featured-img-wrap">
+            <div class="school-featured-badge">🎒 Back to School</div>
+            <img class="school-featured-img" src="https://i.postimg.cc/L66sgZwC/lunch-1.jpg" alt="عرض اللانش بوكس ١" loading="lazy">
         </div>
-        <div class="card-body">
-            <div class="card-name">عرض اللانش بوكس ١ <span class="card-name-en">Lunch Box 1</span></div>
-            <p class="card-desc">ساندوتش تويستر 🌯 + قطعة دجاج 🍗 + بطاطس صغير 🍟</p>
+        <div class="school-featured-body">
+            <div class="school-featured-name">عرض اللانش بوكس ١</div>
+            <span class="school-featured-name-en">Lunch Box 1</span>
+            <hr class="school-featured-divider">
+            <div class="school-featured-title">محتوى العرض</div>
+            <ul class="school-featured-includes">
+                <li>🌯 ساندوتش تويستر</li>
+                <li>🍗 قطعة دجاج</li>
+                <li>🍟 بطاطس صغير</li>
+            </ul>
             <div class="card-footer">
                 <span class="price-badge school">99 LE</span>
-                <a class="school-cta" href="https://wa.me/201023278000?text=عايز%20أطلب%20عرض%20اللانش%20بوكس%201" target="_blank" rel="noopener">اطلب الآن</a>
+                <a class="school-cta" href="https://wa.me/201023278000?text=عايز%20أطلب%20عرض%20اللانش%20بوكس%201" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><use href="#wa-icon"/></svg> اطلب الآن</a>
             </div>
         </div>
     </div>
-    <div class="card school-item">
-        <div class="card-img-placeholder school-ph">
-            <img src="https://i.postimg.cc/MKKGfjgk/lunch-2.jpg" alt="عرض اللانش بوكس ٢" loading="lazy">
+
+    <div class="school-featured reverse">
+        <div class="school-featured-img-wrap">
+            <div class="school-featured-badge">🎒 Back to School</div>
+            <img class="school-featured-img" src="https://i.postimg.cc/MKKGfjgk/lunch-2.jpg" alt="عرض اللانش بوكس ٢" loading="lazy">
         </div>
-        <div class="card-body">
-            <div class="card-name">عرض اللانش بوكس ٢ <span class="card-name-en">Lunch Box 2</span></div>
-            <p class="card-desc">ريزو 🍚 + قطعة دجاج 🍗 + بطاطس صغير 🍟</p>
+        <div class="school-featured-body">
+            <div class="school-featured-name">عرض اللانش بوكس ٢</div>
+            <span class="school-featured-name-en">Lunch Box 2</span>
+            <hr class="school-featured-divider">
+            <div class="school-featured-title">محتوى العرض</div>
+            <ul class="school-featured-includes">
+                <li>🍚 ريزو</li>
+                <li>🍗 قطعة دجاج</li>
+                <li>🍟 بطاطس صغير</li>
+            </ul>
             <div class="card-footer">
                 <span class="price-badge school">99 LE</span>
-                <a class="school-cta" href="https://wa.me/201023278000?text=عايز%20أطلب%20عرض%20اللانش%20بوكس%202" target="_blank" rel="noopener">اطلب الآن</a>
+                <a class="school-cta" href="https://wa.me/201023278000?text=عايز%20أطلب%20عرض%20اللانش%20بوكس%202" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><use href="#wa-icon"/></svg> اطلب الآن</a>
             </div>
         </div>
     </div>
-    <div class="card school-item">
-        <div class="card-img-placeholder school-ph">
-            <img src="https://i.postimg.cc/BQYnTnfh/lunch-3.jpg" alt="عرض اللانش بوكس ٣" loading="lazy">
+
+    <div class="school-featured">
+        <div class="school-featured-img-wrap">
+            <div class="school-featured-badge">🎒 Back to School</div>
+            <img class="school-featured-img" src="https://i.postimg.cc/BQYnTnfh/lunch-3.jpg" alt="عرض اللانش بوكس ٣" loading="lazy">
         </div>
-        <div class="card-body">
-            <div class="card-name">عرض اللانش بوكس ٣ <span class="card-name-en">Lunch Box 3</span></div>
-            <p class="card-desc">أرز مبهر 🍚 + قطعة دجاج 🍗 + قطعة كريسبي 🍗</p>
+        <div class="school-featured-body">
+            <div class="school-featured-name">عرض اللانش بوكس ٣</div>
+            <span class="school-featured-name-en">Lunch Box 3</span>
+            <hr class="school-featured-divider">
+            <div class="school-featured-title">محتوى العرض</div>
+            <ul class="school-featured-includes">
+                <li>🍚 أرز مبهر</li>
+                <li>🍗 قطعة دجاج</li>
+                <li>🍗 قطعة كريسبي</li>
+            </ul>
             <div class="card-footer">
                 <span class="price-badge school">99 LE</span>
-                <a class="school-cta" href="https://wa.me/201023278000?text=عايز%20أطلب%20عرض%20اللانش%20بوكس%203" target="_blank" rel="noopener">اطلب الآن</a>
+                <a class="school-cta" href="https://wa.me/201023278000?text=عايز%20أطلب%20عرض%20اللانش%20بوكس%203" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><use href="#wa-icon"/></svg> اطلب الآن</a>
             </div>
         </div>
     </div>
+
 </div>
 
 <hr class="offer-divider">
 
 <p class="offer-section-title school-offer-title">💥 عروض الـ 299 جنيه</p>
-<div class="menu-grid">
-    <div class="card school-item">
-        <div class="card-img-placeholder school-ph">
-            <img src="https://i.postimg.cc/tRzTgzSd/break-1.jpg
-" alt="عرض الفسحة ١" loading="lazy">
-        </div>
-        <div class="card-body">
-            <div class="card-name">عرض الفسحة ١ <span class="card-name-en">Outing Deal 1</span></div>
-            <p class="card-desc">7 قطع دجاج 🍗 + بطاطس وسط 🍟 + 2 كايزر 🍔 + 2 كول سلو صغير 🥗</p>
-            <div class="card-footer">
-                <span class="price-badge gold">299 LE</span>
-                <a class="school-cta" href="https://wa.me/201023278000?text=عايز%20أطلب%20عرض%20الفسحة%201" target="_blank" rel="noopener">اطلب الآن</a>
-            </div>
-        </div>
-    </div>
-    <div class="card school-item">
-        <div class="card-img-placeholder school-ph">
-            <img src="https://i.postimg.cc/c44Jt82X/break-2.jpg" alt="عرض الفسحة ٢" loading="lazy">
-        </div>
-        <div class="card-body">
-            <div class="card-name">عرض الفسحة ٢ <span class="card-name-en">Outing Deal 2</span></div>
-            <p class="card-desc">ساندوتش تويستر 🌯 + ساندوتش سوبريم 🥪 + ساندوتش تشيكن 🍔 + بطاطس وسط 🍟 + 2 كول سلو صغير 🥗</p>
-            <div class="card-footer">
-                <span class="price-badge gold">299 LE</span>
-                <a class="school-cta" href="https://wa.me/201023278000?text=عايز%20أطلب%20عرض%20الفسحة%202" target="_blank" rel="noopener">اطلب الآن</a>
-            </div>
-        </div>
-    </div>
-    <div class="card school-item">
-        <div class="card-img-placeholder school-ph">
-            <img src="https://i.postimg.cc/8PPCfr9y/break-3.jpg" alt="عرض الفسحة ٣" loading="lazy">
-        </div>
-        <div class="card-body">
-            <div class="card-name">عرض الفسحة ٣ <span class="card-name-en">Outing Deal 3</span></div>
-            <p class="card-desc">2 ساندوتش بيف 🥩🍔 + بطاطس وسط فريسكس 🍟</p>
-            <div class="card-footer">
-                <span class="price-badge gold">299 LE</span>
-                <a class="school-cta" href="https://wa.me/201023278000?text=عايز%20أطلب%20عرض%20الفسحة%203" target="_blank" rel="noopener">اطلب الآن</a>
-            </div>
-        </div>
-    </div>
-</div>
+<div class="school-featured-list">
 
+    <div class="school-featured">
+        <div class="school-featured-img-wrap">
+            <div class="school-featured-badge">🎒 Back to School</div>
+            <img class="school-featured-img" src="https://i.postimg.cc/tRzTgzSd/break-1.jpg" alt="عرض الفسحة ١" loading="lazy">
+        </div>
+        <div class="school-featured-body">
+            <div class="school-featured-name">عرض الفسحة ١</div>
+            <span class="school-featured-name-en">Outing Deal 1</span>
+            <hr class="school-featured-divider">
+            <div class="school-featured-title">محتوى العرض</div>
+            <ul class="school-featured-includes">
+                <li>🍗 7 قطع دجاج</li>
+                <li>🍟 بطاطس وسط</li>
+                <li>🍔 2 كايزر</li>
+                <li>🥗 2 كول سلو صغير</li>
+            </ul>
+            <div class="card-footer">
+                <span class="price-badge gold">299 LE</span>
+                <a class="school-cta" href="https://wa.me/201023278000?text=عايز%20أطلب%20عرض%20الفسحة%201" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><use href="#wa-icon"/></svg> اطلب الآن</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="school-featured reverse">
+        <div class="school-featured-img-wrap">
+            <div class="school-featured-badge">🎒 Back to School</div>
+            <img class="school-featured-img" src="https://i.postimg.cc/c44Jt82X/break-2.jpg" alt="عرض الفسحة ٢" loading="lazy">
+        </div>
+        <div class="school-featured-body">
+            <div class="school-featured-name">عرض الفسحة ٢</div>
+            <span class="school-featured-name-en">Outing Deal 2</span>
+            <hr class="school-featured-divider">
+            <div class="school-featured-title">محتوى العرض</div>
+            <ul class="school-featured-includes">
+                <li>🌯 ساندوتش تويستر</li>
+                <li>🥪 ساندوتش سوبريم</li>
+                <li>🍔 ساندوتش تشيكن</li>
+                <li>🍟 بطاطس وسط</li>
+                <li>🥗 2 كول سلو صغير</li>
+            </ul>
+            <div class="card-footer">
+                <span class="price-badge gold">299 LE</span>
+                <a class="school-cta" href="https://wa.me/201023278000?text=عايز%20أطلب%20عرض%20الفسحة%202" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><use href="#wa-icon"/></svg> اطلب الآن</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="school-featured">
+        <div class="school-featured-img-wrap">
+            <div class="school-featured-badge">🎒 Back to School</div>
+            <img class="school-featured-img" src="https://i.postimg.cc/8PPCfr9y/break-3.jpg" alt="عرض الفسحة ٣" loading="lazy">
+        </div>
+        <div class="school-featured-body">
+            <div class="school-featured-name">عرض الفسحة ٣</div>
+            <span class="school-featured-name-en">Outing Deal 3</span>
+            <hr class="school-featured-divider">
+            <div class="school-featured-title">محتوى العرض</div>
+            <ul class="school-featured-includes">
+                <li>🥩 2 ساندوتش بيف</li>
+                <li>🍟 بطاطس وسط فريسكس</li>
+            </ul>
+            <div class="card-footer">
+                <span class="price-badge gold">299 LE</span>
+                <a class="school-cta" href="https://wa.me/201023278000?text=عايز%20أطلب%20عرض%20الفسحة%203" target="_blank" rel="noopener"><svg viewBox="0 0 24 24"><use href="#wa-icon"/></svg> اطلب الآن</a>
+            </div>
+        </div>
+    </div>
+
+</div>
         <div class="info-banner" style="margin-top:32px;">
             <div class="info-banner-icon">🔥</div>
             <div class="info-banner-text">
@@ -1236,6 +1450,32 @@
             </div>
             <div class="siniya-hero-img">
                 <img src="https://i.postimg.cc/4ypKrJy8/hflt-arbʿt.jpg" alt="صواني ريد روستر">
+            </div>
+        </div>
+        <!-- FEATURED: قرمشه مشه -->
+        <div class="siniya-featured" id="siniya-featured">
+            <div class="siniya-featured-img-wrap">
+                <img class="siniya-featured-img" src="https://i.postimg.cc/pVkFSxtq/qrmsht-msht.jpg" alt="قرمشه مشه">
+                <div class="siniya-featured-badge">⭐ الأكبر والأقوى</div>
+            </div>
+            <div class="siniya-featured-body">
+                <div class="siniya-featured-eyebrow">🔥 صينية جديدة</div>
+                <div class="siniya-featured-name">قرمشه مشه</div>
+                <span class="siniya-featured-name-en">Qormashe Mashe</span>
+                <hr class="siniya-card-divider">
+                <div class="siniya-includes-title">محتوى الصينية</div>
+                <ul class="siniya-includes">
+                    <li>12 قطعة فرايد تشكين</li>
+                    <li class="fries">بطاطس</li>
+                    <li class="sauce">4 صوصات</li>
+                </ul>
+                <div class="siniya-card-footer">
+                    <div class="siniya-price">649 LE</div>
+                    <a class="siniya-order-btn" href="https://wa.me/201023278000?text=عايز%20أطلب%20صينية%20قرمشه%20مشه" target="_blank" rel="noopener">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                        اطلب الآن
+                    </a>
+                </div>
             </div>
         </div>
 
