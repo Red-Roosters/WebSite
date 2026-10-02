@@ -3273,5 +3273,87 @@ nav button.new-badge.active { background: var(--red); color: #fff; }
 .cart-fab .cart-count { min-width: 24px; height: 24px; }
 .cart-count[style*="flex"] { display: flex !important; }
 </style>
+<style id="rr-fix-v5">
+/* ══════════════════════════════════════════
+   1) Back to School → أصفر ذهبي (من لون الديك في اللوجو)
+   ══════════════════════════════════════════ */
+.school-banner,
+.bts-banner {
+  background: linear-gradient(135deg, #E8920C 0%, #F5A623 50%, #FFC94D 100%);
+  color: #2B1408;
+}
+.school-banner::before,
+.bts-banner::before {
+  background-image:
+    repeating-linear-gradient(0deg, rgba(43,20,8,.06) 0 1px, transparent 1px 32px),
+    repeating-linear-gradient(90deg, rgba(43,20,8,.06) 0 1px, transparent 1px 32px);
+}
+.school-banner h2, .bts-content h2 { color: #2B1408; text-shadow: none; }
+.school-banner p, .bts-subtitle { color: #4A2812; opacity: 1; }
+
+.school-chip { background: #2B1408; color: #FFC94D; }
+.school-chip.alt { background: #fff; color: #8A4B00; }
+
+.bts-tag { background: rgba(43,20,8,.12); border-color: rgba(43,20,8,.35); color: #2B1408; }
+.bts-tag-item { background: rgba(43,20,8,.10); border-color: rgba(43,20,8,.25); color: #2B1408; }
+.bts-price { background: #2B1408; color: #FFC94D; box-shadow: 0 6px 20px rgba(43,20,8,.35); }
+.bts-cta { background: #fff; color: #8A4B00; }
+.bts-cta:hover { background: #2B1408; color: #FFC94D; }
+.bts-side { background: rgba(255,255,255,.28); }
+.bts-side-note { color: #2B1408; }
+
+/* كروت صفحة Back to School */
+.school-featured { border-color: rgba(245,166,35,.5); }
+.school-featured:hover { border-color: #F5A623; box-shadow: 0 16px 48px rgba(245,166,35,.28); }
+.school-featured-img-wrap { background: linear-gradient(135deg, #FFF3CF, #FFE19A); }
+.school-featured-body { background: linear-gradient(135deg, #FFFBEF, #FFFFFF); }
+.school-featured-badge { background: linear-gradient(135deg, #F5A623, #FFC94D); color: #2B1408; }
+.school-featured-title { color: #9A5B00; }
+.school-featured-divider { background: linear-gradient(90deg, rgba(245,166,35,.5), transparent); }
+
+/* كروت العروض */
+.card.school-item { border-color: rgba(245,166,35,.5); }
+.card.school-item:hover { border-color: #F5A623; box-shadow: 0 12px 40px rgba(245,166,35,.25); }
+.card.school-item::before { background: linear-gradient(135deg, #F5A623, #FFC94D); color: #2B1408; }
+.card-img-placeholder.school-ph { background: linear-gradient(135deg, #FFF3CF, #FFE19A); }
+.price-badge.school { color: #B87400; }
+.school-offer-title { color: #9A5B00; border-bottom-color: rgba(245,166,35,.45); }
+
+/* ══════════════════════════════════════════
+   2) Red Power Deal → بني (من لون الداكن في اللوجو)
+   ══════════════════════════════════════════ */
+.power-deal-banner {
+  background: linear-gradient(135deg, #1F0F08 0%, #4A2812 55%, #7A4420 100%);
+}
+.power-deal-price { color: #2B1408; }
+.power-deal-cta { border-color: rgba(255,201,77,.6); color: #FFC94D; }
+.power-deal-cta:hover { background: #FFC94D; color: #2B1408; border-color: #FFC94D; }
+.power-deal-glow { background: radial-gradient(circle, rgba(245,166,35,.35), transparent 70%); }
+
+/* ══════════════════════════════════════════
+   3) مسافة الفوتر الزيادة (موبايل)
+   ══════════════════════════════════════════ */
+@media (max-width: 640px) {
+  body { padding-bottom: 0 !important; }
+  footer { padding: 20px 64px; }                 /* مكان لزرار السهم من غير ما يغطي النص */
+  .scroll-top { bottom: 16px; }
+  /* المسافة بتظهر بس لما شريط السلة ظاهر (فيه منتجات) */
+  body:has(.cart-fab:not(.empty)) footer { padding-bottom: 90px; }
+  body:has(.cart-fab:not(.empty)) .scroll-top { bottom: 84px; }
+}
+
+/* ══════════════════════════════════════════
+   4) صورة سويتي هيت ناش = نفس مقاس ناش كول (موبايل)
+   ══════════════════════════════════════════ */
+@media (max-width: 640px) {
+  .card .card-img[alt="SWEETY HIT NASH"],
+  .card .card-img[alt="NASH COOL"] {
+    object-fit: contain !important;
+    object-position: center !important;
+    background: #fff !important;
+    animation: none !important;
+  }
+}
+</style>
 </body>
 </html>
