@@ -3005,5 +3005,156 @@ footer{background:var(--ink)}
   });
 })();
 </script>
+
+<style id="rr-upgrade-v2">
+:root{--hh:70px;--night:#141010}
+@media(max-width:640px){:root{--hh:62px}}
+ 
+/* ── Dark header ── */
+header{background:rgba(20,16,16,.92);border-bottom:0}
+.logo-wrap img{box-shadow:0 0 0 2px var(--night),0 0 0 4px var(--red)}
+.brand{color:#fff}
+nav button{color:#eadfd8}
+nav button:hover{background:rgba(255,255,255,.1);color:#fff}
+nav button.active{background:var(--red);color:#fff}
+.hamburger span{background:#fff}
+.hamburger:hover{background:rgba(255,255,255,.1)}
+.cart-head-btn{background:rgba(255,255,255,.12);color:#fff}
+ 
+/* ── Sticky category chips ── */
+.cat-strip{position:sticky;top:var(--hh);z-index:900;background:rgba(250,246,241,.94);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+.cat-strip-in{max-width:1280px;margin:0 auto;padding:10px 14px;display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}
+.cat-strip-in::-webkit-scrollbar{display:none}
+.chip{flex:none;border:1.5px solid var(--line);background:#fff;color:var(--ink);border-radius:50px;
+  padding:8px 16px;font:700 .88rem 'Cairo',sans-serif;cursor:pointer;white-space:nowrap;
+  transition:background .2s,color .2s,border-color .2s}
+.chip:hover{border-color:var(--red);color:var(--red)}
+.chip.on{background:var(--red);border-color:var(--red);color:#fff}
+@media(min-width:901px){.cat-strip{display:none}}
+ 
+/* ── Search ── */
+.search-box{position:relative;margin-bottom:18px}
+.search-box input{width:100%;padding:15px 52px 15px 18px;border:1.5px solid var(--line);border-radius:50px;background:#fff;
+  font:600 1rem 'Cairo',sans-serif;box-shadow:var(--sh-1);transition:box-shadow .2s,border-color .2s}
+.search-box input:focus{outline:none;border-color:var(--red);box-shadow:0 0 0 4px rgba(217,43,43,.12)}
+.search-box::before{content:"🔍";position:absolute;right:18px;top:50%;transform:translateY(-50%);font-size:1.1rem;pointer-events:none}
+.no-results{display:none;text-align:center;padding:60px 20px;color:var(--gray);font-size:1.05rem}
+body.searching.none .no-results{display:block}
+body.searching #home,body.searching .section.no-hit{display:none!important}
+body.searching .section{display:block}
+body.searching .section>*:not(.section-title):not(.menu-grid):not(.siniya-grid):not(.school-featured-list){display:none}
+ 
+/* ── Dark hero ── */
+.hero{background:
+  radial-gradient(700px 380px at 90% 10%,rgba(217,43,43,.75),transparent 62%),
+  radial-gradient(500px 300px at 10% 100%,rgba(245,166,35,.28),transparent 60%),
+  var(--night);
+  box-shadow:0 30px 60px -30px rgba(0,0,0,.7)}
+.hero-text h1{font-size:clamp(2.6rem,7vw,5rem);letter-spacing:-2px}
+.hero-text p{color:#f3e6df}
+.hero-cta-group .btn-new,.hero-cta-group .btn-outline,.hero-cta-group .btn-school,.hero-cta-group .btn-siniya{display:none}
+.hero-cta-group .btn-primary{background:var(--red);color:#fff;padding:15px 34px;font-size:1.1rem;box-shadow:0 14px 30px -10px rgba(217,43,43,.9)}
+.hero-cta-group .btn-primary:hover{background:#fff;color:var(--red)}
+ 
+/* ── Trust strip ── */
+.trust{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:-14px 0 28px;position:relative;z-index:2}
+.trust div{background:#fff;border:1px solid var(--line);border-radius:18px;padding:14px 12px;text-align:center;
+  box-shadow:var(--sh-1);font-weight:700;font-size:.9rem;line-height:1.4}
+.trust b{display:block;font-size:1.4rem;margin-bottom:2px}
+.trust small{display:block;color:var(--gray);font-weight:600;font-size:.76rem}
+ 
+/* ── Footer ── */
+footer{background:var(--night)}
+ 
+/* ── Cart bar: live total ── */
+.cart-fab::after{content:attr(data-total);margin-inline-start:auto;font-weight:900;padding-inline-start:14px}
+.cart-fab.empty{display:none}
+ 
+/* ── Mobile: app-style list cards ── */
+@media(max-width:640px){
+  .trust{grid-template-columns:1fr 1fr 1fr;gap:6px}
+  .trust div{padding:10px 4px;font-size:.78rem}
+  .trust small{display:none}
+  .menu-grid{grid-template-columns:1fr;gap:10px}
+  .card{display:grid;grid-template-columns:1fr 118px;min-height:130px;border-radius:20px}
+  .card>.card-body{grid-column:1;grid-row:1;padding:12px 14px}
+  .card>.card-img,.card>.card-img-placeholder{grid-column:2;grid-row:1;width:100%;height:100%;min-height:130px}
+  .card-name{font-size:1rem}
+  .card-desc{-webkit-line-clamp:2;margin-bottom:8px}
+  .card-footer{border-top:0;padding-top:4px}
+  .card.new-item::before,.card.wc-item::before,.card.offer-hot::before,.card.school-item::before{
+    top:auto;bottom:8px;right:auto;left:8px;font-size:.62rem;padding:3px 9px}
+  .card .add-cart-btn:not(.has-label){font-size:0;width:40px;height:40px;padding:0;border-radius:50%;
+    justify-content:center;background:var(--red);box-shadow:0 8px 18px -6px rgba(217,43,43,.8)}
+  .card .add-cart-btn:not(.has-label)::before{content:"+";font-size:1.6rem;line-height:1;font-weight:700}
+  .search-box input{padding:13px 48px 13px 16px;font-size:.95rem}
+}
+</style>
+ 
+<script>
+(function(){
+  var $=function(s,r){return (r||document).querySelector(s)}, $$=function(s,r){return [].slice.call((r||document).querySelectorAll(s))};
+  var norm=function(s){return String(s).toLowerCase().replace(/[\u064B-\u065F\u0640]/g,'').replace(/[أإآ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه').replace(/\s+/g,' ').trim()};
+ 
+  /* 1 ─ sticky category chips (built from the existing nav) */
+  var SKIP=['home','about','branches','notes'], chips=[];
+  var strip=document.createElement('div'); strip.className='cat-strip';
+  var inner=document.createElement('div'); inner.className='cat-strip-in'; strip.appendChild(inner);
+  $$('#nav-list button').forEach(function(b){
+    var m=(b.getAttribute('onclick')||'').match(/'([^']+)'/); if(!m||SKIP.indexOf(m[1])>-1) return;
+    var c=document.createElement('button'); c.type='button'; c.className='chip'; c.dataset.id=m[1];
+    c.textContent=b.textContent.trim(); c.onclick=function(){clearSearch();showSection(m[1])};
+    inner.appendChild(c); chips.push(c);
+  });
+  $('header').after(strip);
+  var _show=window.showSection;
+  window.showSection=function(id){
+    _show(id);
+    chips.forEach(function(c){var on=c.dataset.id===id;c.classList.toggle('on',on);
+      if(on) c.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'});});
+  };
+ 
+  /* 2 ─ search across the whole menu */
+  var box=document.createElement('div'); box.className='search-box';
+  box.innerHTML='<input type="search" placeholder="دوّر على أكلتك... (مثال: زينجر، ناشفيل، ريزو)" aria-label="بحث في المنيو">';
+  var empty=document.createElement('div'); empty.className='no-results'; empty.textContent='مفيش نتيجة بالاسم ده 🤔 جرّب كلمة تانية';
+  var main=$('main'); main.insertBefore(empty,main.firstChild); main.insertBefore(box,main.firstChild);
+  var inp=$('input',box), ITEMS='.card,.siniya-card,.school-featured,.siniya-featured';
+  function run(q){
+    q=norm(q); document.body.classList.toggle('searching',!!q);
+    var total=0;
+    $$('.section').forEach(function(s){
+      var hits=0;
+      $$(ITEMS,s).forEach(function(c){var ok=!q||norm(c.textContent).indexOf(q)>-1;c.style.display=ok?'':'none';if(ok)hits++});
+      s.classList.toggle('no-hit',!!q&&!hits); total+=hits;
+    });
+    document.body.classList.toggle('none',!!q&&!total);
+  }
+  function clearSearch(){inp.value='';run('')}
+  var t; inp.addEventListener('input',function(){clearTimeout(t);t=setTimeout(function(){run(inp.value)},120)});
+ 
+  /* 3 ─ trust strip under the hero */
+  var hero=$('#home .hero');
+  if(hero){var tr=document.createElement('div');tr.className='trust';
+    tr.innerHTML='<div><b>🛵</b>توصيل سريع<small>من 30 ج.م حسب المنطقة</small></div><div><b>💵</b>كاش عند الاستلام<small>من غير أي مصاريف</small></div><div><b>🍗</b>دجاج طازج<small>بتتحضّر لما تطلب</small></div>';
+    hero.after(tr);}
+ 
+  /* 4 ─ round "+" buttons need an accessible name */
+  $$('.add-cart-btn').forEach(function(b){
+    if(b.textContent.indexOf('—')>-1) b.classList.add('has-label'); else b.setAttribute('aria-label','أضف للسلة');
+  });
+ 
+  /* 5 ─ cart bar shows live total */
+  var fab=$('.cart-fab');
+  function sync(){
+    var c=[]; try{c=JSON.parse(localStorage.getItem('rr_cart'))||[]}catch(e){}
+    var n=0,t=0; c.forEach(function(i){n+=i.qty;t+=i.qty*i.price});
+    fab.classList.toggle('empty',!n); fab.dataset.total=t?t+' ج.م':'';
+  }
+  $$('.cart-count').forEach(function(el){new MutationObserver(sync).observe(el,{childList:true,characterData:true,subtree:true})});
+  sync(); showSection('home');
+})();
+</script>
 </body>
 </html>
