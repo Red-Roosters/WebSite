@@ -3218,5 +3218,60 @@ nav button.new-badge.active { background: var(--red); color: #fff; }
 .cart-fab .cart-count { min-width: 24px; height: 24px; }
 .cart-count[style*="flex"] { display: flex !important; }
 </style>
+<style id="rr-fix-v4">
+/* ══ زرار + في النص بالظبط (موبايل) ══ */
+@media (max-width: 640px) {
+  .card .add-cart-btn:not(.has-label) {
+    position: relative;
+    font-size: 0 !important;
+    line-height: 0 !important;
+    width: 40px;
+    height: 40px;
+    padding: 0 !important;
+    border-radius: 50%;
+    display: inline-block !important;
+    flex-shrink: 0;
+  }
+  /* نلغي الحرف النصي القديم ونرسم + بخطين */
+  .card .add-cart-btn:not(.has-label)::before {
+    content: "" !important;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 16px;
+    height: 3px;
+    background: #fff;
+    border-radius: 2px;
+    transform: translate(-50%, -50%);
+  }
+  .card .add-cart-btn:not(.has-label)::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 3px;
+    height: 16px;
+    background: #fff;
+    border-radius: 2px;
+    transform: translate(-50%, -50%);
+  }
+}
+
+/* ══ رقم السلة في النص (يفضل زي ما هو) ══ */
+.cart-count {
+  font-family: Arial, system-ui, sans-serif !important;
+  line-height: 1 !important;
+  padding: 0 !important;
+  min-width: 22px;
+  height: 22px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.cart-fab .cart-count { min-width: 24px; height: 24px; }
+.cart-count[style*="flex"] { display: flex !important; }
+</style>
 </body>
 </html>
