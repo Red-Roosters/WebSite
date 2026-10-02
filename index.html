@@ -2406,11 +2406,7 @@ body.no-scroll { overflow: hidden; }
         ],
         'عرض الريزو':       [{ title: 'نوع الريزو', options: RIZO }],
         'عرض الروقان 4':    [{ title: 'نوع الريزو', options: RIZO }],
-        'عرض الرايقين':     [{ title: 'الريزو الأول', options: RIZO }, { title: 'الريزو التاني', options: RIZO }, { title: 'الريزو التالت', options: RIZO }],
-        'ملوك الروقان':     [{ title: 'الريزو الأول', options: RIZO }, { title: 'الريزو التاني', options: RIZO }],
         'عرض اللانش بوكس 2': [{ title: 'نوع الريزو', options: RIZO }],
-        'ملك الروقان':      [{ title: 'نوع الريزو', options: RIZO }],
-        'عرض الروقان 6':    [{ title: 'نوع الريزو', options: RIZO }],
         'Red Power Deal':   [
             { title: 'ساندوتش البيف',   options: BEEF },
             { title: 'ساندوتش التشيكن', options: CHICKEN }
@@ -3160,5 +3156,67 @@ footer{background:var(--night)}
   sync(); showSection('home');
 })();
 </script>
+<style id="rr-fix-v3">
+/* ══ 1) Back to School = لون البراند (أحمر) ══ */
+nav button.school-badge,
+.mobile-nav button.school-badge {
+  background: linear-gradient(135deg, var(--red-dark), var(--red));
+  color: #fff;
+}
+nav button.school-badge:hover {
+  background: linear-gradient(135deg, var(--red), var(--red-light));
+  color: #fff;
+  transform: scale(1.05);
+}
+
+/* ══ 2) "جديد" يرجع شكل عادي زي باقي الأقسام ══ */
+nav button.new-badge {
+  background: transparent;
+  color: #eadfd8;
+}
+nav button.new-badge:hover {
+  background: rgba(255,255,255,.1);
+  color: #fff;
+  transform: none;
+}
+nav button.new-badge.active { background: var(--red); color: #fff; }
+
+.mobile-nav button.new-badge {
+  background: var(--gray-light);
+  color: var(--charcoal);
+}
+.mobile-nav button.new-badge:hover { background: var(--red); color: #fff; }
+
+/* ══ 3) كروت الرئيسية (نفس الفكرة) ══ */
+.cat-card.new-cat {
+  background: #fff;
+  border: 1px solid var(--line);
+}
+.cat-card.new-cat:hover { border-color: rgba(217,43,43,.4); }
+.cat-card.new-cat .cat-icon { background: linear-gradient(145deg,#FFF1E6,#FFE0D2); }
+
+.cat-card.school-cat {
+  background: linear-gradient(135deg, #FFF1F1, #FFE3E0);
+  border: 1px solid rgba(217,43,43,.25);
+}
+.cat-card.school-cat:hover { border-color: var(--red); }
+.cat-card.school-cat .cat-icon { background: linear-gradient(145deg,#FFD9D2,#FFC1B5); }
+
+/* ══ 4) الرقم في نص دايرة السلة ══ */
+.cart-count {
+  font-family: Arial, system-ui, sans-serif !important; /* خط Cairo بيرفع الرقم لفوق */
+  line-height: 1 !important;
+  padding: 0 !important;
+  min-width: 22px;
+  height: 22px;
+  display: none;            /* الجافاسكريبت بيحوّلها flex لما فيه منتجات */
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.cart-fab .cart-count { min-width: 24px; height: 24px; }
+.cart-count[style*="flex"] { display: flex !important; }
+</style>
 </body>
 </html>
