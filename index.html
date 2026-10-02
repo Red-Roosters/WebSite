@@ -2298,7 +2298,6 @@ body.no-scroll { overflow: hidden; }
         // 🎟️ الكوبونات: percent = نسبة %, fixed = مبلغ ثابت, min = أقل مجموع للطلب (اختياري)
         coupons: {
             'RED20':   { type: 'percent', value: 20 },
-            'MAHMOUDGAMAL':   { type: 'percent', value: 20 },
             'WELCOME': { type: 'fixed',   value: 20, min: 150 }
         },
 
@@ -3354,6 +3353,51 @@ nav button.new-badge.active { background: var(--red); color: #fff; }
     background: #fff !important;
     animation: none !important;
   }
+}
+</style>
+<style id="rr-fix-v6">
+/* ══ "جديد" بدل البنفسجي → أحمر البراند ══ */
+
+/* بادج "✨ جديد" على الكروت */
+.card.new-item::before {
+  background: linear-gradient(135deg, var(--red-dark), var(--red));
+  box-shadow: 0 4px 12px rgba(217,43,43,.35);
+}
+
+/* حدود الكارت */
+.card.new-item { border: 2px solid rgba(217,43,43,.25); }
+.card.new-item:hover {
+  border-color: var(--red);
+  box-shadow: 0 12px 40px rgba(217,43,43,.2);
+}
+
+/* السعر */
+.price-badge.purple { color: var(--red); background: none; }
+
+/* عنوان "ساندوتشات جديدة" + بادج NEW */
+.new-pill { background: linear-gradient(135deg, var(--red-dark), var(--red)); }
+.new-items-header::after {
+  background: linear-gradient(90deg, rgba(217,43,43,.3), transparent);
+}
+
+/* زرار "جديد" في القائمة (لو لسه فيه بنفسجي) */
+nav button.new-badge:hover,
+.mobile-nav button.new-badge:hover { background: var(--red); color: #fff; }
+
+/* كارت "جديد ريد روستر" في الرئيسية */
+.cat-card.new-cat { border-color: var(--line); }
+.cat-card.new-cat:hover { border-color: rgba(217,43,43,.4); }
+
+/* بانر "جديد" الكبير (لو مستخدم) */
+.new-hero-overlay {
+  background: linear-gradient(135deg, rgba(160,30,30,.75) 0%, rgba(217,43,43,.55) 100%);
+}
+
+/* زرار "الجديد عندنا" في الهيرو */
+.btn-new { background: linear-gradient(135deg, var(--red-dark), var(--red)); }
+.btn-new:hover {
+  background: linear-gradient(135deg, var(--red), var(--red-light));
+  box-shadow: 0 8px 20px rgba(217,43,43,.4);
 }
 </style>
 </body>
