@@ -1288,7 +1288,8 @@ body.no-scroll { overflow: hidden; }
                 <li><button onclick="showSection('family-meals')">عائلية</button></li>
                 <li><button onclick="showSection('kids-meals')">أطفال</button></li>
                 <li><button onclick="showSection('appetizers')">مقبلات</button></li>
-                <li><button onclick="showSection('sides-drinks')">إضافات</button></li>
+                <li><button onclick="showSection('extras')">➕ إضافات</button></li>
+                <li><button onclick="showSection('drinks')">🥤 مشروبات</button></li>
                 <li><button onclick="showSection('about')">عنّا</button></li>
                 <li><button onclick="showSection('branches')">الفروع</button></li>
                 <li><button onclick="showSection('notes')">ملحوظات</button></li>
@@ -1316,7 +1317,8 @@ body.no-scroll { overflow: hidden; }
         <button onclick="showSection('family-meals'); closeMobileNav()">👨‍👩‍👧‍👦 الوجبات العائلية</button>
         <button onclick="showSection('kids-meals'); closeMobileNav()">🧒 وجبات الأطفال</button>
         <button onclick="showSection('appetizers'); closeMobileNav()">🍟 المقبلات</button>
-        <button onclick="showSection('sides-drinks'); closeMobileNav()">🥤 إضافات ومشروبات</button>
+        <button onclick="showSection('extras'); closeMobileNav()">➕ الإضافات</button>
+        <button onclick="showSection('drinks'); closeMobileNav()">🥤 المشروبات</button>
         <button onclick="showSection('about'); closeMobileNav()">ℹ️ عنّا</button>
         <button onclick="showSection('branches'); closeMobileNav()">📍 الفروع</button>
         <button onclick="showSection('notes'); closeMobileNav()">📝 ملحوظات هامة</button>
@@ -1993,6 +1995,7 @@ body.no-scroll { overflow: hidden; }
             <div class="card"><img class="card-img" src="https://i.postimg.cc/9MZtSND8/twister-nash.jpg" alt="Nash Rab"><div class="card-body"><div class="card-name">ناش راب <span class="card-name-en">Nash Rab</span></div><p class="card-desc">عيش التورتيلا + قطع السبايسي ناشفيل + خس وصوص خاص</p><div class="card-footer"><span class="price-badge">139 LE</span></div></div></div>
             <div class="card"><img class="card-img" src="https://i.postimg.cc/FzvgQgSW/nash-cool.png" alt="NASH COOL"><div class="card-body"><div class="card-name">ناش كول <span class="card-name-en">NASH COOL</span></div><p class="card-desc">زينجر + سلو + روستر الميز + خس + خيار</p><div class="card-footer"><span class="price-badge">179 LE</span></div></div></div>
             <div class="card"><img class="card-img" src="https://i.postimg.cc/tJbtHtP9/sweety-nash.png" alt="SWEETY HIT NASH"><div class="card-body"><div class="card-name">سويتي هيت ناش <span class="card-name-en">SWEETY HIT NASH</span></div><p class="card-desc">زينجر + جبنة أمريكي + سويت شيلي + خس + خيار</p><div class="card-footer"><span class="price-badge">179 LE</span></div></div></div>
+            <div class="card"><img class="card-img" src="https://i.postimg.cc/sXvKWMyt/mayty-nash.png" alt="Mighty Double Nashville"><div class="card-body"><div class="card-name">مايتي دبل ناشفيل <span class="card-name-en">Mighty Double Nashville</span></div><p class="card-desc">شريحة من الجبن الأمريكي المذاب، وخس طازج، وقطعتان من فيليه صدور دجاج "ناش" المقرمش، مع طبقات من المايونيز الكريمي ومايونيز الفلفل الحار.</p><div class="card-footer"><span class="price-badge">179 LE</span></div></div></div>
         </div>
     </section>
 
@@ -2115,13 +2118,19 @@ body.no-scroll { overflow: hidden; }
     </section>
 
     <!-- SIDES & DRINKS -->
-    <section id="sides-drinks" class="section">
-        <h2 class="section-title">🥤 إضافات ومشروبات</h2>
+    <!-- ➕ الإضافات (بتتولّد من مصفوفة EXTRAS) -->
+    <section id="extras" class="section">
+        <h2 class="section-title">➕ الإضافات</h2>
+        <div id="extrasBody"></div>
+    </section>
+
+    <!-- 🥤 المشروبات -->
+    <section id="drinks" class="section">
+        <h2 class="section-title">🥤 المشروبات</h2>
         <div class="menu-grid">
             <div class="card"><img class="card-img" src="https://i.ibb.co/PssjBFrY/image.webp" alt="Soft Drink Can"><div class="card-body"><div class="card-name">مشروب غازي (ماكسي كانز) <span class="card-name-en">Soft Drink Can</span></div><p class="card-desc">كولا / رمان / برتقال</p><div class="card-footer"><span class="price-badge">20 LE</span></div></div></div>
             <div class="card"><img class="card-img" src="https://i.ibb.co/zhnkKGFW/image.jpg" alt="Soft Drink 1L"><div class="card-body"><div class="card-name">مشروب غازي (لتر) <span class="card-name-en">Soft Drink 1L</span></div><p class="card-desc">بيبسي / سفن أب / ميرندا</p><div class="card-footer"><span class="price-badge">35 LE</span></div></div></div>
             <div class="card"><img class="card-img" src="https://i.ibb.co/Gf1CJcnC/image.webp" alt="Water"><div class="card-body"><div class="card-name">مياه معدنية <span class="card-name-en">Water</span></div><p class="card-desc">مياه معبأة</p><div class="card-footer"><span class="price-badge">15 LE</span></div></div></div>
-            <div class="card"><img class="card-img" src="https://i.ibb.co/hR7dVyN5/image.jpg" alt="Kaiser Bread"><div class="card-body"><div class="card-name">خبز كايزر <span class="card-name-en">Kaiser Bread</span></div><p class="card-desc">قطعة خبز كايزر طازج</p><div class="card-footer"><span class="price-badge">5 LE</span></div></div></div>
         </div>
     </section>
 
@@ -2236,6 +2245,7 @@ body.no-scroll { overflow: hidden; }
         </div>
         <div class="form-title">تعديلات سريعة</div>
         <div class="opt-row multi" id="im_chips"></div>
+        <div id="im_suggest"></div>
 
         <div class="field" style="margin-top:14px">
             <label>ملاحظات خاصة بالصنف</label>
@@ -2352,9 +2362,41 @@ body.no-scroll { overflow: hidden; }
             { name: 'الهرم - الرماية', fee: 45 }
         ]
     };
+
+    /* ═══ الإضافات — ضع رابط الصورة في img (لو فاضي بيظهر الإيموجي) ═══ */
+    const EXTRA_GROUPS = [
+        { key: 'meat',   title: '🍗 قطع الدجاج واللحوم' },
+        { key: 'cheese', title: '🧀 الجبن والخضار والإضافات' },
+        { key: 'bread',  title: '🍞 الخبز' },
+        { key: 'combo',  title: '🔥 كومبو' }
+    ];
+    const EXTRAS = [
+        { id:'strips',       group:'meat',   name:'قطعة استربس',    en:'Strips Piece',     price:35, emoji:'🍗', img:'https://i.postimg.cc/HWQH8nxp/astrybs.jpg' },
+        { id:'zinger',       group:'meat',   name:'قطعة زينجر',     en:'Zinger Piece',     price:55, emoji:'🍗', img:'https://i.postimg.cc/xjKYN8Cn/zynjr.jpg' },
+        { id:'chicken',      group:'meat',   name:'قطعة دجاج',      en:'Chicken Piece',    price:65, emoji:'🍗', img:'https://i.postimg.cc/FFjmkzRh/tshykn.jpg' },
+        { id:'burger',       group:'meat',   name:'قطعة برجر',      en:'Burger Piece',     price:55, emoji:'🥩', img:'https://i.postimg.cc/gcvdLjJp/brjr.jpg' },
+        { id:'beefbacon',    group:'meat',   name:'بيف بيكون',      en:'Beef Bacon',       price:25, emoji:'🥓', img:'https://i.postimg.cc/wjnDrwdJ/byf-bykwn.png' },
+        { id:'smokedturkey', group:'meat',   name:'تركي مدخن',      en:'Smoked Turkey',    price:20, emoji:'🦃', img:'https://i.postimg.cc/NjK1bWZb/trky-mdkhn.png' },
+        { id:'roastbeef',    group:'meat',   name:'روست بيف',       en:'Roast Beef',       price:20, emoji:'🥩', img:'https://i.postimg.cc/XYt9Ps0k/rwst-byf.png' },
+
+        { id:'cheese',       group:'cheese', name:'جبنة أمريكي',    en:'American Cheese',  price:10, emoji:'🧀', img:'https://i.postimg.cc/mgPQV0KS/jbnh-amryky.png' },
+        { id:'mozzarella',   group:'cheese', name:'قطعة موتزاريلا', en:'Mozzarella Piece', price:15, emoji:'🧀', img:'https://i.postimg.cc/HxXpCHnt/5.jpg' },
+        { id:'cheddar',      group:'cheese', name:'قطعة شيدر',      en:'Cheddar Piece',    price:15, emoji:'🧀', img:'https://i.postimg.cc/4ywRJ3gz/5.jpg' },
+        { id:'mushroom',     group:'cheese', name:'مشروم',          en:'Mushroom',         price:20, emoji:'🍄', img:'https://i.postimg.cc/bw415mjB/mashrwm.png' },
+        { id:'jalapeno',     group:'cheese', name:'هالبينو',        en:'Jalapeno',         price:10, emoji:'🌶️', img:'https://i.postimg.cc/WbWGG2Y4/jalipino.jpg' },
+        { id:'pickles',      group:'cheese', name:'مخلل',           en:'Pickles',          price:10, emoji:'🥒', img:'https://i.postimg.cc/0yzpZLhc/picles.png' },
+
+        { id:'bun',          group:'bread',  name:'خبز كايزر',      en:'Bun',              price:5,  emoji:'🍞', img:'https://i.ibb.co/hR7dVyN5/image.jpg' },
+        { id:'supreme',      group:'bread',  name:'خبز سوبريم',     en:'Supreme Bread',    price:15, emoji:'🥖', img:'https://i.postimg.cc/52p2Y0s0/swbrym.png' },
+        { id:'brioche',      group:'bread',  name:'خبز بريوش',      en:'Brioche Bread',    price:15, emoji:'🍞', img:'https://i.postimg.cc/xTzfR5tT/images.jpg' },
+        { id:'tortilla',     group:'bread',  name:'خبز تورتيلا',    en:'Tortilla Bread',   price:15, emoji:'🫓', img:'https://i.postimg.cc/7ZXZG6Kh/twrtyla.jpg' },
+
+        { id:'combo',        group:'combo',  name:'كومبو (بطاطس + مشروب)', en:'Combo',     price:50, emoji:'🍟', img:'https://i.postimg.cc/X7Cj8LQd/Combo.png' }
+    ];
+    const getExtra = id => EXTRAS.find(e => e.id === id);
     // أقسام مفيهاش اختيار "حار/عادي"
-    const NO_SPICE_SECTIONS = ['sides-drinks', 'appetizers', 'beef-sandwiches', 'kids-meals'];
-      const NO_CHIPS_SECTIONS = ['sides-drinks'];
+    const NO_SPICE_SECTIONS = ['extras', 'drinks', 'appetizers', 'beef-sandwiches', 'kids-meals'];
+      const NO_CHIPS_SECTIONS = ['extras', 'drinks'];
     const QUICK_CHIPS = ['بدون صوص', 'بدون خضار', 'بدون مخلل', 'بدون بصل', 'بدون جبنة', 'صوص زيادة'];
     const NASH_LEVELS = [
         { v: 'Mild',  t: '🟢 Mild — خفيف' },
@@ -2546,9 +2588,34 @@ body.no-scroll { overflow: hidden; }
     hb.parentNode.insertBefore(headBtn, hb);
 
     /* ═══ بوب أب الصنف ═══ */
+    /* ═══ قواعد الاقتراحات: حسب الاسم (أولوية) أو حسب القسم ═══ */
+    const SUGGEST_BY_NAME_RAW = {
+        'تركي ميلت':        ['smokedturkey', 'beefbacon', 'cheese', 'jalapeno', 'combo'],
+        'ناش كول':          ['cheese', 'jalapeno', 'pickles', 'combo'],
+        'سويتي هيت ناش':    ['cheese', 'jalapeno', 'pickles', 'combo'],
+        'ناش راب':          ['cheese', 'jalapeno', 'combo'],
+        'مايتي دبل ناشفيل': ['cheese', 'beefbacon', 'jalapeno', 'pickles', 'combo'],
+        'مانجو فاير':       ['cheese', 'mozzarella', 'combo'],
+        'مايتي زينجر':      ['beefbacon', 'smokedturkey', 'jalapeno', 'combo']
+    };
+    const SUGGEST_BY_SECTION = {
+        'beef-sandwiches':    ['beefbacon', 'cheese', 'mushroom', 'jalapeno', 'combo'],
+        'chicken-sandwiches': ['smokedturkey', 'beefbacon', 'cheese', 'jalapeno', 'combo'],
+        'twister-supreme':    ['smokedturkey', 'roastbeef', 'cheese', 'combo']
+    };
+    const SUGGEST_BY_NAME = {};
+    Object.keys(SUGGEST_BY_NAME_RAW).forEach(k => SUGGEST_BY_NAME[norm(k)] = SUGGEST_BY_NAME_RAW[k]);
+    const suggestFor = o => (SUGGEST_BY_NAME[norm(o.name)] || SUGGEST_BY_SECTION[o.sec] || [])
+        .map(getExtra).filter(Boolean);
     let cur = null;
     const imType = $('im_type'), imChips = $('im_chips');
     const imChoices = $('im_choices');
+    const imSuggest = $('im_suggest');
+    const extrasSum = () => [...imSuggest.querySelectorAll('.sg-card.sel')].reduce((t, b) => t + (+b.dataset.price), 0);
+    imSuggest.addEventListener('click', e => {
+        const b = e.target.closest('.sg-card'); if (!b) return;
+        b.classList.toggle('sel'); paintQty();
+    });
     imChoices.addEventListener('click', e => {
         const b = e.target.closest('button'); if (!b) return;
         const g = b.closest('.choice-group');
@@ -2557,7 +2624,7 @@ body.no-scroll { overflow: hidden; }
     });
     function paintQty() {
         $('im_qty').textContent = cur.qty;
-        $('im_total').textContent = fmt(cur.price * cur.qty);
+        $('im_total').textContent = fmt((cur.price + extrasSum()) * cur.qty);
     }
     function openItem(o) {
         cur = { ...o, qty: 1 };
@@ -2581,6 +2648,15 @@ imChips.previousElementSibling.style.display = noChips ? 'none' : '';
                 <div class="form-title">${esc(g.title)} <i class="req">*</i></div>
                 <div class="opt-row">${g.options.map(x => `<button type="button" data-v="${esc(x)}">${esc(x)}</button>`).join('')}</div>
             </div>`).join('');
+        const sg = suggestFor(o);
+        imSuggest.innerHTML = sg.length ? `
+            <div class="form-title">⭐ زوّد ساندوتشك</div>
+            <div class="sg-row">${sg.map(x => `
+                <button type="button" class="sg-card" data-price="${x.price}" data-name="${esc(x.name)}">
+                    ${x.img ? `<img class="sg-ph" src="${esc(x.img)}" alt="">` : `<span class="sg-ph">${x.emoji}</span>`}
+                    <b>${esc(x.name)}</b><small>+${x.price} ج.م</small>
+                </button>`).join('')}
+            </div>` : '';
         paintQty(); closeAll(); openEl('itemModal');
     }
     imType.addEventListener('click', e => {
@@ -2605,7 +2681,9 @@ imChips.previousElementSibling.style.display = noChips ? 'none' : '';
         }
         const t = imType.querySelector('button.sel'); if (t) opts.push(cur.nash ? 'ناشفيل ' + t.dataset.v : t.dataset.v);
         imChips.querySelectorAll('button.sel').forEach(b => opts.push(b.dataset.v));
-        addItem({ name: cur.name, label: cur.label, price: cur.price, qty: cur.qty, opts, note: $('im_note').value.trim() });
+        const extraBtns = [...imSuggest.querySelectorAll('.sg-card.sel')];
+        extraBtns.forEach(b => opts.push('➕ ' + b.dataset.name + ' (+' + b.dataset.price + ')'));
+        addItem({ name: cur.name, label: cur.label, price: cur.price + extrasSum(), qty: cur.qty, opts, note: $('im_note').value.trim() });
         closeAll();
     };
     /* ═══ اختيار المنطقة (بحث) ═══ */
@@ -2760,6 +2838,23 @@ imChips.previousElementSibling.style.display = noChips ? 'none' : '';
         const t = $('rrToast'); t.textContent = msg; t.classList.add('show');
         clearTimeout(tt); tt = setTimeout(() => t.classList.remove('show'), 2600);
     }
+
+    /* ═══ رسم قسم الإضافات ═══ */
+    (function buildExtras() {
+        const wrap = $('extrasBody'); if (!wrap) return;
+        wrap.innerHTML = EXTRA_GROUPS.map(g => `
+            <p class="offer-section-title">${g.title}</p>
+            <div class="menu-grid">${EXTRAS.filter(e => e.group === g.key).map(e => `
+                <div class="card">
+                    ${e.img ? `<img class="card-img" src="${esc(e.img)}" alt="${esc(e.en)}">`
+                            : `<div class="card-img-placeholder">${e.emoji}</div>`}
+                    <div class="card-body">
+                        <div class="card-name">${esc(e.name)} <span class="card-name-en">${esc(e.en)}</span></div>
+                        <div class="card-footer"><span class="price-badge">${e.price} LE</span></div>
+                    </div>
+                </div>`).join('')}
+            </div>`).join('');
+    })();
 
     /* ═══ زراير "أضف للسلة" على كل الكروت — بتفتح البوب أب ═══ */
     const TYPES = [
@@ -3399,6 +3494,17 @@ nav button.new-badge:hover,
   background: linear-gradient(135deg, var(--red), var(--red-light));
   box-shadow: 0 8px 20px rgba(217,43,43,.4);
 }
+</style>
+<style id="rr-suggest">
+.sg-row{display:flex;gap:8px;overflow-x:auto;padding:2px 2px 10px;scrollbar-width:none}
+.sg-row::-webkit-scrollbar{display:none}
+.sg-card{flex:none;width:108px;position:relative;border:2px solid rgba(0,0,0,.1);background:#fff;border-radius:16px;padding:8px 6px;text-align:center;cursor:pointer;font-family:'Cairo',sans-serif;display:flex;flex-direction:column;align-items:center;gap:2px;transition:all .2s}
+.sg-card:hover{border-color:var(--red)}
+.sg-ph{width:56px;height:56px;border-radius:14px;object-fit:cover;background:#FFF1E6;display:grid;place-items:center;font-size:1.8rem}
+.sg-card b{font-size:.8rem;line-height:1.3;color:var(--charcoal)}
+.sg-card small{color:var(--red);font-weight:900}
+.sg-card.sel{border-color:var(--red);background:#FFF1F1}
+.sg-card.sel::after{content:'✓';position:absolute;top:4px;left:6px;background:var(--red);color:#fff;width:20px;height:20px;border-radius:50%;font-size:.75rem;display:grid;place-items:center}
 </style>
 </body>
 </html>
