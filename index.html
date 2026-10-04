@@ -3721,7 +3721,14 @@ nav button.new-badge:hover,
   box-shadow:0 -20px 60px -10px rgba(30,20,17,.45)!important;display:flex;flex-direction:column}
 .item-modal.open{transform:translate(-50%,0)!important}
 .item-modal.drag{transition:none!important}
-.item-modal::before{content:"";display:block;flex:none;width:46px;height:5px;border-radius:5px;background:rgba(30,20,17,.22);margin:9px auto 4px;cursor:grab}
+.item-modal::before{display:none!important}
+.im-grip{flex:none;height:26px;position:relative;cursor:grab;touch-action:none}
+.im-grip::after{content:"";position:absolute;left:50%;top:9px;width:46px;height:5px;margin-left:-23px;border-radius:5px;background:rgba(30,20,17,.22)}
+.item-modal .drawer-head{touch-action:none}
+.item-modal{max-height:90vh!important;max-height:90dvh!important;overflow:hidden!important}
+.item-modal .checkout-body{flex:1 1 auto;min-height:0;overflow-y:auto!important;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;touch-action:pan-y;padding-bottom:0}
+.item-modal .checkout-body .sg-row,.item-modal .checkout-body .opt-row{touch-action:pan-x pan-y}
+.item-modal #im_note{scroll-margin-bottom:90px}
 .item-modal .checkout-body{padding-bottom:0}
 #imHero{display:none;width:100%;height:190px;object-fit:cover;border-radius:18px;margin-bottom:14px;box-shadow:var(--sh-1)}
 #imHero.on{display:block}
@@ -3758,12 +3765,13 @@ body.favonly .card:not(.isfav){display:none!important}
   new MutationObserver(function(){ if(im.classList.contains('open')) setHero(); }).observe(im,{attributes:true,attributeFilter:['class']});
   /* سحب لأسفل للإغلاق */
   var y0=null, dy=0;
-  function start(e){ if(e.target.closest('.checkout-body') && body.scrollTop>0) return; y0=(e.touches?e.touches[0]:e).clientY; dy=0; }
+  function start(e){ if(!e.target.closest('.drawer-head,.im-grip')) return; y0=(e.touches?e.touches[0]:e).clientY; dy=0; }
   function move(e){ if(y0===null) return; dy=(e.touches?e.touches[0]:e).clientY-y0;
     if(dy>0){ im.classList.add('drag'); im.style.transform='translate(-50%,'+dy+'px)'; } }
   function end(){ if(y0===null) return; y0=null; im.classList.remove('drag'); im.style.transform='';
     if(dy>110){ var x=im.querySelector('[data-close]'); if(x) x.click(); } dy=0; }
-  im.addEventListener('touchstart',start,{passive:true}); im.addEventListener('touchmove',move,{passive:true}); im.addEventListener('touchend',end);
+  im.addEventListener('touchstart',start,{passive:true}); im.addEventListener('touchmove',move,{passive:true}); im.addEventListener('touchend',end); im.addEventListener('touchcancel',end);
+  var grip=document.createElement('div'); grip.className='im-grip'; im.insertBefore(grip, im.firstChild);
   var hd=im.querySelector('.drawer-head'); hd.addEventListener('mousedown',function(e){ start(e); var mv=move, up=function(){ end(); document.removeEventListener('mousemove',mv); document.removeEventListener('mouseup',up); }; document.addEventListener('mousemove',mv); document.addEventListener('mouseup',up); });
   /* المفضلة */
   var KEY='rr_favs', favs=[]; try{ favs=JSON.parse(localStorage.getItem(KEY)||'[]') }catch(e){}
