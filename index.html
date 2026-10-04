@@ -3871,5 +3871,38 @@ body.favonly .card:not(.isfav){display:none!important}
 function u(){var m=(b.textContent.match(/\d+/)||[0])[0];if(b.dataset.n!==m)b.dataset.n=m}
 new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:true});u();})();
 </script>
+
+<style id="rr-fix4">
+.rr-fav{color:#9a8a84!important;-webkit-text-fill-color:currentColor}
+.rr-fav.on{color:#fff!important}
+#mobileNav{z-index:2050!important}
+#mobileNav .mobile-nav-inner{max-height:calc(100dvh - 190px);overflow-y:auto}
+</style>
+<script>
+(function(){
+  var tabs=document.getElementById('rrTabs'); if(!tabs||typeof showSection!=='function') return;
+  var orig=window.showSection;
+  function mark(which){ [].forEach.call(tabs.querySelectorAll('button'),function(b){ b.classList.toggle('on', b.dataset.t===which); }); }
+  window.showSection=function(id){
+    orig.apply(this,arguments);
+    mark(id==='home'?'home':'menu');
+    setTimeout(function(){
+      if(id==='home'){ window.scrollTo({top:0,behavior:'smooth'}); return; }
+      var sec=document.getElementById(id); if(!sec) return;
+      var tt=sec.querySelector('.section-title')||sec;
+      var y=tt.getBoundingClientRect().top+window.pageYOffset-150;
+      window.scrollTo({top:Math.max(0,y),behavior:'smooth'});
+    },80);
+  };
+  tabs.addEventListener('click',function(e){
+    var b=e.target.closest('button'); if(!b) return;
+    var t=b.dataset.t;
+    if(t==='home'){ e.stopImmediatePropagation(); closeMobileNav(); showSection('home'); }
+    else if(t==='menu'){ e.stopImmediatePropagation(); var nav=document.getElementById('mobileNav'); toggleMobileNav(); mark(nav.classList.contains('open')?'menu':(document.querySelector('#home.active')?'home':'menu')); }
+  },true);
+  /* لو الدروار اتقفل من برّه، نرجّع التمييز لحالة الصفحة */
+  document.getElementById('mobileNav').addEventListener('click',function(){ setTimeout(function(){ mark(document.querySelector('#home.active')?'home':'menu'); },120); });
+})();
+</script>
 </body>
 </html>
