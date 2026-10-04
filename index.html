@@ -1997,7 +1997,7 @@ body.no-scroll { overflow: hidden; }
             <div class="card"><img class="card-img" src="https://i.postimg.cc/9MZtSND8/twister-nash.jpg" alt="Nash Rab"><div class="card-body"><div class="card-name">ناش راب <span class="card-name-en">Nash Rab</span></div><p class="card-desc">عيش التورتيلا + قطع السبايسي ناشفيل + خس وصوص خاص</p><div class="card-footer"><span class="price-badge">139 LE</span></div></div></div>
             <div class="card"><img class="card-img" src="https://i.postimg.cc/FzvgQgSW/nash-cool.png" alt="NASH COOL"><div class="card-body"><div class="card-name">ناش كول <span class="card-name-en">NASH COOL</span></div><p class="card-desc">زينجر + سلو + روستر الميز + خس + خيار</p><div class="card-footer"><span class="price-badge">179 LE</span></div></div></div>
             <div class="card"><img class="card-img" src="https://i.postimg.cc/tJbtHtP9/sweety-nash.png" alt="SWEETY HIT NASH"><div class="card-body"><div class="card-name">سويتي هيت ناش <span class="card-name-en">SWEETY HIT NASH</span></div><p class="card-desc">زينجر + جبنة أمريكي + سويت شيلي + خس + خيار</p><div class="card-footer"><span class="price-badge">179 LE</span></div></div></div>
-            <div class="card"><img class="card-img" src="https://i.postimg.cc/sXvKWMyt/mayty-nash.png" alt="Mighty Double Nashville"><div class="card-body"><div class="card-name">مايتي دبل ناشفيل <span class="card-name-en">Mighty Double Nashville</span></div><p class="card-desc">شريحة من الجبن الأمريكي المذاب، وخس طازج، وقطعتان من فيليه صدور دجاج "ناش" المقرمش، مع طبقات من المايونيز الكريمي ومايونيز الفلفل الحار.</p><div class="card-footer"><span class="price-badge">179 LE</span></div></div></div>
+            <div class="card"><img class="card-img" src="https://i.ibb.co/jCk0YfR/image.png" alt="Mighty Double Nashville"><div class="card-body"><div class="card-name">مايتي دبل ناشفيل <span class="card-name-en">Mighty Double Nashville</span></div><p class="card-desc">شريحة من الجبن الأمريكي المذاب، وخس طازج، وقطعتان من فيليه صدور دجاج "ناش" المقرمش، مع طبقات من المايونيز الكريمي ومايونيز الفلفل الحار.</p><div class="card-footer"><span class="price-badge">179 LE</span></div></div></div>
         </div>
     </section>
 
@@ -3759,6 +3759,8 @@ body.favonly .card:not(.isfav){display:none!important}
     document.querySelectorAll('.card .card-name').forEach(function(n){
       if(!src && n.textContent.trim()===title){ var i=n.closest('.card').querySelector('.card-img'); if(i) src=i.currentSrc||i.src; }
     });
+    var d=''; document.querySelectorAll('.card').forEach(function(c){ var nm=c.querySelector('.card-name'); if(!d && nm && nm.textContent.trim()===title){ var p=c.querySelector('.card-desc'); if(p) d=p.textContent.trim(); } });
+    var de=document.getElementById('imDesc'); if(de){ de.textContent=d; de.style.display=d?'':'none'; }
     hero.classList.toggle('on',!!src); if(src) hero.src=src;
     body.scrollTop=0;
   }
@@ -3793,6 +3795,59 @@ body.favonly .card:not(.isfav){display:none!important}
   }
   save(); decorate();
   new MutationObserver(function(){ clearTimeout(decorate.t); decorate.t=setTimeout(decorate,120); }).observe(document.body,{childList:true,subtree:true});
+})();
+</script>
+
+<style id="rr-sheet2">
+/* ══ شكل بوب أب الصنف الجديد ══ */
+.item-modal{width:min(680px,100%)!important;max-height:92vh!important;max-height:92dvh!important;background:#fff!important}
+.item-modal .drawer-head{position:absolute;top:12px;left:12px;z-index:5;background:transparent!important;border:0!important;padding:0!important}
+.item-modal .x-btn{width:40px;height:40px;background:#fff;border:2px solid var(--ink);color:var(--ink);font-weight:900;box-shadow:var(--sh-1)}
+.im-grip{height:22px}
+.item-modal .checkout-body{padding:4px 20px 20px!important;background:#fff}
+.im-top{display:flex;flex-direction:row;align-items:flex-start;gap:14px;padding:6px 0 16px;margin-top:6px}
+.im-top #imHero{display:none;flex:none;width:92px;height:92px;margin:0;border-radius:18px;box-shadow:none;border:1px solid var(--line)}
+.im-top #imHero.on{display:block}
+.im-info{flex:1;min-width:0;padding-left:46px}
+.im-info h3#im_title{font-family:'Tajawal',sans-serif;font-size:1.45rem;font-weight:900;line-height:1.25;margin:0 0 6px;color:var(--ink)}
+.im-pill{display:inline-block;font-size:.72rem;font-weight:800;color:#0B6E4F;background:#E6F6EE;border:1px solid #BfE6d2;padding:2px 10px;border-radius:50px;margin-bottom:6px}
+.im-info .im-price{font-size:1.7rem;color:var(--red);margin:2px 0 6px}
+#imDesc{margin:0;color:#5b4d48;font-size:.95rem;line-height:1.7}
+/* بطاقات الأقسام */
+.item-modal #im_choices .choice-group,.item-modal #im_type_wrap,.item-modal #im_chips,.item-modal #im_suggest,.item-modal #im_nash,.item-modal .field{
+  background:#F6F2EE;border:1px solid var(--line);border-radius:20px;padding:16px;margin:0 0 14px}
+.item-modal #im_chips:empty,.item-modal #im_suggest:empty,.item-modal #im_nash:empty{display:none}
+.item-modal .choice-group.err{border-color:#e11d48;background:#fff5f6}
+.item-modal .form-title{color:var(--ink);font-size:1.1rem;font-weight:900;margin:0 0 12px}
+.item-modal .opt-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.item-modal .opt-row button{background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:13px 12px;min-height:54px;font-weight:700;color:var(--ink);text-align:center;box-shadow:none}
+.item-modal .opt-row button.sel{background:#FDECEC;border-color:var(--red);color:var(--red-dark)}
+.item-modal .field label{font-weight:800;color:var(--ink)}
+.item-modal .field textarea{background:#fff;border-radius:14px}
+/* الفوتر: زرار الإضافة + الكمية */
+.im-foot{flex:none;display:flex;align-items:center;gap:12px;padding:12px 16px max(12px,env(safe-area-inset-bottom));background:#fff;border-top:1px solid var(--line);box-shadow:0 -8px 24px -12px rgba(30,20,17,.25)}
+.im-foot #im_add{flex:1;position:static!important;margin:0!important;width:auto!important;border-radius:16px!important;padding:15px 10px;font-size:1.05rem;box-shadow:0 8px 20px -8px rgba(217,43,43,.6)!important}
+.im-foot .im-qty{margin:0;flex:none;display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:50px;background:#F3ECE6;border:1px solid var(--line)}
+.im-foot .im-qty span{min-width:26px;text-align:center;font-weight:900}
+@media(max-width:640px){.item-modal .opt-row{grid-template-columns:1fr 1fr}.im-top #imHero{width:76px;height:76px}.im-info h3#im_title{font-size:1.25rem}}
+</style>
+<script>
+(function(){
+  var im=document.getElementById('itemModal'); if(!im||document.getElementById('imDesc')) return;
+  var body=im.querySelector('.checkout-body'), hero=document.getElementById('imHero');
+  var top=document.createElement('div'); top.className='im-top';
+  var info=document.createElement('div'); info.className='im-info';
+  var pill=document.createElement('span'); pill.className='im-pill'; pill.textContent='متاح';
+  var desc=document.createElement('p'); desc.id='imDesc';
+  info.appendChild(document.getElementById('im_title')); info.appendChild(pill);
+  info.appendChild(document.getElementById('im_price')); info.appendChild(desc);
+  top.appendChild(info); if(hero) top.appendChild(hero);
+  body.insertBefore(top, body.firstChild);
+  /* إخفاء عنوان "الكمية" ونقل الكمية وزرار الإضافة للفوتر */
+  body.querySelectorAll('.form-title').forEach(function(f){ if(f.textContent.trim()==='الكمية') f.style.display='none'; });
+  var foot=document.createElement('div'); foot.className='im-foot';
+  foot.appendChild(document.getElementById('im_add')); foot.appendChild(body.querySelector('.im-qty'));
+  im.appendChild(foot);
 })();
 </script>
 </body>
