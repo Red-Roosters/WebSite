@@ -3904,5 +3904,58 @@ new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:tru
   document.getElementById('mobileNav').addEventListener('click',function(){ setTimeout(function(){ mark(document.querySelector('#home.active')?'home':'menu'); },120); });
 })();
 </script>
+
+<style id="rr-fav2">
+#rrFavBar{display:flex!important;align-items:center;justify-content:center;padding:0!important;line-height:1}
+#rrFavBar::before{content:"♥";display:block;width:100%;text-align:center;font-size:1.35rem;line-height:46px;height:46px;color:var(--red);font-family:Arial,sans-serif;-webkit-text-fill-color:var(--red)}
+#rrFavOv{position:fixed;inset:0;background:rgba(20,12,10,.55);backdrop-filter:blur(3px);z-index:2300;opacity:0;pointer-events:none;transition:opacity .3s}
+#rrFavOv.open{opacity:1;pointer-events:auto}
+#rrFavSheet{position:fixed;left:50%;bottom:0;width:min(560px,100%);max-height:86dvh;z-index:2310;background:#fff;border-radius:28px 28px 0 0;
+  transform:translate(-50%,105%);transition:transform .42s var(--ease);display:flex;flex-direction:column;box-shadow:0 -20px 60px -10px rgba(30,20,17,.45)}
+#rrFavSheet.open{transform:translate(-50%,0)}
+#rrFavSheet header{flex:none;display:flex;align-items:center;justify-content:space-between;padding:18px 20px 12px;font:900 1.3rem 'Tajawal',sans-serif;color:var(--ink)}
+#rrFavSheet header button{width:38px;height:38px;border-radius:50%;border:2px solid var(--ink);background:#fff;font-weight:900;cursor:pointer}
+#rrFavList{overflow-y:auto;overscroll-behavior:contain;padding:4px 16px max(18px,env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:12px}
+.fv-row{display:flex;gap:12px;align-items:center;background:#F6F2EE;border:1px solid var(--line);border-radius:18px;padding:10px}
+.fv-row img{width:76px;height:76px;border-radius:14px;object-fit:cover;flex:none}
+.fv-info{flex:1;min-width:0}
+.fv-info b{display:block;font-size:1.02rem;color:var(--ink);margin-bottom:2px}
+.fv-info small{color:var(--red);font-weight:800}
+.fv-act{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.fv-act button{border:0;border-radius:12px;padding:8px 12px;font:800 .8rem 'Cairo',sans-serif;cursor:pointer;background:var(--red);color:#fff}
+.fv-act button.rm{background:#fff;color:#9a8a84;border:1px solid var(--line)}
+.fv-empty{text-align:center;padding:36px 10px;color:#7a6b65;font-weight:700;line-height:1.9}
+</style>
+<div id="rrFavOv"></div>
+<div id="rrFavSheet" role="dialog" aria-label="المفضلة"><header><span>❤️ المفضلة</span><button id="rrFavX" aria-label="إغلاق">✕</button></header><div id="rrFavList"></div></div>
+<script>
+(function(){
+  var bar=document.getElementById('rrFavBar'), ov=document.getElementById('rrFavOv'), sh=document.getElementById('rrFavSheet'), list=document.getElementById('rrFavList');
+  if(!bar) return;
+  function favs(){ try{return JSON.parse(localStorage.getItem('rr_favs')||'[]')}catch(e){return []} }
+  function nm(c){var n=c.querySelector('.card-name');return n?n.textContent.trim():''}
+  function close(){ ov.classList.remove('open'); sh.classList.remove('open'); }
+  function render(){
+    var f=favs(), seen={}, html=0; list.innerHTML='';
+    document.querySelectorAll('.card').forEach(function(c){
+      var n=nm(c); if(!n||seen[n]||f.indexOf(n)<0) return; seen[n]=1; html++;
+      var im=c.querySelector('.card-img'), pr=c.querySelector('.price-badge');
+      var r=document.createElement('div'); r.className='fv-row';
+      r.innerHTML='<img alt=""><div class="fv-info"><b></b><small></small><div class="fv-act"></div></div>';
+      if(im) r.querySelector('img').src=im.currentSrc||im.src; r.querySelector('b').textContent=n; if(pr) r.querySelector('small').textContent=pr.textContent.trim();
+      var act=r.querySelector('.fv-act');
+      c.querySelectorAll('.add-cart-btn').forEach(function(b){
+        var x=document.createElement('button'); x.textContent=b.textContent.trim(); x.onclick=function(){ close(); setTimeout(function(){ b.click() },250); }; act.appendChild(x);
+      });
+      var rm=document.createElement('button'); rm.className='rm'; rm.textContent='إزالة'; rm.onclick=function(){ var h=c.querySelector('.rr-fav'); if(h) h.click(); setTimeout(render,60); }; act.appendChild(rm);
+      list.appendChild(r);
+    });
+    if(!html) list.innerHTML='<div class="fv-empty">لسه مفيش أصناف في المفضلة 💔<br>اضغط ♥ على أي صنف في المنيو وهيظهر هنا</div>';
+  }
+  bar.onclick=function(e){ e.stopPropagation(); document.body.classList.remove('favonly'); bar.classList.remove('on'); render(); ov.classList.add('open'); sh.classList.add('open'); };
+  ov.onclick=close; document.getElementById('rrFavX').onclick=close;
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape') close(); });
+})();
+</script>
 </body>
 </html>
