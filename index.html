@@ -3713,5 +3713,79 @@ nav button.new-badge:hover,
   },700);
 })();
 </script>
+
+<style id="rr-sheet">
+/* ── بوب أب الصنف: شيت سفلي على كل الشاشات ── */
+.item-modal{top:auto!important;bottom:0!important;left:50%!important;width:min(560px,100%)!important;max-width:100%!important;max-height:90vh!important;
+  border-radius:28px 28px 0 0!important;transform:translate(-50%,105%)!important;opacity:1!important;transition:transform .42s var(--ease)!important;
+  box-shadow:0 -20px 60px -10px rgba(30,20,17,.45)!important;display:flex;flex-direction:column}
+.item-modal.open{transform:translate(-50%,0)!important}
+.item-modal.drag{transition:none!important}
+.item-modal::before{content:"";display:block;flex:none;width:46px;height:5px;border-radius:5px;background:rgba(30,20,17,.22);margin:9px auto 4px;cursor:grab}
+.item-modal .checkout-body{padding-bottom:0}
+#imHero{display:none;width:100%;height:190px;object-fit:cover;border-radius:18px;margin-bottom:14px;box-shadow:var(--sh-1)}
+#imHero.on{display:block}
+.item-modal #im_add{position:sticky;bottom:0;margin:14px -22px 0;width:calc(100% + 44px);border-radius:0;padding:17px;
+  box-shadow:0 -10px 24px -8px rgba(30,20,17,.2);padding-bottom:max(17px,env(safe-area-inset-bottom))}
+.item-modal .opt-row button{transition:.2s var(--ease)}
+.item-modal .opt-row button:active{transform:scale(.95)}
+/* ── قلب المفضلة ── */
+.rr-fav{position:absolute;top:12px;left:12px;z-index:3;width:38px;height:38px;border-radius:50%;border:0;background:rgba(255,255,255,.92);
+  backdrop-filter:blur(6px);font-size:1.15rem;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(0,0,0,.18);transition:.25s var(--ease)}
+.rr-fav:active{transform:scale(.8)}
+.rr-fav.on{background:var(--red);color:#fff;animation:rrPop .4s var(--ease)}
+@keyframes rrPop{50%{transform:scale(1.3)}}
+.card{position:relative}
+#rrFavBar{position:fixed;top:78px;left:14px;z-index:1800;border:0;border-radius:50px;padding:9px 16px;font:800 .85rem 'Cairo',sans-serif;cursor:pointer;
+  background:#fff;color:var(--red);box-shadow:var(--sh-2);display:flex;gap:6px;align-items:center}
+#rrFavBar.on{background:var(--red);color:#fff}
+body.favonly .card:not(.isfav){display:none!important}
+</style>
+<script>
+(function(){
+  var im=document.getElementById('itemModal'); if(!im) return;
+  /* صورة الصنف داخل الشيت */
+  var body=im.querySelector('.checkout-body'), hero=document.createElement('img');
+  hero.id='imHero'; hero.alt=''; body.insertBefore(hero, body.firstChild);
+  function setHero(){
+    var title=(document.getElementById('im_title').textContent||'').replace(/\s*\(.*\)\s*$/,'').trim(), src='';
+    document.querySelectorAll('.card .card-name').forEach(function(n){
+      if(!src && n.textContent.trim()===title){ var i=n.closest('.card').querySelector('.card-img'); if(i) src=i.currentSrc||i.src; }
+    });
+    hero.classList.toggle('on',!!src); if(src) hero.src=src;
+    body.scrollTop=0;
+  }
+  new MutationObserver(function(){ if(im.classList.contains('open')) setHero(); }).observe(im,{attributes:true,attributeFilter:['class']});
+  /* سحب لأسفل للإغلاق */
+  var y0=null, dy=0;
+  function start(e){ if(e.target.closest('.checkout-body') && body.scrollTop>0) return; y0=(e.touches?e.touches[0]:e).clientY; dy=0; }
+  function move(e){ if(y0===null) return; dy=(e.touches?e.touches[0]:e).clientY-y0;
+    if(dy>0){ im.classList.add('drag'); im.style.transform='translate(-50%,'+dy+'px)'; } }
+  function end(){ if(y0===null) return; y0=null; im.classList.remove('drag'); im.style.transform='';
+    if(dy>110){ var x=im.querySelector('[data-close]'); if(x) x.click(); } dy=0; }
+  im.addEventListener('touchstart',start,{passive:true}); im.addEventListener('touchmove',move,{passive:true}); im.addEventListener('touchend',end);
+  var hd=im.querySelector('.drawer-head'); hd.addEventListener('mousedown',function(e){ start(e); var mv=move, up=function(){ end(); document.removeEventListener('mousemove',mv); document.removeEventListener('mouseup',up); }; document.addEventListener('mousemove',mv); document.addEventListener('mouseup',up); });
+  /* المفضلة */
+  var KEY='rr_favs', favs=[]; try{ favs=JSON.parse(localStorage.getItem(KEY)||'[]') }catch(e){}
+  function save(){ try{ localStorage.setItem(KEY,JSON.stringify(favs)) }catch(e){} bar.textContent='❤️ المفضلة ('+favs.length+')'; }
+  var bar=document.createElement('button'); bar.id='rrFavBar'; document.body.appendChild(bar);
+  bar.onclick=function(){ var on=document.body.classList.toggle('favonly'); bar.classList.toggle('on',on);
+    if(on && !favs.length){ document.body.classList.remove('favonly'); bar.classList.remove('on'); var t=document.getElementById('rrToast'); if(t){t.textContent='اضغط ❤️ على أي صنف لإضافته للمفضلة'; t.classList.add('show'); setTimeout(function(){t.classList.remove('show')},2200);} } };
+  function name(c){ var n=c.querySelector('.card-name'); return n?n.textContent.trim():''; }
+  function decorate(){
+    document.querySelectorAll('.card').forEach(function(c){
+      if(!c.querySelector('.rr-fav')){
+        var b=document.createElement('button'); b.className='rr-fav'; b.type='button'; b.setAttribute('aria-label','المفضلة'); b.textContent='♥';
+        b.addEventListener('click',function(e){ e.stopPropagation(); e.preventDefault(); var n=name(c), i=favs.indexOf(n);
+          if(i<0) favs.push(n); else favs.splice(i,1); save(); decorate(); }, true);
+        c.appendChild(b);
+      }
+      var f=favs.indexOf(name(c))>-1; c.classList.toggle('isfav',f); c.querySelector('.rr-fav').classList.toggle('on',f);
+    });
+  }
+  save(); decorate();
+  new MutationObserver(function(){ clearTimeout(decorate.t); decorate.t=setTimeout(decorate,120); }).observe(document.body,{childList:true,subtree:true});
+})();
+</script>
 </body>
 </html>
