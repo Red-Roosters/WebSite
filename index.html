@@ -3872,13 +3872,16 @@ body.favonly .card:not(.isfav){display:none!important}
   var hd=im.querySelector('.drawer-head'); hd.addEventListener('mousedown',function(e){ start(e); var mv=move, up=function(){ end(); document.removeEventListener('mousemove',mv); document.removeEventListener('mouseup',up); }; document.addEventListener('mousemove',mv); document.addEventListener('mouseup',up); });
   /* المفضلة */
   var KEY='rr_favs', favs=[]; try{ favs=JSON.parse(localStorage.getItem(KEY)||'[]') }catch(e){}
+  var KF=function(s){s=s||'';var a=s.split(/[A-Za-z]/)[0];if(!/[\u0600-\u06FF0-9]/.test(a))a=s;return a.replace(/[٠-٩]/g,function(d){return '٠١٢٣٤٥٦٧٨٩'.indexOf(d)}).replace(/[^\u0600-\u06FFA-Za-z0-9 ]/g,' ').replace(/\s+/g,' ').trim()};
+  favs=favs.map(KF).filter(function(x,i,a){return x&&a.indexOf(x)===i});
   function save(){ try{ localStorage.setItem(KEY,JSON.stringify(favs)) }catch(e){} bar.textContent='❤️ المفضلة ('+favs.length+')'; }
   var bar=document.createElement('button'); bar.id='rrFavBar'; document.body.appendChild(bar);
   bar.onclick=function(){ var on=document.body.classList.toggle('favonly'); bar.classList.toggle('on',on);
     if(on && !favs.length){ document.body.classList.remove('favonly'); bar.classList.remove('on'); var t=document.getElementById('rrToast'); if(t){t.textContent='اضغط ❤️ على أي صنف لإضافته للمفضلة'; t.classList.add('show'); setTimeout(function(){t.classList.remove('show')},2200);} } };
-  function name(c){ var n=c.querySelector('.card-name'); return n?n.textContent.trim():''; }
+  var KF=function(s){s=s||'';var a=s.split(/[A-Za-z]/)[0];if(!/[\u0600-\u06FF0-9]/.test(a))a=s;return a.replace(/[٠-٩]/g,function(d){return '٠١٢٣٤٥٦٧٨٩'.indexOf(d)}).replace(/[^\u0600-\u06FFA-Za-z0-9 ]/g,' ').replace(/\s+/g,' ').trim()};
+  function name(c){ var n=c.querySelector('.card-name,.siniya-card-name,.siniya-featured-name,.school-featured-name,.power-deal-content h2'); return n?KF(n.textContent):''; }
   function decorate(){
-    document.querySelectorAll('.card').forEach(function(c){
+    document.querySelectorAll('[data-cart="1"]').forEach(function(c){
       if(!c.querySelector('.rr-fav')){
         var b=document.createElement('button'); b.className='rr-fav'; b.type='button'; b.setAttribute('aria-label','المفضلة'); b.textContent='♥';
         b.addEventListener('click',function(e){ e.stopPropagation(); e.preventDefault(); var n=name(c), i=favs.indexOf(n);
@@ -4027,13 +4030,13 @@ new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:tru
   var bar=document.getElementById('rrFavBar'), ov=document.getElementById('rrFavOv'), sh=document.getElementById('rrFavSheet'), list=document.getElementById('rrFavList');
   if(!bar) return;
   function favs(){ try{return JSON.parse(localStorage.getItem('rr_favs')||'[]')}catch(e){return []} }
-  function nm(c){var n=c.querySelector('.card-name');return n?n.textContent.trim():''}
+  var KF=function(s){s=s||'';var a=s.split(/[A-Za-z]/)[0];if(!/[\u0600-\u06FF0-9]/.test(a))a=s;return a.replace(/[٠-٩]/g,function(d){return '٠١٢٣٤٥٦٧٨٩'.indexOf(d)}).replace(/[^\u0600-\u06FFA-Za-z0-9 ]/g,' ').replace(/\s+/g,' ').trim()}; function nm(c){var n=c.querySelector('.card-name,.siniya-card-name,.siniya-featured-name,.school-featured-name,.power-deal-content h2');return n?KF(n.textContent):''}
   function close(){ ov.classList.remove('open'); sh.classList.remove('open'); }
   function render(){
     var f=favs(), seen={}, html=0; list.innerHTML='';
-    document.querySelectorAll('.card').forEach(function(c){
+    document.querySelectorAll('[data-cart="1"]').forEach(function(c){
       var n=nm(c); if(!n||seen[n]||f.indexOf(n)<0) return; seen[n]=1; html++;
-      var im=c.querySelector('.card-img')||c.querySelector('.school-featured-img')||c.querySelector('img'), pr=c.querySelector('.price-badge');
+      var im=c.querySelector('.card-img')||c.querySelector('.school-featured-img')||c.querySelector('img'), pr=c.querySelector('.price-badge,.siniya-price,.power-deal-price');
       var r=document.createElement('div'); r.className='fv-row';
       r.innerHTML='<img alt=""><div class="fv-info"><b></b><small></small><div class="fv-act"></div></div>';
       if(im) r.querySelector('img').src=im.currentSrc||im.getAttribute('src')||im.src; r.querySelector('b').textContent=n; if(pr) r.querySelector('small').textContent=pr.textContent.trim();
@@ -4288,6 +4291,13 @@ a,button,input,select,textarea,label,.card,.cat-card,.siniya-card,[onclick]{touc
   .hero-img{width:100%!important;max-width:100%!important;align-self:stretch!important;margin:14px 0 0}
   .hero-img img{max-height:520px}
 }
+</style>
+
+<style id="rr-favall">
+[data-cart="1"]{position:relative}
+.rr-fav{z-index:20!important}
+.power-deal-banner .rr-fav,.siniya-featured .rr-fav,.school-featured .rr-fav,.siniya-card .rr-fav{top:14px;left:14px;width:42px;height:42px;font-size:1.2rem;box-shadow:0 6px 16px rgba(0,0,0,.3)}
+.siniya-featured .siniya-featured-img-wrap,.school-featured .school-featured-img-wrap,.siniya-card .siniya-card-img-wrap{position:relative}
 </style>
 </body>
 </html>
