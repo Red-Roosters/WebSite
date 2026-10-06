@@ -1192,6 +1192,7 @@ body.no-scroll { overflow: hidden; }
 .coupon-msg { font-size: .8rem; margin: -4px 0 8px; min-height: 1em; }
 .coupon-msg.ok { color: #0B6E4F; } .coupon-msg.bad { color: #e11d48; }
 .sum-row.disc { color: #0B6E4F; font-weight: 700; }
+.delivery-time-note { margin-top: 10px; padding: 10px 12px; background: rgba(217,43,43,.07); border: 1px dashed rgba(217,43,43,.35); border-radius: 10px; font-size: .92rem; font-weight: 700; color: var(--charcoal); text-align: center; line-height: 1.6; }
 @media (max-width: 640px) { .item-modal { width: calc(100% - 24px); } }
 /* ══ اختيارات العروض ══ */
 .choice-group { margin-bottom: 6px; padding: 10px 12px; border-radius: 14px; border: 2px solid transparent; }
@@ -2910,7 +2911,8 @@ imChips.previousElementSibling.style.display = noChips ? 'none' : '';
             `<div class="sum-row" style="margin-top:10px"><span>المجموع</span><span>${fmt(sub)}</span></div>` +
             (d ? `<div class="sum-row disc"><span>🎟️ خصم (${esc(coupon.code)})</span><span>− ${fmt(d)}</span></div>` : '') +
             `<div class="sum-row"><span>${pk() ? 'استلام من الفرع' : 'التوصيل'}</span><span>${pk() ? 'بدون رسوم' : (fee === null ? 'اختار المنطقة' : fmt(fee))}</span></div>` +
-            `<div class="sum-row total"><span>الإجمالي</span><span>${fmt(sub - d + (fee || 0))}</span></div>`;
+            `<div class="sum-row total"><span>الإجمالي</span><span>${fmt(sub - d + (fee || 0))}</span></div>` +
+            (pk() ? '' : `<div class="delivery-time-note">⏱️ وقت التوصيل يبدأ من تأكيد الأوردر ويستغرق 60 دقيقة كحد أقصى</div>`);
     }
 
     $('goCheckout').addEventListener('click', () => {
@@ -2987,6 +2989,7 @@ imChips.previousElementSibling.style.display = noChips ? 'none' : '';
             d ? '🎟️ خصم (' + coupon.code + '): − ' + d + ' ج.م' : null,
             pickup ? '🏪 استلام من فرع فيصل المريوطية (بدون رسوم توصيل)' : '🛵 التوصيل (' + area.name + '): ' + area.fee + ' ج.م',
             '✅ *الإجمالي: ' + total + ' ج.م*',
+            pickup ? null : '⏱️ وقت التوصيل يبدأ من تأكيد الأوردر ويستغرق 60 دقيقة كحد أقصى',
             ...payLines(),
             v('f_notes') ? '\n📝 *ملاحظات عامة:* ' + v('f_notes') : null
         ].filter(l => l !== null).join('\n');
