@@ -1260,6 +1260,10 @@ body.no-scroll { overflow: hidden; }
     .ticker-move { animation-duration: 80s !important; }
 }
     </style>
+<style id="rr-preload">
+/* النوافذ مخفية تماماً لحد ما الصفحة والستايلات تخلص تحميل (يمنع الوميض أول ما الموقع يفتح) */
+html:not(.rr-ready) .item-modal,html:not(.rr-ready) #itemModal,html:not(.rr-ready) #checkoutModal,html:not(.rr-ready) #cartDrawer,html:not(.rr-ready) #rrFavSheet,html:not(.rr-ready) #rrFavOv,html:not(.rr-ready) #rrOverlay,html:not(.rr-ready) #mobileNav{visibility:hidden!important;opacity:0!important;transition:none!important;animation:none!important}
+</style>
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -4322,6 +4326,14 @@ a,button,input,select,textarea,label,.card,.cat-card,.siniya-card,[onclick]{touc
     .observe(b,{attributes:true,attributeFilter:['class']});
   var fs=document.getElementById('rrFavSheet');
   if(fs) new MutationObserver(function(){ b.classList.toggle('no-scroll', fs.classList.contains('open')); }).observe(fs,{attributes:true,attributeFilter:['class']});
+})();
+</script>
+
+<script>
+(function(){
+  function ready(){ requestAnimationFrame(function(){ requestAnimationFrame(function(){ document.documentElement.classList.add('rr-ready'); }); }); }
+  if(document.readyState==='complete') ready(); else window.addEventListener('load',ready);
+  setTimeout(function(){ document.documentElement.classList.add('rr-ready'); },3000);
 })();
 </script>
 </body>
