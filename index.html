@@ -2118,7 +2118,8 @@ body.no-scroll { overflow: hidden; }
             <div class="card"><img loading="lazy" decoding="async" class="card-img" src="https://i.postimg.cc/xCHyZnWB/rizo.jpg" alt="ريزو حار"><div class="card-body"><div class="card-name">ريزو حار <span class="card-name-en">Rizo Spicy</span></div><div class="card-footer"><span class="price-badge">90 LE</span></div></div></div>
             <div class="card"><img loading="lazy" decoding="async" class="card-img" src="https://i.postimg.cc/MZ7mbZ0Q/ryzw-fahyta-mʿdl.png" alt="ريزو فاهيتا حار"><div class="card-body"><div class="card-name">ريزو فاهيتا حار <span class="card-name-en">Rizo Fajita Spicy</span></div><div class="card-footer"><span class="price-badge">90 LE</span></div></div></div>
             <div class="card"><img loading="lazy" decoding="async" class="card-img" src="https://i.postimg.cc/MZ7mbZ0Q/ryzw-fahyta-mʿdl.png" alt="ريزو فاهيتا"><div class="card-body"><div class="card-name">ريزو فاهيتا <span class="card-name-en">Rizo Fajita</span></div><div class="card-footer"><span class="price-badge">90 LE</span></div></div></div>
-            <div class="card"><img loading="lazy" decoding="async" class="card-img" src="https://i.postimg.cc/9MTtkCvB/rixe.jpg" alt="ارز مبهر"><div class="card-body"><div class="card-name">ارز مبهر<span class="card-name-en">Rice</span></div><div class="card-footer"><span class="price-badge">25 LE</span></div></div></div>
+            <div class="card"><img loading="lazy" decoding="async" class="card-img" src="https://i.postimg.cc/9MTtkCvB/rixe.jpg" alt="ارز مبهر صغير"><div class="card-body"><div class="card-name">ارز مبهر صغير<span class="card-name-en">Rice Small</span></div><div class="card-footer"><span class="price-badge">25 LE</span></div></div></div>
+            <div class="card"><img loading="lazy" decoding="async" class="card-img" src="https://i.ibb.co/FL7xXT8s/Red-Rooster-Crispy-Rice-Bucket.png" alt="ارز مبهر كبير"><div class="card-body"><div class="card-name">ارز مبهر كبير <span class="card-name-en">Rice Large</span></div><div class="card-footer"><span class="price-badge">70 LE</span></div></div></div>
             <div class="card"><img loading="lazy" decoding="async" class="card-img" src="https://i.postimg.cc/rwP1FDTv/mix.jpg" alt="ميكس بوكس"><div class="card-body"><div class="card-name">ميكس بوكس <span class="card-name-en">Mix Box</span></div><div class="card-footer"><span class="price-badge">S 109 / L 169</span></div></div></div>
             <div class="card"><img loading="lazy" decoding="async" class="card-img" src="https://i.postimg.cc/pVmY4YtP/cheder.jpg" alt="كوب جبن"><div class="card-body"><div class="card-name">كوب جبن <span class="card-name-en">Cheese Cup</span></div><div class="card-footer"><span class="price-badge">39 LE</span></div></div></div>
             <div class="card"><img loading="lazy" decoding="async" class="card-img" src="https://i.postimg.cc/g01H4nBg/chese-m.jpg" alt="جرة جبن متوسطة"><div class="card-body"><div class="card-name">جرة جبن متوسطة <span class="card-name-en">Cheese Jar Medium</span></div><div class="card-footer"><span class="price-badge">79 LE</span></div></div></div>
@@ -2560,6 +2561,7 @@ body.no-scroll { overflow: hidden; }
             return;
         }
         $('cartFoot').style.display = '';
+        const _st = body.scrollTop;
         const norm = s => s.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(/[^\u0600-\u06FFA-Za-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim();
         if (!window.__rrImgMap) {
             const map = {};
@@ -2590,7 +2592,7 @@ body.no-scroll { overflow: hidden; }
             const src = imgFor(i.name);
             return `
             <div class="ct-row">
-                <div class="ct-img">${src ? `<img src="${esc(src)}" alt="">` : '🍗'}</div>
+                <div class="ct-img">${src ? `<img src="${esc(src)}" alt="" loading="lazy" decoding="async">` : '🍗'}</div>
                 <div class="ct-name"><div class="cart-line-name">${esc(i.name)}</div>${optsHtml}</div>
                 <div class="ct-unit" data-l="السعر">${fmt(i.price)}</div>
                 <div class="ct-qty">
@@ -2604,6 +2606,7 @@ body.no-scroll { overflow: hidden; }
         }).join('');
         body.innerHTML = `<div class="ct-head"><span>الصورة</span><span>المنتج</span><span>السعر</span><span>الكمية</span><span>الإجمالي</span><span>مسح</span></div>${rows}
             <button type="button" class="ct-clear" data-act="clear">🗑️ تفريغ السلة</button>`;
+        body.scrollTop = _st;
         const d = discount();
         $('cartDiscRow').style.display = d ? '' : 'none';
         $('cartDisc').textContent = '− ' + fmt(d);
@@ -4093,7 +4096,6 @@ new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:tru
 </style>
 
 <style id="rr-cart2">
-.cart-drawer{container-type:inline-size}
 .ct-head{display:none}
 .ct-row{display:grid;grid-template-columns:72px 1fr auto;grid-template-areas:"img name del" "img unit unit" "qty qty tot";gap:8px 12px;align-items:center;padding:14px 4px;border-bottom:1px solid var(--line)}
 .ct-img{grid-area:img;width:72px;height:72px;border-radius:16px;overflow:hidden;background:#F3ECE6;display:flex;align-items:center;justify-content:center;font-size:1.8rem;border:1px solid var(--line)}
@@ -4109,7 +4111,7 @@ new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:tru
 .ct-tot{grid-area:tot;justify-self:end;font-weight:900;font-size:1.05rem;color:var(--red)}
 .ct-del{grid-area:del;justify-self:end;width:38px;height:38px;border-radius:12px;border:0;background:#FDECEC;cursor:pointer;font-size:1rem}
 .ct-clear{margin:14px auto 4px;display:block;border:1.5px dashed var(--line);background:transparent;color:#9a8a84;font:700 .85rem 'Cairo',sans-serif;padding:9px 18px;border-radius:50px;cursor:pointer}
-@container (min-width:620px){
+@media (min-width:900px){
   .ct-head,.ct-row{grid-template-columns:78px minmax(0,1fr) 92px 128px 100px 44px;grid-template-areas:none}
   .ct-head{display:grid;gap:12px;padding:10px 4px;border-bottom:2px solid var(--ink);font-weight:800;font-size:.85rem;color:#5b4d48;text-align:center}
   .ct-head span:nth-child(2){text-align:right}
@@ -4302,5 +4304,25 @@ a,button,input,select,textarea,label,.card,.cat-card,.siniya-card,[onclick]{touc
 .power-deal-banner .rr-fav,.siniya-featured .rr-fav,.school-featured .rr-fav,.siniya-card .rr-fav{top:14px;left:14px;width:42px;height:42px;font-size:1.2rem;box-shadow:0 6px 16px rgba(0,0,0,.3)}
 .siniya-featured .siniya-featured-img-wrap,.school-featured .school-featured-img-wrap,.siniya-card .siniya-card-img-wrap{position:relative}
 </style>
+
+<style id="rr-stable">
+.item-modal,#rrFavSheet,#checkoutModal,.cart-drawer{transition:transform .4s var(--ease),visibility 0s linear .4s!important}
+.item-modal.open,#rrFavSheet.open,#checkoutModal.open,.cart-drawer.open{transition:transform .4s var(--ease),visibility 0s linear 0s!important}
+.item-modal:not(.open),#rrFavSheet:not(.open),#checkoutModal:not(.open),.cart-drawer:not(.open){visibility:hidden;box-shadow:none!important;pointer-events:none}
+.item-modal.drag{transition:none!important}
+#cartBody,.drawer-body,.checkout-body,#rrFavList{overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+.card-img[alt="ارز مبهر كبير"]{object-fit:contain!important;padding:10px;background:linear-gradient(145deg,#FFF6EE,#FFE4D4)!important}
+</style>
+<script>
+(function(){
+  var b=document.body, y=0, locked=false;
+  function lock(){ y=window.pageYOffset; b.style.position='fixed'; b.style.top='-'+y+'px'; b.style.left='0'; b.style.right='0'; b.style.width='100%'; locked=true; }
+  function unlock(){ b.style.position=''; b.style.top=''; b.style.left=''; b.style.right=''; b.style.width=''; locked=false; window.scrollTo({top:y,left:0,behavior:'instant'}); }
+  new MutationObserver(function(){ var on=b.classList.contains('no-scroll'); if(on&&!locked) lock(); else if(!on&&locked) unlock(); })
+    .observe(b,{attributes:true,attributeFilter:['class']});
+  var fs=document.getElementById('rrFavSheet');
+  if(fs) new MutationObserver(function(){ b.classList.toggle('no-scroll', fs.classList.contains('open')); }).observe(fs,{attributes:true,attributeFilter:['class']});
+})();
+</script>
 </body>
 </html>
