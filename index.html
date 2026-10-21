@@ -2654,7 +2654,7 @@ html:not(.rr-ready) .item-modal,html:not(.rr-ready) #itemModal,html:not(.rr-read
         if (d.min && subtotal() < d.min) setCouponMsg(`الكوبون يحتاج طلب بقيمة ${fmt(d.min)} أو أكتر`, false);
         else setCouponMsg(`✅ تم تطبيق ${coupon.code}`, true);
     }
-    /* ═══ الكوبون لأول طلب بس: بنسجّل الكود اللي اتستخدم (على الجهاز + رقم الموبايل) ═══ */
+    /* ═══ الكوبون لأول طلب بس: بنسجّل الكود اللي استخدم (على الجهاز + رقم الموبايل) ═══ */
     const normPhone = p => toEn(p || '').replace(/\D/g, '').replace(/^(0020|20)/, '0').slice(-11);
     const usedCoupons = () => LS.get('rr_used_coupons', {});
     function couponUsed(code, phone) {
@@ -2668,12 +2668,12 @@ html:not(.rr-ready) .item-modal,html:not(.rr-ready) #itemModal,html:not(.rr-read
         if (p.length === 11 && !u.phones.includes(p)) u.phones.push(p);
         all[code] = u; LS.set('rr_used_coupons', all);
     }
-    const USED_MSG = code => `❌ كود ${code} اتستخدم قبل كده. الخصم متاح لأول طلب بس.`;
+    const USED_MSG = code => `❌ كود ${code} استخدم قبل كده. الخصم متاح لأول طلب بس.`;
     function dropUsedCoupon(phone) {
         if (coupon && coupon.def.firstOrderOnly && couponUsed(coupon.code, phone)) {
             const c = coupon.code; coupon = null; $('couponInput').value = '';
             setCouponMsg(USED_MSG(c), false); render(); renderSummary();
-            toast('⚠️ كود ' + c + ' اتستخدم قبل كده، اتشال من طلبك');
+            toast('⚠️ كود ' + c + ' استخدم قبل كده، اتشال من طلبك');
             return true;
         }
         return false;
