@@ -2350,10 +2350,13 @@ html:not(.rr-ready) .item-modal,html:not(.rr-ready) #itemModal,html:not(.rr-read
         // ⏰ ساعات العمل (خليها enabled:true لتفعيلها). لو الإغلاق بعد منتصف الليل اكتب close أصغر من open
         hours: { enabled: false, open: '12:00', close: '02:00', tz: 'Africa/Cairo' },
 
+        // 🌐 رابط سكريبت Google (Apps Script) للتحقق من الكوبون لأول طلب من أي جهاز. سيبه فاضي = تحقق على نفس الجهاز بس
+        couponApi: 'https://script.google.com/macros/s/AKfycbw0O5ZtdzHoJiiv4FSUEPqWoG3SNSgRgwHBnz0fdtJJADjZMEXdIcjM2QZM94csdDoGnQ/exec',
+
         // 🎟️ الكوبونات: percent = نسبة %, fixed = مبلغ ثابت, min = أقل مجموع للطلب (اختياري)
         coupons: {
-            'RED20':   { type: 'percent', value: 20 },
-            'WELCOME': { type: 'fixed',   value: 20, min: 150 }
+            'RED20':   { type: 'percent', value: 20, firstOrderOnly: true },
+            'WELCOME': { type: 'fixed',   value: 20, min: 150, firstOrderOnly: true }
         },
 
         areas: [
@@ -2375,7 +2378,6 @@ html:not(.rr-ready) .item-modal,html:not(.rr-ready) #itemModal,html:not(.rr-read
             { name: 'حدائق الأهرام - مساكن الضباط', fee: 55 },
             { name: 'شارع العمدة', fee: 45 },
             { name: 'شارع المستشفى', fee: 30 },
-            { name: 'شارع الوفاء والامل', fee: 30 },
             { name: 'شارع سهل حمزة', fee: 35 },
             { name: 'فيصل - أول فيصل', fee: 55 },
             { name: 'فيصل - آخر فيصل', fee: 35 },
@@ -2398,9 +2400,7 @@ html:not(.rr-ready) .item-modal,html:not(.rr-ready) #itemModal,html:not(.rr-read
             { name: 'الهرم - التعاون', fee: 40 },
             { name: 'الهرم - الثلاثيني 2', fee: 40 },
             { name: 'الهرم - العروبة', fee: 45 },
-            { name: 'الهرم - العريش', fee: 35 },
-            { name: 'الهرم - مدكور', fee: 45 },
-            { name: 'الهرم - الاريزونا', fee: 40 },
+            { name: 'الهرم - العريش', fee: 30 },
             { name: 'الهرم - المجزر الآلي', fee: 45 },
             { name: 'الهرم - المنصورية', fee: 45 },
             { name: 'الهرم - ويمبي', fee: 45 },
@@ -2453,7 +2453,7 @@ html:not(.rr-ready) .item-modal,html:not(.rr-ready) #itemModal,html:not(.rr-read
         { name:'تومية',              en:'Tomia',                price:15, hot:false, img:'https://i.ibb.co/wZYNK0hj/image.jpg' },
         { name:'تكساس كب',           en:'Texas Cup',            price:25, hot:false, img:'https://i.ibb.co/4wbRHXdF/image.jpg' },
         { name:'ثاوزند أيلاند',      en:'Thousand Island',      price:20, hot:false, img:'https://i.ibb.co/FbSQppY7/image.jpg' },
-        //{ name:'مانجو صوص',          en:'Mango Sauce',          price:25, hot:false, img:'' },//
+        { name:'مانجو صوص',          en:'Mango Sauce',          price:25, hot:false, img:'' },
 
         { name:'شيلي مايونيز كب',    en:'Chili Mayonnaise Cup', price:25, hot:true,  img:'' },
         { name:'تايجر كب',           en:'Tiger Cup',            price:20, hot:true,  img:'' },
@@ -2654,12 +2654,64 @@ html:not(.rr-ready) .item-modal,html:not(.rr-ready) #itemModal,html:not(.rr-read
         if (d.min && subtotal() < d.min) setCouponMsg(`الكوبون يحتاج طلب بقيمة ${fmt(d.min)} أو أكتر`, false);
         else setCouponMsg(`✅ تم تطبيق ${coupon.code}`, true);
     }
+    /* ═══ الكوبون لأول طلب بس: بنسجّل الكود اللي اتستخدم (على الجهاز + رقم الموبايل) ═══ */
+    const normPhone = p => toEn(p || '').replace(/\D/g, '').replace(/^(0020|20)/, '0').slice(-11);
+    const usedCoupons = () => LS.get('rr_used_coupons', {});
+    function couponUsed(code, phone) {
+        const u = usedCoupons()[code]; if (!u) return false;
+        const p = normPhone(phone);
+        return !!u.device || (p.length === 11 && (u.phones || []).includes(p));
+    }
+    function markCouponUsed(code, phone, dev = true) {
+        const all = usedCoupons(), u = all[code] || { phones: [] }, p = normPhone(phone);
+        if (dev) u.device = true; u.at = new Date().toISOString();
+        if (p.length === 11 && !u.phones.includes(p)) u.phones.push(p);
+        all[code] = u; LS.set('rr_used_coupons', all);
+    }
+    const USED_MSG = code => `❌ كود ${code} اتستخدم قبل كده. الخصم متاح لأول طلب بس.`;
+    function dropUsedCoupon(phone) {
+        if (coupon && coupon.def.firstOrderOnly && couponUsed(coupon.code, phone)) {
+            const c = coupon.code; coupon = null; $('couponInput').value = '';
+            setCouponMsg(USED_MSG(c), false); render(); renderSummary();
+            toast('⚠️ كود ' + c + ' اتستخدم قبل كده، اتشال من طلبك');
+            return true;
+        }
+        return false;
+    }
+
+    /* ═══ التحقق من السيرفر (Google Sheets) ═══ */
+    const apiUrl = (q) => CONFIG.couponApi + (CONFIG.couponApi.includes('?') ? '&' : '?') + q;
+    async function checkCoupon(code, phone) {
+        if (!CONFIG.couponApi) return null;
+        try {
+            const r = await fetch(apiUrl('action=check&code=' + encodeURIComponent(code) + '&phone=' + normPhone(phone)));
+            const j = await r.json(); return j && j.ok ? !!j.used : null;
+        } catch (e) { return null; }
+    }
+    async function claimCoupon(code, phone) {
+        if (!CONFIG.couponApi) return 'local';
+        try {
+            const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 9000);
+            const r = await fetch(CONFIG.couponApi, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'claim', code, phone: normPhone(phone) }), signal: ctl.signal });
+            clearTimeout(to); const j = await r.json();
+            return j && j.ok ? (j.used ? 'used' : 'ok') : 'error';
+        } catch (e) { return 'error'; }
+    }
+    async function serverDrop(phone) {
+        if (!coupon || !coupon.def.firstOrderOnly || !CONFIG.couponApi) return;
+        const p = normPhone(phone); if (p.length !== 11) return;
+        const code = coupon.code, used = await checkCoupon(code, p);
+        if (used === true && coupon && coupon.code === code) { markCouponUsed(code, p, false); dropUsedCoupon(p); }
+    }
+
     $('couponBtn').addEventListener('click', () => {
         const code = $('couponInput').value.trim().toUpperCase();
         if (!code) { coupon = null; setCouponMsg('', true); render(); return; }
         const def = CONFIG.coupons[code];
         if (!def) { coupon = null; setCouponMsg('❌ الكوبون غير صحيح', false); render(); return; }
+        if (def.firstOrderOnly && couponUsed(code, (LS.get('rr_customer', {}) || {}).phone)) { coupon = null; setCouponMsg(USED_MSG(code), false); render(); return; }
         coupon = { code, def }; render();
+        if (def.firstOrderOnly) serverDrop((LS.get('rr_customer', {}) || {}).phone || $('f_phone').value);
     });
 
     /* ═══ فتح/قفل ═══ */
@@ -2952,11 +3004,26 @@ imChips.previousElementSibling.style.display = noChips ? 'none' : '';
         return ok;
     }
 
-    $('checkoutForm').addEventListener('submit', e => {
+    $('f_phone').addEventListener('change', () => { if (!dropUsedCoupon($('f_phone').value)) serverDrop($('f_phone').value); });
+
+    $('checkoutForm').addEventListener('submit', async e => {
         e.preventDefault();
         if (!cart.length) { toast('السلة فاضية'); return; }
         if (!isOpenNow()) { toast(closedMsg()); return; }
         if (!validate()) return;
+        if (dropUsedCoupon($('f_phone').value)) return;
+        /* حجز الكوبون على السيرفر قبل الإرسال (نافذة الواتساب بتتفتح الأول عشان المتصفح مايمنعهاش) */
+        let pre = null;
+        const sbtn = $('checkoutForm').querySelector('[type=submit]');
+        if (coupon && coupon.def.firstOrderOnly && discount() > 0 && CONFIG.couponApi) {
+            pre = window.open('', '_blank'); if (sbtn) sbtn.disabled = true; toast('⏳ بنتحقق من كود الخصم...');
+            const r = await claimCoupon(coupon.code, $('f_phone').value);
+            if (sbtn) sbtn.disabled = false;
+            if (r === 'used') {
+                if (pre) pre.close();
+                markCouponUsed(coupon.code, $('f_phone').value, false); dropUsedCoupon($('f_phone').value); return;
+            }
+        }
 
         const v = id => $(id).value.trim();
         const pickup = pk();
@@ -3008,8 +3075,10 @@ imChips.previousElementSibling.style.display = noChips ? 'none' : '';
         if (!pickup) fields.forEach(f => data[f] = v('f_' + f));
         LS.set('rr_customer', data);
 
-        window.open('https://wa.me/' + CONFIG.phone + '?text=' + encodeURIComponent(lines), '_blank');
+        const waUrl = 'https://wa.me/' + CONFIG.phone + '?text=' + encodeURIComponent(lines);
+        if (pre && !pre.closed) pre.location.href = waUrl; else window.open(waUrl, '_blank');
 
+        if (coupon && coupon.def.firstOrderOnly && d > 0) markCouponUsed(coupon.code, v('f_phone'));
         cart = []; coupon = null; $('couponInput').value = ''; setCouponMsg('', true);
         LS.set('rr_cart', cart); render(); closeAll();
         toast('تم تجهيز طلبك ✅ اضغط إرسال في الواتساب لتأكيده');
