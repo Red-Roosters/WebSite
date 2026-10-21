@@ -2668,7 +2668,7 @@ html:not(.rr-ready) .item-modal,html:not(.rr-ready) #itemModal,html:not(.rr-read
         if (p.length === 11 && !u.phones.includes(p)) u.phones.push(p);
         all[code] = u; LS.set('rr_used_coupons', all);
     }
-    const USED_MSG = code => `❌ كود ${code} تم استخدام الكود من قبل. الخصم متاح لأول طلب بس.`;
+    const USED_MSG = code => `❌ كود ${code} تم استخدامه من قبل. الخصم متاح لأول طلب بس.`;
     function dropUsedCoupon(phone) {
         if (coupon && coupon.def.firstOrderOnly && couponUsed(coupon.code, phone)) {
             const c = coupon.code; coupon = null; $('couponInput').value = '';
