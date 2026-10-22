@@ -2359,7 +2359,7 @@ html:not(.rr-ready) .item-modal,html:not(.rr-ready) #itemModal,html:not(.rr-read
         hours: { enabled: false, open: '12:00', close: '02:00', tz: 'Africa/Cairo' },
 
         // 🌐 رابط سكريبت Google (Apps Script) للتحقق من الكوبون لأول طلب من أي جهاز. سيبه فاضي = تحقق على نفس الجهاز بس
-        couponApi: 'https://script.google.com/macros/s/AKfycbw0O5ZtdzHoJiiv4FSUEPqWoG3SNSgRgwHBnz0fdtJJADjZMEXdIcjM2QZM94csdDoGnQ/exec',
+        couponApi: 'https://script.google.com/macros/s/AKfycbzoNNPfliuE1Cp87iylF0GtJGxrYSMRfnatHjIBHefLAwIzvv8T4BQzKfFYp_G2OALr/exec',
 
         // 🎟️ الكوبونات: percent = نسبة %, fixed = مبلغ ثابت, min = أقل مجموع للطلب (اختياري)
         coupons: {
@@ -2712,10 +2712,20 @@ html:not(.rr-ready) .item-modal,html:not(.rr-ready) #itemModal,html:not(.rr-read
         if (used === true && coupon && coupon.code === code) { markCouponUsed(code, p, false); dropUsedCoupon(p); }
     }
 
+    window.RR_API = CONFIG.couponApi;
+    async function applyLoyalty(code) {
+        setCouponMsg('⏳ بنتحقق من الكود...', true);
+        try {
+            const r = await fetch(apiUrl('action=validate&code=' + encodeURIComponent(code))), j = await r.json();
+            if (j && j.ok && j.valid) { coupon = { code, def: { type: 'fixed', value: +j.value, loyalty: true } }; render(); return; }
+            coupon = null; setCouponMsg(j && j.ok && j.used ? '❌ كود النقاط ده اتستخدم قبل كده' : '❌ كود النقاط غير صحيح', false); render();
+        } catch (e) { coupon = null; setCouponMsg('⚠️ تعذّر التحقق من الكود، جرّب تاني', false); render(); }
+    }
     $('couponBtn').addEventListener('click', () => {
         const code = $('couponInput').value.trim().toUpperCase();
         if (!code) { coupon = null; setCouponMsg('', true); render(); return; }
         const def = CONFIG.coupons[code];
+        if (!def && /^RR-/.test(code) && CONFIG.couponApi) { applyLoyalty(code); return; }
         if (!def) { coupon = null; setCouponMsg('❌ الكوبون غير صحيح', false); render(); return; }
         if (def.firstOrderOnly && couponUsed(code, (LS.get('rr_customer', {}) || {}).phone)) { coupon = null; setCouponMsg(USED_MSG(code), false); render(); return; }
         coupon = { code, def }; render();
@@ -3087,6 +3097,7 @@ imChips.previousElementSibling.style.display = noChips ? 'none' : '';
         if (pre && !pre.closed) pre.location.href = waUrl; else window.open(waUrl, '_blank');
 
         if (coupon && coupon.def.firstOrderOnly && d > 0) markCouponUsed(coupon.code, v('f_phone'));
+        if (window.rrOrderHook) rrOrderHook({ phone: v('f_phone'), total: Math.max(0, subtotal() - d), code: (coupon && coupon.def.loyalty) ? coupon.code : '' });
         cart = []; coupon = null; $('couponInput').value = ''; setCouponMsg('', true);
         LS.set('rr_cart', cart); render(); closeAll();
         toast('تم تجهيز طلبك ✅ اضغط إرسال في الواتساب لتأكيده');
@@ -4610,5 +4621,68 @@ main,.container,.wrap{max-width:1200px}
   #rrFavBar{bottom:216px!important}
 }
 </style>
+
+<style id="rr-pts">
+#rrTabs{grid-template-columns:repeat(5,1fr)!important}
+#rrPtsOv{position:fixed;inset:0;background:rgba(20,12,10,.55);z-index:2300;opacity:0;pointer-events:none;transition:opacity .3s}
+#rrPtsOv.open{opacity:1;pointer-events:auto}
+#rrPtsSheet{position:fixed;left:50%;bottom:0;width:min(560px,100%);max-height:90dvh;z-index:2310;background:#fff;border-radius:28px 28px 0 0;transform:translate(-50%,105%);visibility:hidden;transition:transform .4s var(--ease),visibility 0s linear .4s;display:flex;flex-direction:column}
+#rrPtsSheet.open{transform:translate(-50%,0);visibility:visible;transition:transform .4s var(--ease),visibility 0s}
+#rrPtsSheet .ph{display:flex;justify-content:space-between;align-items:center;padding:16px 20px 8px;font:900 1.3rem 'Tajawal',sans-serif}
+#rrPtsSheet .ph button{width:38px;height:38px;border-radius:50%;border:2px solid #171211;background:#fff;font-weight:900;cursor:pointer}
+#rrPtsBody{overflow-y:auto;overscroll-behavior:contain;padding:4px 18px max(20px,env(safe-area-inset-bottom))}
+.pt-row{display:flex;gap:8px}.pt-row input{flex:1;height:50px;border:2px solid #EEE8E2;border-radius:14px;padding:0 14px;font:700 1.05rem 'Cairo',sans-serif;direction:ltr;text-align:center}
+.pt-btn{border:0;background:#E0282E;color:#fff;border-radius:14px;padding:0 18px;font:800 .95rem 'Cairo',sans-serif;cursor:pointer}.pt-btn[disabled]{background:#ddd;color:#999}
+.pt-card{margin:14px 0;padding:18px;border-radius:22px;color:#fff;background:linear-gradient(135deg,#3a0a0a,#a81616 60%,#E0282E);text-align:center}
+.pt-card b{display:block;font:900 2.8rem/1.1 'Tajawal',sans-serif}.pt-card small{opacity:.85;font-weight:700}
+.pt-bar{height:8px;border-radius:8px;background:rgba(255,255,255,.25);margin-top:12px;overflow:hidden}.pt-bar i{display:block;height:100%;background:#FFD54A;border-radius:8px}
+.pt-tier{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 14px;margin-bottom:10px;border:1px solid #EEE8E2;border-radius:16px;font-weight:800}
+.pt-tier span small{display:block;color:#7A6F69;font-weight:600}
+.pt-code{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 14px;margin-bottom:8px;border:2px dashed #E0282E;border-radius:14px;background:#FFF6F3}
+.pt-code strong{font:900 1.15rem 'Tajawal',sans-serif;letter-spacing:2px;color:#E0282E;direction:ltr}
+.pt-h{font:900 1.05rem 'Tajawal',sans-serif;margin:16px 2px 8px}.pt-note{color:#7A6F69;font-size:.84rem;line-height:1.7}
+</style>
+<div id="rrPtsOv"></div>
+<div id="rrPtsSheet" role="dialog" aria-label="نقاطي"><div class="ph"><span>⭐ نقاطي</span><button id="rrPtsX" aria-label="إغلاق">✕</button></div>
+<div id="rrPtsBody"><div class="pt-row"><input id="ptPhone" type="tel" inputmode="numeric" placeholder="رقم موبايلك 01xxxxxxxxx" maxlength="11"><button class="pt-btn" id="ptGo">عرض نقاطي</button></div>
+<div id="ptOut"><p class="pt-note" style="margin-top:14px">اكتب رقمك وشوف نقاطك. كل طلب بيديك نقاط بقيمة 10% من إجمالي الشيك، وبتبدّلها بأكواد خصم: 2000 نقطة = 20 ج خصم، وبالمضاعفات.</p></div></div></div>
+<script>
+(function(){
+  var API=window.RR_API, tabs=document.getElementById('rrTabs'); if(!API||!tabs) return;
+  var $=function(i){return document.getElementById(i)}, STEP=2000, PER=100;
+  function norm(p){return String(p||'').replace(/[٠-٩]/g,function(d){return '٠١٢٣٤٥٦٧٨٩'.indexOf(d)}).replace(/\D/g,'').replace(/^(0020|20)/,'0').slice(-11)}
+  function u(q){return API+(API.indexOf('?')>-1?'&':'?')+q}
+  function post(b){return fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(b)}).then(function(r){return r.json()})}
+  var b=document.createElement('button'); b.setAttribute('data-t','pts'); b.innerHTML='<span>⭐</span>نقاطي'; tabs.insertBefore(b,tabs.children[3]);
+  function open(){ var ph=''; try{ph=(JSON.parse(localStorage.getItem('rr_customer')||'{}')||{}).phone||''}catch(e){} if(!$('ptPhone').value) $('ptPhone').value=norm(ph); $('rrPtsOv').classList.add('open'); $('rrPtsSheet').classList.add('open'); if(norm($('ptPhone').value).length===11) load(); }
+  function close(){ $('rrPtsOv').classList.remove('open'); $('rrPtsSheet').classList.remove('open'); }
+  b.addEventListener('click',open); $('rrPtsOv').onclick=close; $('rrPtsX').onclick=close; $('ptGo').onclick=load;
+  function mine(){try{return JSON.parse(localStorage.getItem('rr_my_codes')||'[]')}catch(e){return []}}
+  function load(){
+    var ph=norm($('ptPhone').value), out=$('ptOut'); if(ph.length!==11){ out.innerHTML='<p class="pt-note">⚠️ اكتب رقم موبايل صحيح (11 رقم)</p>'; return; }
+    out.innerHTML='<p class="pt-note">⏳ جاري التحميل...</p>';
+    fetch(u('action=points&phone='+ph)).then(function(r){return r.json()}).then(function(j){
+      if(!j||!j.ok) throw 0; var p=j.points, next=(Math.floor(p/STEP)+1)*STEP, pct=Math.min(100,Math.round((p%STEP)/STEP*100));
+      var h='<div class="pt-card"><small>رصيدك الحالي</small><b>'+p+'</b><small>نقطة = '+(p/PER).toFixed(0)+' ج</small><div class="pt-bar"><i style="width:'+pct+'%"></i></div><small style="display:block;margin-top:6px">باقي '+(next-p)+' نقطة للمكافأة الجاية</small></div>';
+      if(j.pending>0) h+='<p class="pt-note">⏳ نقاط قيد التأكيد: '+j.pending+' (بتتضاف بعد ما المطعم يأكد استلامك للطلب)</p>';
+      h+='<div class="pt-h">🛍️ متجر النقاط</div>';
+      [2000,4000,6000,10000].forEach(function(t){ h+='<div class="pt-tier"><span>خصم '+(t/PER)+' ج<small>'+t+' نقطة</small></span><button class="pt-btn" data-p="'+t+'"'+(p>=t?'':' disabled')+'>استبدل</button></div>'; });
+      var m=mine().filter(function(c){return c.phone===ph});
+      if(m.length){ h+='<div class="pt-h">🎟️ أكوادي</div>'; m.forEach(function(c){ h+='<div class="pt-code"><span><strong>'+c.code+'</strong><br><small>خصم '+c.value+' ج</small></span><button class="pt-btn" data-use="'+c.code+'">استخدم</button></div>'; }); }
+      out.innerHTML=h+'<p class="pt-note">الكود صالح لاستخدام واحد، وبتكتبه في خانة الكوبون في السلة.</p>';
+    }).catch(function(){ out.innerHTML='<p class="pt-note">⚠️ تعذّر تحميل النقاط، جرّب تاني بعد شوية</p>'; });
+  }
+  $('ptOut').addEventListener('click',function(e){
+    var r=e.target.closest('[data-p]'), us=e.target.closest('[data-use]');
+    if(r){ r.disabled=true; r.textContent='...'; post({action:'redeem',phone:norm($('ptPhone').value),points:+r.dataset.p}).then(function(j){
+        if(j&&j.ok){ var a=mine(); a.unshift({code:j.code,value:j.value,phone:norm($('ptPhone').value)}); localStorage.setItem('rr_my_codes',JSON.stringify(a)); } load(); }).catch(load); }
+    if(us){ var i=document.getElementById('couponInput'), cb=document.getElementById('couponBtn'); if(i&&cb){ i.value=us.dataset.use; cb.click(); } close(); }
+  });
+  /* بعد كل طلب: نسجّل النقاط (قيد التأكيد) ونحرق كود النقاط المستخدم */
+  window.rrOrderHook=function(o){ var ph=norm(o.phone); if(ph.length!==11) return;
+    if(o.total>0) post({action:'order',phone:ph,total:o.total,orderId:'RR'+Date.now()}).catch(function(){});
+    if(o.code) post({action:'useCode',code:o.code}).catch(function(){}); };
+})();
+</script>
 </body>
 </html>
