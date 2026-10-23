@@ -4788,5 +4788,27 @@ button,.chip,.add-cart-btn,.rr-btn{touch-action:manipulation}
   body{padding-bottom:84px!important}
 }
 </style>
+
+<style id="rr-navlock">
+/* القائمة الجانبية/السفلية: السكرول جواها بس، والصفحة اللي ورا ثابتة */
+#mobileNav{overscroll-behavior:contain;touch-action:none}
+#mobileNav .mobile-nav-inner{overscroll-behavior:contain;touch-action:pan-y;-webkit-overflow-scrolling:touch}
+body.nav-locked{position:fixed;left:0;right:0;width:100%;overflow:hidden}
+</style>
+<script>
+(function(){
+  var nav=document.getElementById('mobileNav'); if(!nav) return;
+  var y=0, locked=false;
+  function lock(){ if(locked) return; locked=true; y=window.pageYOffset||document.documentElement.scrollTop||0;
+    document.body.style.top=(-y)+'px'; document.body.classList.add('nav-locked'); }
+  function unlock(){ if(!locked) return; locked=false;
+    document.body.classList.remove('nav-locked'); document.body.style.top='';
+    window.scrollTo(0,y); }
+  new MutationObserver(function(){ nav.classList.contains('open') ? lock() : unlock(); })
+    .observe(nav,{attributes:true,attributeFilter:['class']});
+  /* لو الشاشة اتكبرت لديسكتوب والقائمة مفتوحة */
+  window.addEventListener('resize',function(){ if(window.innerWidth>900 && nav.classList.contains('open') && typeof closeMobileNav==='function') closeMobileNav(); });
+})();
+</script>
 </body>
 </html>
