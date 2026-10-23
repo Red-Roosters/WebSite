@@ -1401,7 +1401,7 @@ html:not(.rr-ready) .item-modal,html:not(.rr-ready) #itemModal,html:not(.rr-read
                 <p>تويستر، زينجر وفيليه سوبريم</p>
             </div>
             <div class="cat-card" onclick="showSection('chicken-sandwiches')">
-                <span class="cat-icon has-img" style="--img:url('https://i.postimg.cc/sXcMnB8F/Turkey-Melt.jpg')"><img src="https://i.postimg.cc/sXcMnB8F/Turkey-Melt.jpg" alt="" loading="lazy"></span>
+                <span class="cat-icon has-img" style="--img:url('https://i.postimg.cc/MTMWBnSm/chili-Gun.jpg')"><img src="https://i.postimg.cc/MTMWBnSm/chili-Gun.jpg" alt="" loading="lazy"></span>
                 <h3>ساندوتشات الدجاج</h3>
                 <p>زينجر، كريسبي، وأكتر</p>
             </div>
@@ -4750,6 +4750,43 @@ button,.chip,.add-cart-btn,.rr-btn{touch-action:manipulation}
   .card:hover .card-img{transform:none!important}
 }
 .add-cart-btn:focus-visible,.rr-btn:focus-visible,.chip:focus-visible,#nav-list button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+</style>
+
+<style id="rr-mobile-clean">
+/* تهدئة صورة كارت ساندوتشات الدجاج (تشيلي جان): بدون تقريب */
+.cat-card[onclick*="chicken-sandwiches"] .cat-icon{--z:1!important;--o:50% 50%!important}
+.cat-card[onclick*="chicken-sandwiches"] .cat-icon img{transform:none!important;object-position:center 55%!important}
+
+/* ══ موبايل: واجهة أبسط ══ */
+@media (max-width:820px){
+  /* السلة: شريط الإجمالي الأحمر كفاية (شيلنا أيقونة الهيدر وتاب السلة) */
+  .cart-head-btn,.cart-fab{display:none!important}
+  #rrTabs{grid-template-columns:repeat(4,1fr)!important}
+  #rrTabs button[data-t="cart"]{display:none!important}
+
+  /* أزرار عائمة: ما تظهرش غير لما تكون لازمة */
+  #rrTop{display:none!important}
+  #rrFavBar[data-n="0"]{display:none!important}
+  #rrFavBar{width:42px!important;height:42px!important;bottom:150px!important}
+
+  /* الرئيسية: شيل الزحمة (شريط الأقسام + شرايط الثقة + طرق الدفع) */
+  body:has(#home.active) .cat-strip{display:none}
+  .trust,.rr-chips{display:none!important}
+  .rr-row-title small{display:none}
+
+  /* بلاطات الأقسام: نص أصغر وهادي */
+  .category-grid .cat-card h3{font-size:1rem!important;right:12px!important;left:12px!important;bottom:12px!important}
+  .category-grid{gap:10px!important}
+
+  /* كروت الأصناف: أنضف */
+  .card.new-item::before,.card.wc-item::before,.card.offer-hot::before,.card.school-item::before,.card.sauce-hot::before{display:none}
+  .rr-fav{width:32px;height:32px;font-size:1rem;top:8px;left:8px;opacity:.9}
+  .card-name-en{display:none}
+  .card-desc{-webkit-line-clamp:2!important}
+
+  /* مسافة تحت المحتوى بدل الشرايط المتعددة */
+  body{padding-bottom:84px!important}
+}
 </style>
 </body>
 </html>
