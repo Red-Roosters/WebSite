@@ -1360,7 +1360,7 @@ html:not(.rr-ready) .item-modal,html:not(.rr-ready) #itemModal,html:not(.rr-read
                     <button class="btn btn-school" onclick="showSection('back-to-school')">🎒 عروض المدارس</button>
                     <button class="btn btn-siniya" onclick="showSection('siniya')">🥘 صواني ريد روستر</button>
                     <button class="btn btn-new" onclick="showSection('new-items')">✨ الجديد عندنا</button>
-                    <button class="btn btn-primary" onclick="showSection('offers')">🎉 شوف العروض</button>
+                    <button type="button" class="btn btn-primary" onclick="showSection('offers')">🎉 شوف العروض</button>
                     <button class="btn btn-outline" onclick="showSection('about')">📞 اتصل بنا</button>
                 </div>
             </div>
@@ -3979,7 +3979,6 @@ body.favonly .card:not(.isfav){display:none!important}
   var bar=document.createElement('button'); bar.id='rrFavBar'; document.body.appendChild(bar);
   bar.onclick=function(){ var on=document.body.classList.toggle('favonly'); bar.classList.toggle('on',on);
     if(on && !favs.length){ document.body.classList.remove('favonly'); bar.classList.remove('on'); var t=document.getElementById('rrToast'); if(t){t.textContent='اضغط ❤️ على أي صنف لإضافته للمفضلة'; t.classList.add('show'); setTimeout(function(){t.classList.remove('show')},2200);} } };
-  var KF=function(s){s=s||'';var a=s.split(/[A-Za-z]/)[0];if(!/[\u0600-\u06FF0-9]/.test(a))a=s;return a.replace(/[٠-٩]/g,function(d){return '٠١٢٣٤٥٦٧٨٩'.indexOf(d)}).replace(/[^\u0600-\u06FFA-Za-z0-9 ]/g,' ').replace(/\s+/g,' ').trim()};
   function name(c){ var n=c.querySelector('.card-name,.siniya-card-name,.siniya-featured-name,.school-featured-name,.power-deal-content h2'); return n?KF(n.textContent):''; }
   function decorate(){
     document.querySelectorAll('[data-cart="1"]').forEach(function(c){
@@ -4533,7 +4532,7 @@ input[type=search],#searchInput,.search-box input{background:#fff!important;bord
   .card>.card-img,.card>.card-img-placeholder{width:116px!important;height:100%!important;min-height:116px;object-fit:cover;border-radius:0!important}
   .card-body{padding:12px 14px!important}
 }
-.rr-btn,.btn-primary{background:var(--v-red)!important;border-radius:14px!important;box-shadow:none!important}
+.rr-btn{background:var(--v-red)!important;border-radius:14px!important;box-shadow:none!important}
 /* شريط التنقل السفلي + شريط السلة */
 @media(max-width:820px){
   #rrTabs{background:rgba(255,255,255,.97)!important;border-top:1px solid var(--v-line);border-radius:0!important;box-shadow:0 -8px 24px -16px rgba(0,0,0,.25)!important;inset:auto 0 0 0!important}
@@ -4715,5 +4714,42 @@ main,.container,.wrap{max-width:1200px}
   hb.parentNode.insertBefore(b,hb);
 })();
 </script>
+
+<style id="rr-btnfix">
+/* ══ زرار "شوف العروض": لون الخط ثابت وواضح في كل الحالات (عادي / hover / ضغط / فوكس) ══ */
+.hero .hero-cta-group .btn.btn-primary{
+  display:inline-flex;align-items:center;justify-content:center;gap:10px;
+  background:#fff!important;color:#9E1B1B!important;-webkit-text-fill-color:#9E1B1B!important;
+  border:2px solid #fff!important;border-radius:16px!important;
+  padding:15px 34px;min-height:52px;font:900 1.1rem 'Cairo',sans-serif;
+  box-shadow:0 14px 30px -12px rgba(0,0,0,.55)!important;
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation;
+  transition:background .2s,color .2s,transform .15s,box-shadow .2s;
+}
+.hero .hero-cta-group .btn.btn-primary::after{content:"←";font-size:1.15em;transition:transform .2s}
+@media (hover:hover){
+  .hero .hero-cta-group .btn.btn-primary:hover{
+    background:#FFD166!important;color:#4A1010!important;-webkit-text-fill-color:#4A1010!important;
+    border-color:#FFD166!important;transform:translateY(-2px);
+    box-shadow:0 18px 34px -12px rgba(0,0,0,.6)!important}
+  .hero .hero-cta-group .btn.btn-primary:hover::after{transform:translateX(-4px)}
+}
+.hero .hero-cta-group .btn.btn-primary:active,
+.hero .hero-cta-group .btn.btn-primary:focus{
+  background:#FFC247!important;color:#4A1010!important;-webkit-text-fill-color:#4A1010!important;
+  border-color:#FFC247!important;transform:scale(.97);outline:none}
+.hero .hero-cta-group .btn.btn-primary:focus-visible{outline:3px solid #FFD166!important;outline-offset:3px}
+@media(max-width:640px){.hero .hero-cta-group .btn.btn-primary{width:100%;padding:14px 20px}}
+
+/* ══ تحسينات عامة ══ */
+button,a,.card,.cat-card{-webkit-tap-highlight-color:transparent}
+button,.chip,.add-cart-btn,.rr-btn{touch-action:manipulation}
+/* على التاتش: منع الـ hover العالق بعد اللمس */
+@media (hover:none){
+  .card:hover,.cat-card:hover,.siniya-card:hover{transform:none!important}
+  .card:hover .card-img{transform:none!important}
+}
+.add-cart-btn:focus-visible,.rr-btn:focus-visible,.chip:focus-visible,#nav-list button:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+</style>
 </body>
 </html>
