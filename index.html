@@ -1381,12 +1381,12 @@ html:not(.rr-ready) .item-modal,html:not(.rr-ready) #itemModal,html:not(.rr-read
                 <p>حفلة قرمشة لا تُنسى!</p>
             </div>
             <div class="cat-card new-cat" onclick="showSection('new-items')">
-                <span class="cat-icon has-img" style="--img:url('https://i.ibb.co/jCk0YfR/image.png')"><img src="https://i.ibb.co/jCk0YfR/image.png" alt="" loading="lazy"></span>
+                <span class="cat-icon has-img" style="--img:url('https://i.ibb.co/TMD1795L/mango-sandwich.jpg')"><img src="https://i.ibb.co/TMD1795L/mango-sandwich.jpg" alt="" loading="lazy"></span>
                 <h3>جديد ريد روستر</h3>
                 <p>أحدث الإضافات لمنيونا</p>
             </div>
             <div class="cat-card" onclick="showSection('nashville')">
-                <span class="cat-icon has-img" style="--img:url('https://i.postimg.cc/FzvgQgSW/nash-cool.png')"><img src="https://i.postimg.cc/FzvgQgSW/nash-cool.png" alt="" loading="lazy"></span>
+                <span class="cat-icon has-img" style="--img:url('https://i.postimg.cc/CKWscVxj/meal-l.jpg')"><img src="https://i.postimg.cc/CKWscVxj/meal-l.jpg" alt="" loading="lazy"></span>
                 <h3>ناشڤيل</h3>
                 <p>الجديد - 3 درجات حرارة</p>
             </div>
@@ -4810,5 +4810,156 @@ body.nav-locked{position:fixed;left:0;right:0;width:100%;overflow:hidden}
   window.addEventListener('resize',function(){ if(window.innerWidth>900 && nav.classList.contains('open') && typeof closeMobileNav==='function') closeMobileNav(); });
 })();
 </script>
+
+<style id="rr-pro">
+/* ═══════ Red Roosters PRO — نظام تصميم موحّد (آخر طبقة) ═══════ */
+:root{--p-red:#D92B2B;--p-red2:#A81616;--p-ink:#151010;--p-mute:#756963;--p-bg:#FBF9F6;--p-line:#ECE6DF;--p-gold:#F5A623;
+  --p-sh1:0 1px 2px rgba(21,16,16,.05),0 8px 24px -14px rgba(21,16,16,.2);--p-sh2:0 2px 4px rgba(21,16,16,.06),0 24px 48px -20px rgba(21,16,16,.35);--p-ease:cubic-bezier(.22,.8,.2,1)}
+html{scroll-padding-top:150px}
+body{background:var(--p-bg)!important;color:var(--p-ink);font-size:16px;line-height:1.65}
+main{max-width:1240px!important;padding:24px 20px 72px!important}
+/* ── Header ── */
+header{background:rgba(255,255,255,.92)!important;backdrop-filter:saturate(1.8) blur(18px);-webkit-backdrop-filter:saturate(1.8) blur(18px);border-bottom:1px solid var(--p-line)!important}
+.header-inner{max-width:1240px!important;padding:12px 20px 0!important}
+.logo-wrap img{width:46px!important;height:46px!important;border-radius:50%!important;box-shadow:0 0 0 2px #fff,0 0 0 4px var(--p-red)!important}
+.brand{font-size:1.25rem!important;color:var(--p-ink)!important;letter-spacing:-.4px}.brand small{color:var(--p-red)!important;letter-spacing:.4px}
+.cart-head-btn{background:var(--p-ink)!important;color:#fff!important;width:46px!important;height:46px!important;box-shadow:0 8px 18px -8px rgba(21,16,16,.6)}
+#nav-list button{background:transparent!important;color:#4d413c!important;border-radius:0!important;padding:10px 14px!important;font-weight:800!important;position:relative;border-bottom:3px solid transparent!important;transition:color .2s}
+#nav-list button:hover{color:var(--p-red)!important}
+#nav-list button.active{background:transparent!important;color:var(--p-red)!important;border-bottom-color:var(--p-red)!important}
+@media(max-width:820px){#nav-list button{background:#F3EEE9!important;border-radius:50px!important;border-bottom:0!important;padding:9px 16px!important}#nav-list button.active{background:var(--p-ink)!important;color:#fff!important}}
+/* ── Hero ── */
+.hero{border-radius:32px!important;padding:44px 48px!important;min-height:360px!important;align-items:center!important;
+  background:radial-gradient(800px 420px at 85% 0%,rgba(245,166,35,.35),transparent 60%),radial-gradient(700px 400px at 0% 100%,rgba(0,0,0,.55),transparent 60%),linear-gradient(135deg,#6e0f12,#C21F25 60%,#E8452A)!important;
+  box-shadow:0 40px 70px -40px rgba(120,10,10,.8)!important}
+.hero-text h1{font-size:clamp(2.2rem,5.2vw,4.2rem)!important;letter-spacing:-1.5px;line-height:1.08!important}
+.hero-text p{font-size:1.12rem!important;max-width:36ch;color:#fff3ec}
+.hero-cta-group .btn-primary{background:#fff!important;color:var(--p-red2)!important;padding:15px 32px;font-size:1.05rem;box-shadow:0 16px 30px -12px rgba(0,0,0,.5)!important}
+.hero-img{border-radius:26px!important;box-shadow:0 30px 60px -24px rgba(0,0,0,.7)!important}
+@media(max-width:700px){.hero{padding:26px 20px!important;border-radius:24px!important}}
+/* ── Benefits + loyalty banner ── */
+.pro-benefits{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:18px 0 28px}
+.pro-benefits div{display:flex;gap:12px;align-items:center;background:#fff;border:1px solid var(--p-line);border-radius:20px;padding:14px 16px;box-shadow:var(--p-sh1)}
+.pro-benefits i{font-style:normal;font-size:1.6rem;width:46px;height:46px;border-radius:14px;display:grid;place-items:center;background:#FDECEC;flex:none}
+.pro-benefits b{display:block;font-size:.95rem}.pro-benefits small{color:var(--p-mute);font-weight:600;font-size:.78rem}
+@media(max-width:820px){.pro-benefits{grid-template-columns:1fr 1fr}.pro-benefits div{padding:10px 12px}.pro-benefits small{display:none}.pro-benefits i{width:38px;height:38px;font-size:1.3rem}}
+.pro-loyal{display:flex;align-items:center;gap:18px;margin:8px 0 30px;padding:22px 26px;border-radius:26px;color:#fff;
+  background:radial-gradient(500px 200px at 0% 0%,rgba(245,166,35,.45),transparent 60%),linear-gradient(135deg,#1c1110,#4a1010 70%,#8b1a1a);box-shadow:var(--p-sh2)}
+.pro-loyal .ic{font-size:2.6rem;flex:none}.pro-loyal h3{font:900 1.35rem 'Tajawal',sans-serif;margin:0 0 2px}.pro-loyal p{margin:0;opacity:.88;font-size:.95rem}
+.pro-loyal button{margin-inline-start:auto;flex:none;border:0;border-radius:50px;padding:13px 24px;background:var(--p-gold);color:#2B1408;font:900 1rem 'Cairo',sans-serif;cursor:pointer;transition:transform .2s}
+.pro-loyal button:hover{transform:translateY(-2px)}
+@media(max-width:700px){.pro-loyal{flex-wrap:wrap;padding:18px}.pro-loyal button{width:100%;margin:0}}
+/* ── Titles ── */
+.section-title{font:900 clamp(1.7rem,3vw,2.4rem) 'Tajawal',sans-serif!important;letter-spacing:-.6px;margin-bottom:24px!important}
+.section-title::after{display:block!important;height:3px!important;max-width:120px;background:var(--p-red)!important;border-radius:3px}
+.rr-row-title h2{font-size:1.5rem!important}
+/* ── Category tiles ── */
+.category-grid .cat-card{border-radius:24px!important;aspect-ratio:1/1.08!important;box-shadow:var(--p-sh1)!important;transition:transform .4s var(--p-ease),box-shadow .4s!important}
+.category-grid .cat-card:hover{transform:translateY(-6px)!important;box-shadow:var(--p-sh2)!important}
+.category-grid .cat-card h3{font-size:1.2rem!important}
+/* ── Product cards (desktop) ── */
+@media(min-width:701px){
+  .menu-grid{grid-template-columns:repeat(auto-fill,minmax(250px,1fr))!important;gap:22px!important}
+  .card{border-radius:24px!important;border:1px solid var(--p-line)!important;box-shadow:var(--p-sh1)!important;transition:transform .4s var(--p-ease),box-shadow .4s!important}
+  .card:hover{transform:translateY(-6px)!important;box-shadow:var(--p-sh2)!important}
+  .card>.card-img,.card>.card-img-placeholder{height:auto!important;aspect-ratio:4/3;width:100%!important;object-fit:cover!important}
+  .card-body{padding:16px 18px 18px!important}
+  .card-name{font-size:1.08rem!important}
+  .card-footer{margin-top:auto;padding-top:14px!important;border-top:1px dashed var(--p-line)!important}
+  .price-badge{font-size:1.25rem!important}
+  .add-cart-btn{padding:10px 20px!important;font-weight:800!important;box-shadow:0 10px 20px -10px rgba(217,43,43,.8)!important}
+  .add-cart-btn:hover{background:var(--p-red2)!important;transform:translateY(-2px)}
+}
+/* ── Buttons / forms ── */
+.rr-btn{border-radius:16px!important;font-weight:900!important}
+.rr-btn.wa{background:linear-gradient(135deg,#1FBF62,#0E9F78)!important}
+.field input,.field select,.field textarea{border-radius:14px!important}
+.drawer-head{background:#fff!important}
+/* ── Footer ── */
+footer.pro-foot{background:var(--p-ink)!important;color:#d9cfc9;padding:0!important;text-align:right!important;margin-top:20px}
+.pf-in{max-width:1240px;margin:0 auto;padding:48px 20px 20px;display:grid;grid-template-columns:1.4fr 1fr 1fr 1.2fr;gap:32px}
+.pf-in h4{color:#fff;font:900 1.05rem 'Tajawal',sans-serif;margin:0 0 14px}
+.pf-in p{font-size:.92rem;line-height:1.8;color:#b9aea7;margin:0}
+.pf-in a,.pf-in button.l{display:block;background:none;border:0;padding:5px 0;color:#d9cfc9;text-decoration:none;font:600 .93rem 'Cairo',sans-serif;cursor:pointer;text-align:right}
+.pf-in a:hover,.pf-in button.l:hover{color:var(--p-gold)}
+.pf-brand{display:flex;align-items:center;gap:12px;margin-bottom:12px;color:#fff;font:900 1.4rem 'Tajawal',sans-serif}
+.pf-brand img{width:46px;height:46px;border-radius:50%}
+.pf-pay{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}.pf-pay span{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:50px;padding:5px 12px;font-size:.8rem;font-weight:700}
+.pf-copy{max-width:1240px;margin:0 auto;padding:18px 20px 26px;border-top:1px solid rgba(255,255,255,.1);font-size:.85rem;color:#8f847d;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.pf-copy strong{color:var(--p-red)}
+@media(max-width:820px){.pf-in{grid-template-columns:1fr 1fr;padding-top:34px}.pf-in>div:first-child{grid-column:1/-1}}
+@media(max-width:820px){footer.pro-foot{padding-bottom:84px!important}}
+@media(prefers-reduced-motion:reduce){*{transition-duration:.01ms!important;animation-duration:.01ms!important}}
+</style>
+<script>
+(function(){
+  var hero=document.querySelector('#home .hero'), grid=document.querySelector('#home .category-grid');
+  if(hero&&!document.querySelector('.pro-benefits')){
+    var b=document.createElement('div'); b.className='pro-benefits';
+    b.innerHTML='<div><i>🛵</i><span><b>توصيل سريع</b><small>حتى 60 دقيقة من التأكيد</small></span></div><div><i>🍗</i><span><b>دجاج طازج</b><small>بيتحضّر لما تطلب</small></span></div><div><i>⭐</i><span><b>نقاط مع كل طلب</b><small>بدّلها بخصومات</small></span></div><div><i>💳</i><span><b>كاش أو تحويل</b><small>فودافون كاش وإنستا باي</small></span></div>';
+    hero.after(b);
+  }
+  if(grid&&!document.querySelector('.pro-loyal')){
+    var l=document.createElement('div'); l.className='pro-loyal';
+    l.innerHTML='<div class="pl-top"><span class="pl-star">⭐</span><div class="pl-txt"><span class="pl-tag">برنامج الولاء</span><h3>اجمع نقاط مع كل طلب</h3><p><b>50%</b> من قيمة كل طلب بتتحول لنقاط، وبدّلها بكود خصم على طلبك الجاي.</p></div><button type="button">⭐ شوف نقاطي</button></div><div class="pl-steps"><div><i>1</i><span><b>اطلب</b><small>من الموقع أو الفرع</small></span></div><div><i>2</i><span><b>اجمع</b><small>50% من الطلب نقاط</small></span></div><div><i>3</i><span><b>بدّل</b><small>بكود خصم لطلبك الجاي</small></span></div></div>';
+    l.querySelector('button').onclick=function(){ var t=document.querySelector('#rrTabs [data-t=pts]'); if(t) t.click(); };
+    grid.parentNode.insertBefore(l,grid);
+  }
+  var f=document.querySelector('footer');
+  if(f&&!f.classList.contains('pro-foot')){
+    f.classList.add('pro-foot');
+    var logo=(document.querySelector('.logo-wrap img')||{}).src||'';
+    f.innerHTML='<div class="pf-in"><div><div class="pf-brand"><img src="'+logo+'" alt="">Red Roosters</div><p>أروق ديك في مصر 🐓 دجاج مقرمش وساندوتشات وبرجر وصواني بجودة عالية وأسعار تنافسية.</p></div>'+
+      '<div><h4>المنيو</h4><button class="l" data-s="offers">العروض</button><button class="l" data-s="nashville">ناشڤيل</button><button class="l" data-s="siniya">الصواني</button><button class="l" data-s="family-meals">الوجبات العائلية</button></div>'+
+      '<div><h4>خدماتنا</h4><button class="l" data-s="branches">الفروع</button><button class="l" data-s="notes">ملحوظات هامة</button><button class="l" data-s="about">عنّا</button><button class="l" data-pts="1">⭐ نقاطي</button></div>'+
+      '<div><h4>تواصل معنا</h4><a href="tel:0237721525">📞 0237721525</a><a href="https://wa.me/201023278000" target="_blank" rel="noopener">💬 واتساب 01023278000</a><a href="https://www.facebook.com/redrooster.eg/" target="_blank" rel="noopener">📘 فيسبوك</a><div class="pf-pay"><span>💵 كاش</span><span>📱 فودافون كاش</span><span>🏦 إنستا باي</span></div></div></div>'+
+      '<div class="pf-copy"><span>&copy; 2026 <strong>Red Roosters</strong> — جميع الحقوق محفوظة</span><span>فرع فيصل المريوطية</span></div>';
+    f.addEventListener('click',function(e){ var b=e.target.closest('button.l'); if(!b) return;
+      if(b.dataset.s){ showSection(b.dataset.s); } else if(b.dataset.pts){ var t=document.querySelector('#rrTabs [data-t=pts]'); if(t) t.click(); } });
+  }
+})();
+</script>
+
+<style id="rr-pro2">
+.pro-loyal{display:block!important;position:relative;overflow:hidden;padding:26px 28px 22px!important;border-radius:30px!important;
+  background:radial-gradient(520px 260px at 100% 0%,rgba(245,166,35,.5),transparent 62%),radial-gradient(420px 240px at 0% 100%,rgba(217,43,43,.45),transparent 60%),linear-gradient(135deg,#150d0c,#3b0d0d 65%,#6e1414)!important;
+  box-shadow:0 30px 60px -30px rgba(60,10,10,.9)!important}
+.pro-loyal::before{content:"";position:absolute;inset:0;background:radial-gradient(circle,rgba(255,255,255,.07) 1.2px,transparent 1.6px) 0 0/22px 22px;pointer-events:none}
+.pl-top{position:relative;display:flex;align-items:center;gap:18px}
+.pl-star{flex:none;width:68px;height:68px;border-radius:22px;display:grid;place-items:center;font-size:2.1rem;
+  background:linear-gradient(145deg,#FFD66B,#F5A623);box-shadow:0 14px 28px -10px rgba(245,166,35,.8),inset 0 -4px 0 rgba(0,0,0,.12);transform:rotate(-6deg)}
+.pl-txt{flex:1;min-width:0}
+.pl-tag{display:inline-block;margin-bottom:6px;padding:3px 12px;border-radius:50px;background:rgba(245,166,35,.18);border:1px solid rgba(245,166,35,.5);color:#FFD66B;font:800 .74rem 'Cairo',sans-serif}
+.pro-loyal h3{font:900 1.55rem/1.2 'Tajawal',sans-serif!important;margin:0 0 4px!important}
+.pro-loyal p{margin:0!important;color:#eadcd4;font-size:.96rem;line-height:1.7}
+.pro-loyal p b{color:#FFD66B;font-size:1.1em}
+.pro-loyal .pl-top>button{flex:none;margin:0!important;padding:14px 26px!important;border-radius:16px!important;font-size:1rem!important;
+  background:linear-gradient(135deg,#FFD66B,#F5A623)!important;box-shadow:0 14px 26px -10px rgba(245,166,35,.8)}
+.pl-steps{position:relative;display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:20px}
+.pl-steps div{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:16px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12)}
+.pl-steps i{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:#F5A623;color:#2B1408;font:900 .95rem 'Tajawal',sans-serif;font-style:normal}
+.pl-steps b{display:block;color:#fff;font-size:.95rem}.pl-steps small{display:block;color:#bfaea5;font-size:.76rem;font-weight:600}
+@media(max-width:700px){
+  .pro-loyal{padding:20px 16px 16px!important;border-radius:24px!important}
+  .pl-top{flex-wrap:wrap;gap:12px}.pl-star{width:54px;height:54px;font-size:1.7rem;border-radius:18px}
+  .pro-loyal h3{font-size:1.25rem!important}
+  .pro-loyal .pl-top>button{width:100%}
+  .pl-steps{grid-template-columns:1fr;gap:8px}.pl-steps div{padding:9px 12px}
+}
+.cat-card[onclick*="nashville"] .cat-icon,.cat-card[onclick*="new-items"] .cat-icon{background:#1a1210!important;--z:1;--o:50% 50%}
+.cat-card[onclick*="nashville"] .cat-icon img,.cat-card[onclick*="new-items"] .cat-icon img{transform:none!important;object-fit:cover!important;object-position:center!important}
+.category-grid .cat-card[onclick*="nashville"]:hover .cat-icon img,.category-grid .cat-card[onclick*="new-items"]:hover .cat-icon img{transform:scale(1.06)!important}
+</style>
+
+<style id="rr-pro3">
+/* ناشڤيل (ريد ناش ميل لارج): نقص الشريط الأحمر من فوق وتكبير الأكل */
+.cat-card[onclick*="nashville"] .cat-icon{background:#e9d9cf!important}
+.cat-card[onclick*="nashville"] .cat-icon img{object-fit:cover!important;transform-origin:50% 100%!important;transform:scale(1.28)!important}
+.category-grid .cat-card[onclick*="nashville"]:hover .cat-icon img{transform:scale(1.34)!important}
+/* جديد (مانجو فاير): الساندوتش كامل في النص */
+.cat-card[onclick*="new-items"] .cat-icon{background:#f2f2f2!important}
+.cat-card[onclick*="new-items"] .cat-icon img{object-fit:cover!important;transform-origin:50% 50%!important;transform:translateY(-13%) scale(.86)!important}
+.category-grid .cat-card[onclick*="new-items"]:hover .cat-icon img{transform:translateY(-13%) scale(.9)!important}
+</style>
 </body>
 </html>
