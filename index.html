@@ -5204,5 +5204,68 @@ footer.pro-foot{background:var(--p-ink)!important;color:#d9cfc9;padding:0!import
     if(Math.abs(d)>4) ly=y; tk=false; }); },{passive:true});
 })();
 </script>
+
+<style id="rr-plate-wide">
+/* ═════ كروت أفقية (كمبيوتر) بطبق دوّار في قطع دايري — لكل قوائم الوجبات والساندوتشات ═════ */
+#nashville .menu-grid,#individual-meals .menu-grid,#family-meals .menu-grid,#kids-meals .menu-grid{grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:96px 22px;padding-top:86px}
+@media(max-width:700px){
+  #nashville .menu-grid,#individual-meals .menu-grid,#family-meals .menu-grid,#kids-meals .menu-grid{grid-template-columns:1fr!important;gap:92px 0!important;padding-top:84px!important}
+}
+@keyframes plSwing{0%,100%{transform:rotate(-7deg) scale(1)}50%{transform:rotate(7deg) scale(1.04)}}
+@media(min-width:701px){
+  #beef-sandwiches .menu-grid,#chicken-sandwiches .menu-grid,#twister-supreme .menu-grid,#nashville .menu-grid,#individual-meals .menu-grid,#family-meals .menu-grid,#kids-meals .menu-grid{
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:36px 44px!important;padding-top:6px!important}
+  .menu-grid .card.plate-card{flex-direction:row-reverse!important;align-items:stretch;background:none!important;box-shadow:none!important;border-radius:0!important;min-height:236px}
+  .plate-card:hover{transform:none!important}
+  .plate-card .pl-wrap{position:relative;top:auto;left:auto;margin:0 -45px 0 0;flex:none;width:236px;height:236px;align-self:center;z-index:3}
+  .plate-card>.card-body{flex:1;min-width:0;border-radius:24px;padding:30px 30px 26px 66px!important;justify-content:center;
+    background:linear-gradient(150deg,#F58220,#F26A1B);
+    -webkit-mask:radial-gradient(circle 128px at -71px 50%,transparent 98.5%,#000 100%);mask:radial-gradient(circle 128px at -71px 50%,transparent 98.5%,#000 100%);
+    transition:transform .35s cubic-bezier(.22,.8,.2,1)}
+  .plate-card:nth-child(4n+2)>.card-body,.plate-card:nth-child(4n+3)>.card-body{background:linear-gradient(150deg,#FBB040,#F9A22B)}
+  .plate-card:hover>.card-body{transform:translateY(-4px)}
+  .plate-card .card-name{color:#151010!important;font-size:1.4rem!important}
+  .plate-card .card-name-en{color:rgba(21,16,16,.6)!important}
+  .plate-card .card-desc{color:rgba(21,16,16,.82)!important;-webkit-line-clamp:3}
+  .plate-card .price-badge{color:#151010!important}
+  .plate-card .pl-ring text{fill:#151010}
+  .plate-card .pl-ring{opacity:1}
+  .plate-card .pl-tag{top:14px;right:14px;background:rgba(255,255,255,.55);color:#7A3A00}
+  .plate-card .rr-fav{top:14px;left:auto;right:84px;width:32px;height:32px}
+}
+/* الصور من فوق (لو متاحة) بتلف لفة كاملة، وغير كده بتتمايل بشكل لطيف */
+.pl-wrap .card-img{animation:plSwing 6s ease-in-out infinite!important}
+.pl-wrap.topview .card-img{animation:plSpin 26s linear infinite!important}
+.pl-wrap .card-img{border-color:#FFF4E4!important}
+</style>
+<script>
+(function(){
+  /* لو عندك صور من فوق (top-view) حطها هنا: اسم الصنف بالعربي (زي ما هو في المنيو) : رابط الصورة */
+  window.RR_TOPVIEW=window.RR_TOPVIEW||{};
+  var RING='<svg class="pl-ring" viewBox="0 0 200 200" aria-hidden="true"><defs><path id="plc" d="M100,100 m-93,0 a93,93 0 1,1 186,0 a93,93 0 1,1 -186,0"/></defs>'+
+    '<g class="r1"><text><textPath href="#plc">RED ROOSTERS ★ FRIED CHICKEN &amp; BURGER ★ RED ROOSTERS ★ FRIED CHICKEN &amp; BURGER ★</textPath></text></g></svg>';
+  var io='IntersectionObserver' in window?new IntersectionObserver(function(es){es.forEach(function(e){e.target.classList.toggle('spin',e.isIntersecting)})},{rootMargin:'120px'}):null;
+  ['nashville','individual-meals','family-meals','kids-meals'].forEach(function(id){
+    var sec=document.getElementById(id); if(!sec) return;
+    [].forEach.call(sec.querySelectorAll('.card'),function(c,i){
+      if(c.classList.contains('plate-card')) return;
+      var img=c.querySelector('img.card-img'); if(!img) return;
+      c.classList.add('plate-card');
+      var w=document.createElement('div'); w.className='pl-wrap'; w.innerHTML=RING.replace('id="plc"','id="plc'+id+i+'"').replace('#plc"','#plc'+id+i+'"');
+      w.appendChild(img); c.insertBefore(w,c.firstChild);
+      var tag=c.classList.contains('new-item')?'جديد':(i===0?'مميز':'');
+      if(tag){ var s=document.createElement('span'); s.className='pl-tag'; s.textContent=tag; c.appendChild(s); }
+      if(io) io.observe(w); else w.classList.add('spin');
+    });
+  });
+  /* ربط صور top-view بالأصناف (لو اتحطت) */
+  document.querySelectorAll('.plate-card').forEach(function(c){
+    var n=c.querySelector('.card-name'); if(!n) return;
+    var cl=n.cloneNode(true); cl.querySelectorAll('.card-name-en').forEach(function(x){x.remove()});
+    var key=cl.textContent.replace(/\s+/g,' ').trim(), url=window.RR_TOPVIEW[key];
+    if(url){ var im=c.querySelector('.pl-wrap img.card-img'); if(im){ im.src=url; c.querySelector('.pl-wrap').classList.add('topview'); } }
+  });
+})();
+</script>
 </body>
 </html>
