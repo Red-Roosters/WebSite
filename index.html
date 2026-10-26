@@ -1148,6 +1148,10 @@ body.no-scroll { overflow: hidden; }
 }
 .coupon-msg { font-size: .8rem; margin: -4px 0 8px; min-height: 1em; }
 .coupon-msg.ok { color: #0B6E4F; } .coupon-msg.bad { color: #e11d48; }
+.coupon-box { margin-top: 20px; }
+.coupon-box .form-title { margin-bottom: 10px; }
+.coupon-box .coupon-row { margin-bottom: 6px; }
+.coupon-box .coupon-msg { margin: 0 0 14px; min-height: 1.2em; }
 .sum-row.disc { color: #0B6E4F; font-weight: 700; }
 .delivery-time-note { margin-top: 10px; padding: 10px 12px; background: rgba(217,43,43,.07); border: 1px dashed rgba(217,43,43,.35); border-radius: 10px; font-size: .92rem; font-weight: 700; color: var(--charcoal); text-align: center; line-height: 1.6; }
 @media (max-width: 640px) { .item-modal { width: calc(100% - 24px); } }
@@ -3777,7 +3781,7 @@ footer.pro-foot{background:var(--p-ink)!important;color:#d9cfc9;padding:0!import
             { name: 'الطالبية التأمين الصحي', fee: 55 },
             { name: 'العمرانية الشرقية', fee: 65 },
             { name: 'العمرانية الغربية', fee: 55 },
-            { name: 'المحولات - الهرم', fee: 40 },
+            { name: 'المحولات - الهرم', fee: 45 },
             { name: 'المريوطية - هرم 1', fee: 35 },
             { name: 'المريوطية - هرم 2', fee: 45 },
             { name: 'المريوطية - هرم 3', fee: 55 },
@@ -4055,19 +4059,25 @@ footer.pro-foot{background:var(--p-ink)!important;color:#d9cfc9;padding:0!import
 
     /* ═══ الكوبون (بيتضاف تلقائي في السلة) ═══ */
     const foot = $('cartFoot');
-    const cRow = document.createElement('div');
-    cRow.innerHTML = `
-        <div class="coupon-row"><input id="couponInput" placeholder="كود الخصم 🎟️" autocomplete="off"><button type="button" id="couponBtn">تطبيق</button></div>
-        <div class="coupon-msg" id="couponMsg"></div>
-        <div class="sum-row disc" id="cartDiscRow" style="display:none"><span>🎟️ خصم الكوبون</span><span id="cartDisc"></span></div>`;
-    foot.insertBefore(cRow, foot.firstChild);
-    if (!Object.keys(CONFIG.coupons).length) cRow.querySelector('.coupon-row').style.display = 'none';
+    const dRow = document.createElement('div');
+    dRow.innerHTML = `<div class="sum-row disc" id="cartDiscRow" style="display:none"><span>🎟️ خصم الكوبون</span><span id="cartDisc"></span></div>`;
+    foot.insertBefore(dRow, foot.firstChild);
+    /* خانة كود الخصم: في صفحة تأكيد الطلب، قبل زرار الإرسال على طول */
+    const cBox = document.createElement('div');
+    cBox.className = 'coupon-box';
+    cBox.innerHTML = `
+        <div class="form-title">🎟️ كود الخصم</div>
+        <div class="coupon-row"><input id="couponInput" placeholder="اكتب كود الخصم هنا" autocomplete="off"><button type="button" id="couponBtn">تطبيق</button></div>
+        <div class="coupon-msg" id="couponMsg"></div>`;
+    const subBtn = $('checkoutForm').querySelector('[type=submit]');
+    subBtn.parentNode.insertBefore(cBox, subBtn);
+    if (!Object.keys(CONFIG.coupons).length) cBox.style.display = 'none';
 
     function setCouponMsg(t, ok) { const m = $('couponMsg'); m.textContent = t; m.className = 'coupon-msg ' + (ok ? 'ok' : 'bad'); }
     function refreshCouponMsg() {
         const d = coupon.def;
         if (d.min && subtotal() < d.min) setCouponMsg(`الكوبون يحتاج طلب بقيمة ${fmt(d.min)} أو أكتر`, false);
-        else setCouponMsg(`✅ تم تطبيق ${coupon.code}`, true);
+        else setCouponMsg(`✅ تم تطبيق ${coupon.code} — خصم ${fmt(discount())}`, true);
     }
     /* ═══ الكوبون لأول طلب بس: بنسجّل الكود اللي استخدم (على الجهاز + رقم الموبايل) ═══ */
     const normPhone = p => toEn(p || '').replace(/\D/g, '').replace(/^(0020|20)/, '0').slice(-11);
@@ -4075,11 +4085,13 @@ footer.pro-foot{background:var(--p-ink)!important;color:#d9cfc9;padding:0!import
     function couponUsed(code, phone) {
         const u = usedCoupons()[code]; if (!u) return false;
         const p = normPhone(phone);
-        return !!u.device || (p.length === 11 && (u.phones || []).includes(p));
+        /* التحقق بالرقم بس — الجهاز مش بيتحسب (قديم: u.device بقى متجاهَل) */
+        return p.length === 11 && (u.phones || []).includes(p);
     }
     function markCouponUsed(code, phone, dev = true) {
         const all = usedCoupons(), u = all[code] || { phones: [] }, p = normPhone(phone);
-        if (dev) u.device = true; u.at = new Date().toISOString();
+        u.at = new Date().toISOString();
+        if (!u.phones) u.phones = [];
         if (p.length === 11 && !u.phones.includes(p)) u.phones.push(p);
         all[code] = u; LS.set('rr_used_coupons', all);
     }
@@ -4116,7 +4128,7 @@ footer.pro-foot{background:var(--p-ink)!important;color:#d9cfc9;padding:0!import
         if (!coupon || !coupon.def.firstOrderOnly || !CONFIG.couponApi) return;
         const p = normPhone(phone); if (p.length !== 11) return;
         const code = coupon.code, used = await checkCoupon(code, p);
-        if (used === true && coupon && coupon.code === code) { markCouponUsed(code, p, false); dropUsedCoupon(p); }
+        if (used === true && coupon && coupon.code === code) { markCouponUsed(code, p); dropUsedCoupon(p); }
     }
 
     window.RR_API = CONFIG.couponApi;
@@ -4124,20 +4136,33 @@ footer.pro-foot{background:var(--p-ink)!important;color:#d9cfc9;padding:0!import
         setCouponMsg('⏳ بنتحقق من الكود...', true);
         try {
             const r = await fetch(apiUrl('action=validate&code=' + encodeURIComponent(code))), j = await r.json();
-            if (j && j.ok && j.valid) { coupon = { code, def: { type: 'fixed', value: +j.value, loyalty: true } }; render(); return; }
-            coupon = null; setCouponMsg(j && j.ok && j.used ? '❌ كود النقاط ده اتستخدم قبل كده' : '❌ كود النقاط غير صحيح', false); render();
-        } catch (e) { coupon = null; setCouponMsg('⚠️ تعذّر التحقق من الكود، جرّب تاني', false); render(); }
+            if (j && j.ok && j.valid) { coupon = { code, def: { type: 'fixed', value: +j.value, loyalty: true } }; render(); renderSummary(); return; }
+            coupon = null; setCouponMsg(j && j.ok && j.used ? '❌ كود النقاط ده اتستخدم قبل كده' : '❌ كود النقاط غير صحيح', false); render(); renderSummary();
+        } catch (e) { coupon = null; setCouponMsg('⚠️ تعذّر التحقق من الكود، جرّب تاني', false); render(); renderSummary(); }
     }
-    $('couponBtn').addEventListener('click', () => {
+    $('couponBtn').addEventListener('click', async () => {
         const code = $('couponInput').value.trim().toUpperCase();
-        if (!code) { coupon = null; setCouponMsg('', true); render(); return; }
+        const upd = () => { render(); renderSummary(); };
+        if (!code) { coupon = null; setCouponMsg('', true); upd(); return; }
         const def = CONFIG.coupons[code];
         if (!def && /^RR-/.test(code) && CONFIG.couponApi) { applyLoyalty(code); return; }
-        if (!def) { coupon = null; setCouponMsg('❌ الكوبون غير صحيح', false); render(); return; }
-        if (def.firstOrderOnly && couponUsed(code, (LS.get('rr_customer', {}) || {}).phone)) { coupon = null; setCouponMsg(USED_MSG(code), false); render(); return; }
-        coupon = { code, def }; render();
-        if (def.firstOrderOnly) serverDrop((LS.get('rr_customer', {}) || {}).phone || $('f_phone').value);
+        if (!def) { coupon = null; setCouponMsg('❌ الكوبون غير صحيح', false); upd(); return; }
+        if (def.firstOrderOnly) {
+            /* التحقق بالرقم بس: لازم رقم الموبايل يكون مكتوب وصحيح */
+            const ph = $('f_phone').value;
+            if (!phoneOk(ph)) {
+                coupon = null; setCouponMsg('📞 اكتب رقم موبايلك الأول (11 رقم) عشان نتحقق من الكود', false); upd();
+                $('f_phone').focus(); return;
+            }
+            if (couponUsed(code, ph)) { coupon = null; setCouponMsg(USED_MSG(code), false); upd(); return; }
+            setCouponMsg('⏳ بنتحقق من الكود...', true);
+            const used = await checkCoupon(code, ph);
+            if (normPhone($('f_phone').value) !== normPhone(ph)) { setCouponMsg('📞 رقم الموبايل اتغيّر، دوس تطبيق تاني', false); return; }
+            if (used === true) { markCouponUsed(code, ph); coupon = null; setCouponMsg(USED_MSG(code), false); upd(); return; }
+        }
+        coupon = { code, def }; upd();
     });
+    $('couponInput').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('couponBtn').click(); } });
 
     /* ═══ فتح/قفل ═══ */
     function openEl(id) { $(id).classList.add('open'); $('rrOverlay').classList.add('open'); document.body.classList.add('no-scroll'); }
@@ -4448,7 +4473,7 @@ imChips.previousElementSibling.style.display = noChips ? 'none' : '';
             if (sbtn) sbtn.disabled = false;
             if (r === 'used') {
                 if (pre) pre.close();
-                markCouponUsed(coupon.code, $('f_phone').value, false); dropUsedCoupon($('f_phone').value); return;
+                markCouponUsed(coupon.code, $('f_phone').value); dropUsedCoupon($('f_phone').value); return;
             }
         }
 
@@ -4967,10 +4992,7 @@ new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:tru
     var done=function(){ hint.textContent='✅ تم نسخ الكود'; setTimeout(function(){ hint.textContent='اضغط للنسخ 📋'; },2200); };
     try{ navigator.clipboard.writeText('RED20').then(done,done); }catch(e){ done(); }
   });
-  /* "يلا نطلب": بنطبّق الكود في السلة تلقائي */
-  go.addEventListener('click',function(){
-    setTimeout(function(){ var i=document.getElementById('couponInput'), b=document.getElementById('couponBtn'); if(i&&b){ i.value='RED20'; b.click(); } },60);
-  });
+  /* العميل بيكتب الكود بنفسه في صفحة تأكيد الطلب (مفيش تطبيق تلقائي) */
 })();
 </script>
 
@@ -5042,7 +5064,7 @@ new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:tru
       [2000,4000,6000,10000].forEach(function(t){ h+='<div class="pt-tier"><span>خصم '+(t/PER)+' ج<small>'+t+' نقطة</small></span><button class="pt-btn" data-p="'+t+'"'+(p>=t?'':' disabled')+'>استبدل</button></div>'; });
       var m=mine().filter(function(c){return c.phone===ph});
       if(m.length){ h+='<div class="pt-h">🎟️ أكوادي</div>'; m.forEach(function(c){ h+='<div class="pt-code"><span><strong>'+c.code+'</strong><br><small>خصم '+c.value+' ج</small></span><button class="pt-btn" data-use="'+c.code+'">استخدم</button></div>'; }); }
-      out.innerHTML=h+'<p class="pt-note">الكود صالح لاستخدام واحد، وبتكتبه في خانة الكوبون في السلة.</p>';
+      out.innerHTML=h+'<p class="pt-note">الكود صالح لاستخدام واحد، وبتكتبه في خانة كود الخصم في صفحة تأكيد الطلب.</p>';
     }).catch(function(){ out.innerHTML='<p class="pt-note">⚠️ تعذّر تحميل النقاط، جرّب تاني بعد شوية</p>'; });
   }
   $('ptOut').addEventListener('click',function(e){
