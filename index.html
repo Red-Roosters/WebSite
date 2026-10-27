@@ -5483,7 +5483,7 @@ new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:tru
 .tk-step i{display:block;width:26px;height:26px;border-radius:50%;margin:0 auto 6px;background:#eee;line-height:26px;font-style:normal;font-size:.8rem;position:relative;z-index:1}
 .tk-step.on{color:#1E1411;font-weight:800}.tk-step.on i{background:#D92B2B;color:#fff}
 .tk-step.cur i{box-shadow:0 0 0 5px rgba(217,43,43,.18)}
-.tk-cancel{margin:12px 0 2px;padding:10px 12px;border-radius:12px;background:#f3f3f3;color:#555;font-size:.88rem;font-weight:700}
+.tk-cancel{margin:12px 0 2px;padding:11px 13px;border-radius:12px;background:#FDECEC;border:1px solid #f3b9b9;color:#9E1B1B;font-size:.9rem;font-weight:800;line-height:1.7}.tk-cancel small{color:#7a5a5a;font-weight:600}
 .tk-wait{margin:12px 0 2px;font-size:.88rem;color:#6B6B6B}
 .tk-more{margin-top:10px;font-size:.88rem}
 .tk-more summary{cursor:pointer;font-weight:800;color:#D92B2B}
@@ -5544,7 +5544,7 @@ new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:tru
     h+='<div class="tk-meta">'+when(o?o.time:e.t)+(o?' · '+o.total+' ج.م':'')+(type==='pickup'?' · استلام من الفرع':' · دليفري')+'</div>';
     if(o===undefined) h+='<div class="tk-wait">⏳ بنجيب حالة الطلب...</div>';
     else if(o===null) h+='<div class="tk-wait">'+(Date.now()-e.t<600000?'⏳ بنسجّل طلبك.. ثواني ويظهر هنا.':'مش لاقيين الطلب ده. لو محتاج مساعدة كلمنا على الواتساب.')+'</div>';
-    else if(st==='cancelled') h+='<div class="tk-cancel">❌ الطلب ده اتلغى. لو ده غلط كلمنا على الواتساب.</div>';
+    else if(st==='cancelled') h+='<div class="tk-cancel">❌ الطلب ده اتلغى'+(o.reason?'<br>السبب: '+esc(o.reason):'')+'<br><small>لو محتاج مساعدة أو ده غلط كلمنا على الواتساب.</small></div>';
     else{
       var idx=S.map(function(x){return x[0]}).indexOf(st);
       h+='<div class="tk-steps">'+S.map(function(x,i){return '<div class="tk-step'+(i<=idx?' on':'')+(i===idx?' cur':'')+'"><i>'+x[2]+'</i>'+esc(x[1])+'</div>'}).join('')+'</div>';
@@ -5558,12 +5558,15 @@ new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:tru
     }
     return h+'</div>';
   }
-  function render(){ var a=get(KEY); $('tkList').innerHTML=a.length?a.map(card).join(''):'<div class="tk-empty">مفيش طلبات على الجهاز ده لسه 🍗<br>اطلب دلوقتي، أو تتبّع طلب برقمه من تحت.</div>'; }
+  function render(){ var a=get(KEY), ch=false; a.forEach(function(e){ if(e.status==='cancelled'&&!e.seen){ e.seen=true; ch=true; } }); $('tkList').innerHTML=a.length?a.map(card).join(''):'<div class="tk-empty">مفيش طلبات على الجهاز ده لسه 🍗<br>اطلب دلوقتي، أو تتبّع طلب برقمه من تحت.</div>'; if(ch){ put(KEY,a); updatePill(); } }
 
   /* ── زرار التتبع في الهيدر: بيبان أوضح لما يكون فيه طلب شغال ── */
   function updatePill(){
     var b=$('rrTkBtn'); if(!b) return; var t=b.querySelector('.tx');
-    var a=get(KEY).filter(function(e){return !FINAL[e.status]&&Date.now()-e.t<864e5});
+    var all=get(KEY), now=Date.now();
+    var a=all.filter(function(e){return !FINAL[e.status]&&now-e.t<864e5});
+    var c=all.filter(function(e){return e.status==='cancelled'&&!e.seen&&now-e.t<864e5});
+    if(c.length){ b.classList.add('act'); t.textContent='طلبك اتلغى · اعرف السبب'; b.title='اضغط لمعرفة سبب الإلغاء'; return; }
     if(!a.length){ b.classList.remove('act'); t.textContent='تتبع طلبي'; b.title='تتبع طلبي'; return; }
     var e=a[0], S=steps(e.type).filter(function(x){return x[0]===e.status})[0];
     b.classList.add('act'); t.textContent='طلبك: '+(S?S[1]:'قيد المراجعة'); b.title='اضغط لمتابعة طلبك';
