@@ -2709,6 +2709,7 @@ footer.pro-foot{background:var(--p-ink)!important;color:#d9cfc9;padding:0!import
                 <li><button onclick="showSection('drinks')">🥤 مشروبات</button></li>
                 <li><button onclick="showSection('about')">عنّا</button></li>
                 <li><button onclick="showSection('branches')">الفروع</button></li>
+                <li><button onclick="window.rrTrackOpen&&rrTrackOpen()">📦 تتبع طلبي</button></li>
                 <li><button onclick="showSection('notes')">ملحوظات</button></li>
             </ul>
         </nav>
@@ -2739,6 +2740,7 @@ footer.pro-foot{background:var(--p-ink)!important;color:#d9cfc9;padding:0!import
         <button onclick="showSection('drinks'); closeMobileNav()">🥤 المشروبات</button>
         <button onclick="showSection('about'); closeMobileNav()">ℹ️ عنّا</button>
         <button onclick="showSection('branches'); closeMobileNav()">📍 الفروع</button>
+        <button onclick="closeMobileNav(); window.rrTrackOpen&&rrTrackOpen()">📦 تتبع طلبي</button>
         <button onclick="showSection('notes'); closeMobileNav()">📝 ملحوظات هامة</button>
     </div>
 </div>
@@ -3781,7 +3783,7 @@ footer.pro-foot{background:var(--p-ink)!important;color:#d9cfc9;padding:0!import
             { name: 'الطالبية التأمين الصحي', fee: 55 },
             { name: 'العمرانية الشرقية', fee: 65 },
             { name: 'العمرانية الغربية', fee: 55 },
-            { name: 'المحولات - الهرم', fee: 40 },
+            { name: 'المحولات - الهرم', fee: 45 },
             { name: 'المريوطية - هرم 1', fee: 35 },
             { name: 'المريوطية - هرم 2', fee: 45 },
             { name: 'المريوطية - هرم 3', fee: 55 },
@@ -4483,6 +4485,7 @@ imChips.previousElementSibling.style.display = noChips ? 'none' : '';
         const fmtT = s => { const [h, m] = s.split(':').map(Number); return ((h % 12) || 12) + ':' + String(m).padStart(2, '0') + ' ' + (h >= 12 ? 'م' : 'ص'); };
         const sub = subtotal(), d = discount(), total = sub - d + area.fee;
         const num = id => toEn(v(id));
+        const orderId = 'RR' + Date.now().toString(36).toUpperCase().slice(-7);
 
         const itemLines = [];
         cart.forEach((i, n) => {
@@ -4494,6 +4497,7 @@ imChips.previousElementSibling.style.display = noChips ? 'none' : '';
 
         const lines = [
             '🐓 *طلب جديد - Red Roosters*',
+            '🔖 *رقم الطلب:* ' + orderId,
             '━━━━━━━━━━━━━━',
             '👤 *الاسم:* ' + v('f_name'),
             '📞 *الموبايل:* ' + num('f_phone'),
@@ -4526,15 +4530,22 @@ imChips.previousElementSibling.style.display = noChips ? 'none' : '';
         const data = pickup ? Object.assign({}, saved, { name: v('f_name'), phone: v('f_phone') }) : { area: +areaVal.value };
         if (!pickup) fields.forEach(f => data[f] = v('f_' + f));
         LS.set('rr_customer', data);
+        /* حفظ الأوردر في الشيت عشان الداشبورد والتتبع (مش بيعطّل إرسال الواتساب) */
+        try {
+            const addr = pickup ? ('استلام من الفرع — ' + fmtT(v('f_ptime'))) : [area.name, v('f_street'), v('f_station') && ('محطة ' + v('f_station')), 'عمارة ' + v('f_building'), 'دور ' + v('f_floor'), 'شقة ' + v('f_apt'), v('f_landmark') && ('علامة: ' + v('f_landmark'))].filter(Boolean).join(' - ');
+            window.rrTrackSave && window.rrTrackSave({ id: orderId, name: v('f_name'), phone: num('f_phone'), phone2: pickup ? '' : num('f_phone2'), type: pickup ? 'pickup' : 'delivery', address: addr,
+                items: cart.map(i => ({ n: i.name, q: i.qty, p: i.price, o: i.opts || [], t: i.note || '' })), subtotal: sub, discount: d, coupon: d ? coupon.code : '', fee: area.fee, total: total, payment: $('f_pay').value, notes: v('f_notes') });
+        } catch (err) {}
 
         const waUrl = 'https://wa.me/' + CONFIG.phone + '?text=' + encodeURIComponent(lines);
         if (pre && !pre.closed) pre.location.href = waUrl; else window.open(waUrl, '_blank');
 
         if (coupon && coupon.def.firstOrderOnly && d > 0) markCouponUsed(coupon.code, v('f_phone'));
-        if (window.rrOrderHook) rrOrderHook({ phone: v('f_phone'), total: Math.max(0, subtotal() - d), code: (coupon && coupon.def.loyalty) ? coupon.code : '' });
+        if (window.rrOrderHook) rrOrderHook({ orderId: orderId, phone: v('f_phone'), total: Math.max(0, subtotal() - d), code: (coupon && coupon.def.loyalty) ? coupon.code : '' });
         cart = []; coupon = null; $('couponInput').value = ''; setCouponMsg('', true);
         LS.set('rr_cart', cart); render(); closeAll();
-        toast('تم تجهيز طلبك ✅ اضغط إرسال في الواتساب لتأكيده');
+        toast('تم تجهيز طلبك ✅ رقم الطلب ' + orderId + ' — اضغط إرسال في الواتساب لتأكيده');
+        if (window.rrTrackOpen) setTimeout(() => window.rrTrackOpen(orderId), 1200);
     });
 
     /* ═══ Toast ═══ */
@@ -5075,7 +5086,7 @@ new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:tru
   });
   /* بعد كل طلب: نسجّل النقاط (قيد التأكيد) ونحرق كود النقاط المستخدم */
   window.rrOrderHook=function(o){ var ph=norm(o.phone); if(ph.length!==11) return;
-    if(o.total>0) post({action:'order',phone:ph,total:o.total,orderId:'RR'+Date.now()}).catch(function(){});
+    if(o.total>0) post({action:'order',phone:ph,total:o.total,orderId:o.orderId||('RR'+Date.now())}).catch(function(){});
     if(o.code) post({action:'useCode',code:o.code}).catch(function(){}); };
 })();
 </script>
@@ -5440,5 +5451,133 @@ new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:tru
 })();
 </script>
 
+
+<style>
+#rrTkOv{position:fixed;inset:0;background:rgba(20,12,10,.55);z-index:2400;opacity:0;pointer-events:none;transition:opacity .3s}
+#rrTkOv.open{opacity:1;pointer-events:auto}
+#rrTkSheet{position:fixed;left:50%;bottom:0;width:min(600px,100%);max-height:92dvh;z-index:2410;background:#fff;border-radius:28px 28px 0 0;transform:translate(-50%,105%);visibility:hidden;transition:transform .4s cubic-bezier(.2,.8,.2,1),visibility 0s linear .4s;display:flex;flex-direction:column}
+#rrTkSheet.open{transform:translate(-50%,0);visibility:visible;transition:transform .4s cubic-bezier(.2,.8,.2,1),visibility 0s}
+#rrTkSheet .tk-h{display:flex;justify-content:space-between;align-items:center;padding:16px 20px 8px;font:900 1.3rem "Tajawal",sans-serif}
+#rrTkSheet .tk-h button{width:38px;height:38px;border-radius:50%;border:2px solid #171211;background:#fff;font-weight:900;cursor:pointer}
+#rrTkBody{overflow:auto;padding:4px 18px 24px;-webkit-overflow-scrolling:touch}
+.tk-card{border:1.5px solid #eadfd8;border-radius:18px;padding:14px;margin:12px 0;background:#fff}
+.tk-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.tk-id{font:900 1.05rem "Tajawal",sans-serif;letter-spacing:.5px;direction:ltr}
+.tk-badge{font-size:.78rem;font-weight:800;padding:4px 10px;border-radius:20px;background:#FDECEC;color:#D92B2B;white-space:nowrap}
+.tk-badge.done{background:#E3F6EC;color:#0B6E4F}.tk-badge.bad{background:#eee;color:#666}
+.tk-meta{font-size:.82rem;color:#6B6B6B;margin-top:4px}
+.tk-steps{display:flex;margin:16px 0 4px}
+.tk-step{flex:1;text-align:center;font-size:.68rem;color:#9a8f8a;position:relative;line-height:1.35}
+.tk-step::before{content:"";position:absolute;top:12px;left:50%;width:100%;height:3px;background:#eee}
+.tk-step:first-child::before{display:none}
+.tk-step.on::before{background:#D92B2B}
+.tk-step i{display:block;width:26px;height:26px;border-radius:50%;margin:0 auto 6px;background:#eee;line-height:26px;font-style:normal;font-size:.8rem;position:relative;z-index:1}
+.tk-step.on{color:#1E1411;font-weight:800}.tk-step.on i{background:#D92B2B;color:#fff}
+.tk-step.cur i{box-shadow:0 0 0 5px rgba(217,43,43,.18)}
+.tk-cancel{margin:12px 0 2px;padding:10px 12px;border-radius:12px;background:#f3f3f3;color:#555;font-size:.88rem;font-weight:700}
+.tk-wait{margin:12px 0 2px;font-size:.88rem;color:#6B6B6B}
+.tk-more{margin-top:10px;font-size:.88rem}
+.tk-more summary{cursor:pointer;font-weight:800;color:#D92B2B}
+.tk-more .ln{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px dashed #eee}
+.tk-more small{color:#6B6B6B}
+.tk-more .sum{font-weight:800}
+.tk-find{margin-top:18px;padding-top:14px;border-top:2px dashed #eadfd8}
+.tk-find b{display:block;margin-bottom:8px}
+.tk-find .row{display:flex;gap:8px;flex-wrap:wrap}
+.tk-find input{flex:1;min-width:120px;padding:10px 12px;border:2px solid #eadfd8;border-radius:12px;font:600 .9rem "Cairo",sans-serif}
+.tk-find button{border:0;background:#1E1411;color:#fff;border-radius:12px;padding:0 18px;font:800 .9rem "Cairo",sans-serif;cursor:pointer;min-height:42px}
+#tkMsg{font-size:.82rem;color:#e11d48;margin-top:6px;min-height:1.1em}
+.tk-empty{text-align:center;color:#6B6B6B;padding:26px 6px;font-size:.95rem}
+</style>
+<div id="rrTkOv"></div>
+<div id="rrTkSheet" role="dialog" aria-label="تتبع الطلب"><div class="tk-h"><span>📦 تتبع طلبي</span><button id="rrTkX" aria-label="إغلاق">✕</button></div>
+<div id="rrTkBody"><div id="tkList"></div>
+<div class="tk-find"><b>🔎 تتبّع طلب برقمه</b><div class="row"><input id="tkId" placeholder="رقم الطلب RRxxxxxxx" autocomplete="off" style="direction:ltr;text-transform:uppercase"><input id="tkPh" type="tel" inputmode="numeric" maxlength="11" placeholder="رقم موبايلك"><button type="button" id="tkGo">تتبّع</button></div><div id="tkMsg"></div></div></div></div>
+<script>
+(function(){
+  var API=window.RR_API; if(!API) return;
+  var $=function(i){return document.getElementById(i)};
+  var KEY='rr_orders', QKEY='rr_order_queue', FINAL={delivered:1,cancelled:1}, cache={}, timer=null;
+  var norm=function(p){return String(p||'').replace(/[٠-٩]/g,function(d){return '٠١٢٣٤٥٦٧٨٩'.indexOf(d)}).replace(/\D/g,'').replace(/^(0020|20)/,'0').slice(-11)};
+  var esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
+  var get=function(k){try{return JSON.parse(localStorage.getItem(k)||'[]')||[]}catch(e){return []}};
+  var put=function(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}};
+  var url=function(q){return API+(API.indexOf('?')>-1?'&':'?')+q};
+  var PAY={cash:'كاش عند الاستلام',wallet:'محفظة إلكترونية',instapay:'إنستا باي'};
+  function steps(type){return [['new','تم الاستلام','🧾'],['confirmed','تم التأكيد','✅'],['preparing','بنجهّزه','👨‍🍳'],['out',type==='pickup'?'جاهز للاستلام':'خرج للتوصيل',type==='pickup'?'🏪':'🛵'],['delivered','تم التسليم','🎉']];}
+  function when(t){try{return new Date(t).toLocaleString('ar-EG',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'})}catch(e){return ''}}
+
+  /* ── حفظ الأوردر على السيرفر (مع إعادة المحاولة لو النت فصل) ── */
+  function send(o){return fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({action:'newOrder'},o)),keepalive:true})
+    .then(function(r){return r.json()}).then(function(j){ if(!j||!j.ok) throw 0; });}
+  function flush(){ var q=get(QKEY); if(!q.length) return; put(QKEY,[]);
+    q.forEach(function(o){ send(o).catch(function(){ var n=get(QKEY); n.push(o); put(QKEY,n.slice(-10)); }); }); }
+  window.rrTrackSave=function(o){
+    var a=get(KEY); a.unshift({id:o.id,phone:norm(o.phone),t:Date.now(),status:'new',type:o.type}); put(KEY,a.slice(0,10));
+    send(o).catch(function(){ var q=get(QKEY); q.push(o); put(QKEY,q.slice(-10)); });
+  };
+
+  /* ── جلب الحالة ── */
+  function track(e){return fetch(url('action=track&id='+encodeURIComponent(e.id)+'&phone='+e.phone)).then(function(r){return r.json()})
+    .then(function(j){ if(!j||!j.ok) throw 0; return j.found?j.order:null; });}
+  function refresh(force){
+    var a=get(KEY), jobs=a.filter(function(e){return force||!FINAL[e.status]}).slice(0,5).map(function(e){
+      return track(e).then(function(o){ if(o){ cache[e.id]=o; e.status=o.status; e.type=o.type; } else if(cache[e.id]===undefined) cache[e.id]=null; }).catch(function(){}); });
+    return Promise.all(jobs).then(function(){ put(KEY,a); if($('rrTkSheet').classList.contains('open')) render(); });
+  }
+
+  /* ── الرسم ── */
+  function card(e){
+    var o=cache[e.id], type=(o&&o.type)||e.type||'delivery', st=o?o.status:(e.status||'new'), S=steps(type);
+    var lbl=st==='cancelled'?'ملغي':(S.filter(function(x){return x[0]===st})[0]||S[0])[1];
+    var h='<div class="tk-card"><div class="tk-top"><span class="tk-id">#'+esc(e.id)+'</span><span class="tk-badge '+(st==='delivered'?'done':st==='cancelled'?'bad':'')+'">'+esc(lbl)+'</span></div>';
+    h+='<div class="tk-meta">'+when(o?o.time:e.t)+(o?' · '+o.total+' ج.م':'')+(type==='pickup'?' · استلام من الفرع':' · دليفري')+'</div>';
+    if(o===undefined) h+='<div class="tk-wait">⏳ بنجيب حالة الطلب...</div>';
+    else if(o===null) h+='<div class="tk-wait">'+(Date.now()-e.t<600000?'⏳ بنسجّل طلبك.. ثواني ويظهر هنا.':'مش لاقيين الطلب ده. لو محتاج مساعدة كلمنا على الواتساب.')+'</div>';
+    else if(st==='cancelled') h+='<div class="tk-cancel">❌ الطلب ده اتلغى. لو ده غلط كلمنا على الواتساب.</div>';
+    else{
+      var idx=S.map(function(x){return x[0]}).indexOf(st);
+      h+='<div class="tk-steps">'+S.map(function(x,i){return '<div class="tk-step'+(i<=idx?' on':'')+(i===idx?' cur':'')+'"><i>'+x[2]+'</i>'+esc(x[1])+'</div>'}).join('')+'</div>';
+      if(o.updated) h+='<div class="tk-meta">آخر تحديث: '+when(o.updated)+'</div>';
+    }
+    if(o&&o.items&&o.items.length){
+      h+='<details class="tk-more"><summary>تفاصيل الطلب</summary>'+o.items.map(function(i){return '<div class="ln"><span>'+i.q+' × '+esc(i.n)+(i.o&&i.o.length?' <small>('+esc(i.o.join('، '))+')</small>':'')+'</span><span>'+(i.p*i.q)+'</span></div>'}).join('')
+        +'<div class="ln"><span>المجموع</span><span>'+o.subtotal+'</span></div>'+(o.discount?'<div class="ln"><span>خصم</span><span>− '+o.discount+'</span></div>':'')
+        +'<div class="ln"><span>'+(type==='pickup'?'استلام':'التوصيل')+'</span><span>'+(o.fee?o.fee:'بدون رسوم')+'</span></div>'
+        +'<div class="ln sum"><span>الإجمالي</span><span>'+o.total+' ج.م</span></div><div class="ln"><span>الدفع</span><span>'+esc(PAY[o.payment]||o.payment)+'</span></div></details>';
+    }
+    return h+'</div>';
+  }
+  function render(){ var a=get(KEY); $('tkList').innerHTML=a.length?a.map(card).join(''):'<div class="tk-empty">مفيش طلبات على الجهاز ده لسه 🍗<br>اطلب دلوقتي، أو تتبّع طلب برقمه من تحت.</div>'; }
+
+  /* ── فتح/قفل ── */
+  function open(id){
+    $('rrTkOv').classList.add('open'); $('rrTkSheet').classList.add('open'); render();
+    if(id&&!get(KEY).some(function(e){return e.id===id})){ $('tkId').value=id; try{ var c=JSON.parse(localStorage.getItem('rr_customer')||'{}'); if(c&&c.phone) $('tkPh').value=norm(c.phone); }catch(x){} }
+    refresh(true); clearInterval(timer); timer=setInterval(function(){ refresh(false); },30000);
+  }
+  function close(){ $('rrTkOv').classList.remove('open'); $('rrTkSheet').classList.remove('open'); clearInterval(timer); }
+  window.rrTrackOpen=open;
+  $('rrTkOv').onclick=close; $('rrTkX').onclick=close;
+  document.addEventListener('keydown',function(e){ if(e.key==='Escape') close(); });
+
+  /* ── تتبّع برقم الطلب ── */
+  $('tkGo').onclick=function(){
+    var id=$('tkId').value.trim().toUpperCase().replace(/[^A-Z0-9]/g,''), ph=norm($('tkPh').value), m=$('tkMsg');
+    if(!id||ph.length!==11){ m.textContent='اكتب رقم الطلب ورقم الموبايل (11 رقم)'; return; }
+    m.textContent='⏳ بندوّر...';
+    track({id:id,phone:ph}).then(function(o){
+      if(!o){ m.textContent='❌ مفيش طلب بالبيانات دي، اتأكد من الرقم'; return; }
+      m.textContent=''; var a=get(KEY).filter(function(x){return x.id!==id}); a.unshift({id:id,phone:ph,t:o.time,status:o.status,type:o.type}); put(KEY,a.slice(0,10)); cache[id]=o; render();
+    }).catch(function(){ m.textContent='⚠️ تعذّر الاتصال، جرّب تاني'; });
+  };
+
+  /* ── تشغيل ── */
+  flush();
+  document.addEventListener('visibilitychange',function(){ if(!document.hidden){ flush(); if($('rrTkSheet').classList.contains('open')) refresh(false); } });
+  window.addEventListener('online',flush);
+  var hm=/^#track=([A-Za-z0-9]+)/.exec(location.hash||''); if(hm) setTimeout(function(){ open(hm[1].toUpperCase()); },400);
+})();
+</script>
 </body>
 </html>

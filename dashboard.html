@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>لوحة طلبات ريد روستر</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@500;700;900&family=Tajawal:wght@800;900&display=swap" rel="stylesheet">
+<style>
+:root{--red:#D92B2B;--ink:#1E1411;--paper:#FAF6F1;--line:#eadfd8;--mute:#6B6B6B;--green:#0B6E4F;--amber:#C98200;--orange:#E8590C;--blue:#2563eb}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:"Cairo",system-ui,sans-serif;background:var(--paper);color:var(--ink);min-height:100vh;padding-top:env(safe-area-inset-top)}
+button{font-family:inherit;cursor:pointer}
+a{color:inherit}
+.hide{display:none!important}
+
+/* login */
+#login{min-height:100vh;display:grid;place-items:center;padding:20px}
+.lg{background:#fff;border-radius:24px;padding:30px 26px;width:min(380px,100%);box-shadow:0 20px 50px -20px rgba(0,0,0,.35);text-align:center}
+.lg h1{font:900 1.5rem "Tajawal",sans-serif;margin:0 0 4px}
+.lg p{margin:0 0 18px;color:var(--mute);font-size:.92rem}
+.lg input[type=password],.lg input[type=text]{width:100%;padding:13px 14px;border:2px solid var(--line);border-radius:14px;font:700 1.1rem "Cairo",sans-serif;text-align:center;letter-spacing:4px;direction:ltr}
+.lg input:focus{outline:none;border-color:var(--red)}
+.lg label{display:flex;gap:8px;align-items:center;justify-content:center;margin:12px 0;font-size:.88rem;color:var(--mute)}
+.lg .go{width:100%;border:0;background:var(--red);color:#fff;border-radius:14px;padding:13px;font-weight:900;font-size:1rem}
+#lgErr{color:#e11d48;font-size:.88rem;min-height:1.3em;margin-top:10px;font-weight:700}
+
+/* top bar */
+.bar{position:sticky;top:0;z-index:20;background:var(--ink);color:#fff;display:flex;align-items:center;gap:10px;padding:10px 16px;flex-wrap:wrap}
+.bar h1{font:900 1.15rem "Tajawal",sans-serif;margin:0;flex:1;min-width:150px}
+.live{display:flex;align-items:center;gap:6px;font-size:.78rem;color:#d9cfc9}
+.live i{width:9px;height:9px;border-radius:50%;background:#34d399;box-shadow:0 0 0 0 rgba(52,211,153,.7);animation:pl 2s infinite}
+.live.off i{background:#f87171;animation:none}
+@keyframes pl{70%{box-shadow:0 0 0 8px rgba(52,211,153,0)}100%{box-shadow:0 0 0 0 rgba(52,211,153,0)}}
+.ib{border:1.5px solid rgba(255,255,255,.28);background:none;color:#fff;border-radius:12px;padding:6px 12px;font-weight:700;font-size:.82rem}
+.ib:hover{background:rgba(255,255,255,.12)}
+
+main{max-width:1280px;margin:0 auto;padding:16px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:14px}
+.st{background:#fff;border:1.5px solid var(--line);border-radius:16px;padding:12px 14px}
+.st b{display:block;font:900 1.5rem "Tajawal",sans-serif;line-height:1.2}
+.st span{font-size:.8rem;color:var(--mute)}
+.st.hot b{color:var(--red)}
+
+.tools{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;flex:1}
+.tab{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:7px 14px;font-weight:800;font-size:.85rem;color:var(--ink)}
+.tab em{font-style:normal;background:var(--paper);border-radius:999px;padding:0 7px;margin-inline-start:4px;font-size:.78rem}
+.tab.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.tab.on em{background:rgba(255,255,255,.2)}
+.tools input{padding:9px 14px;border:1.5px solid var(--line);border-radius:12px;font:600 .9rem "Cairo",sans-serif;min-width:200px}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:14px;align-items:start}
+.card{background:#fff;border:1.5px solid var(--line);border-radius:20px;padding:16px;display:flex;flex-direction:column;gap:10px;position:relative}
+.card.new{border-color:var(--red);box-shadow:0 0 0 3px rgba(217,43,43,.12)}
+.card.late{border-color:var(--orange)}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.oid{font:900 1.1rem "Tajawal",sans-serif;direction:ltr;letter-spacing:.5px}
+.chip{font-size:.76rem;font-weight:800;padding:4px 10px;border-radius:999px;background:#eee;color:#555;white-space:nowrap}
+.chip.new{background:#FDECEC;color:var(--red)}.chip.confirmed{background:#FFF3D6;color:var(--amber)}
+.chip.preparing{background:#FFE8DA;color:var(--orange)}.chip.out{background:#E3ECFF;color:var(--blue)}
+.chip.delivered{background:#E3F6EC;color:var(--green)}.chip.cancelled{background:#eee;color:#777}
+.sub{display:flex;gap:8px;flex-wrap:wrap;font-size:.8rem;color:var(--mute);align-items:center}
+.sub .late{color:var(--orange);font-weight:800}
+.who{font-weight:900;font-size:1.02rem}
+.ph{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.ph a.n{direction:ltr;font-weight:800;text-decoration:none;background:var(--paper);border-radius:10px;padding:5px 10px;font-size:.92rem}
+.ph a.wa{background:#25D366;color:#fff;border-radius:10px;padding:5px 10px;font-size:.8rem;font-weight:800;text-decoration:none}
+.addr{font-size:.9rem;line-height:1.7;background:var(--paper);border-radius:12px;padding:8px 12px}
+.items{border-top:1px dashed var(--line);border-bottom:1px dashed var(--line);padding:8px 0;font-size:.92rem}
+.it{display:flex;justify-content:space-between;gap:10px;padding:3px 0}
+.it small{display:block;color:var(--mute);font-size:.8rem}
+.it .q{font-weight:900;color:var(--red);margin-inline-end:6px}
+.sum{font-size:.86rem;display:grid;gap:3px}
+.sum div{display:flex;justify-content:space-between}
+.sum .tot{font:900 1.1rem "Tajawal",sans-serif;border-top:1px solid var(--line);padding-top:6px;margin-top:2px}
+.note{background:#FFF3CD;border:1px solid #F5A623;color:#7A5800;border-radius:12px;padding:8px 12px;font-size:.88rem;font-weight:700}
+.acts{display:flex;gap:8px;flex-wrap:wrap}
+.btn{border:0;border-radius:12px;padding:10px 14px;font-weight:900;font-size:.9rem;flex:1;min-width:120px;background:var(--ink);color:#fff}
+.btn.main{background:var(--red)}
+.btn.ghost{background:#fff;color:var(--ink);border:1.5px solid var(--line);flex:0 0 auto;min-width:0;font-weight:800;text-decoration:none;text-align:center}
+.btn.danger{background:#fff;color:#c01048;border:1.5px solid #f3c1d0;flex:0 0 auto;min-width:0}
+.empty{grid-column:1/-1;text-align:center;color:var(--mute);padding:50px 10px;font-size:1.05rem}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 22px;border-radius:999px;font-weight:800;z-index:50;opacity:0;pointer-events:none;transition:.3s}
+#toast.show{opacity:1}
+@media print{
+  body.p1 .bar,body.p1 .stats,body.p1 .tools,body.p1 .card:not(.pme),body.p1 .acts{display:none!important}
+  body.p1 .pme{border:0;box-shadow:none}
+}
+</style>
+</head>
+<body>
+
+<section id="login">
+  <form class="lg" id="lgForm">
+    <h1>🐓 لوحة طلبات ريد روستر</h1>
+    <p>اكتب الرقم السري للدخول</p>
+    <input id="pin" type="password" inputmode="numeric" autocomplete="current-password" placeholder="••••••" autofocus>
+    <label><input type="checkbox" id="remember"> فضّلني مسجّل دخول على الجهاز ده</label>
+    <button class="go" type="submit">دخول</button>
+    <div id="lgErr"></div>
+  </form>
+</section>
+
+<div id="app" class="hide">
+  <div class="bar">
+    <h1>🐓 طلبات ريد روستر</h1>
+    <div class="live" id="live"><i></i><span id="liveT">متصل</span></div>
+    <button class="ib" id="snd">🔔 الصوت: شغال</button>
+    <button class="ib" id="rf">🔄 تحديث</button>
+    <button class="ib" id="out">خروج</button>
+  </div>
+  <main>
+    <div class="stats" id="stats"></div>
+    <div class="tools"><div class="tabs" id="tabs"></div><input id="q" type="search" placeholder="🔎 ابحث بالاسم / الموبايل / رقم الطلب"></div>
+    <div class="grid" id="grid"></div>
+  </main>
+</div>
+<div id="toast"></div>
+
+<script>
+/* ═══ إعدادات ═══ */
+const API  = 'https://script.google.com/macros/s/AKfycbzoNNPfliuE1Cp87iylF0GtJGxrYSMRfnatHjIBHefLAwIzvv8T4BQzKfFYp_G2OALr/exec';
+const SITE = 'https://red-roosters.github.io/Menu/';   // رابط الموقع (بيتبعت للعميل للتتبع)
+const POLL_MS = 15000, REPEAT_BEEP_MS = 30000, LATE_MIN = 60;
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const LABEL = {new:'جديد', confirmed:'مؤكد', preparing:'بيتحضّر', out:'خرج للتوصيل', delivered:'تم التسليم', cancelled:'ملغي'};
+const PAY = {cash:'💵 كاش عند الاستلام', wallet:'📱 محفظة إلكترونية', instapay:'🏦 إنستا باي'};
+const ACTIVE = ['new','confirmed','preparing','out'];
+const TABS = [['active','النشطة'],['new','جديد'],['doing','قيد التنفيذ'],['delivered','تم التسليم'],['cancelled','ملغي'],['all','الكل']];
+const inTab = {active:o=>ACTIVE.includes(o.status), new:o=>o.status==='new', doing:o=>['confirmed','preparing','out'].includes(o.status),
+               delivered:o=>o.status==='delivered', cancelled:o=>o.status==='cancelled', all:()=>true};
+
+let pin = sessionStorage.getItem('rr_admin_pin') || localStorage.getItem('rr_admin_pin') || '';
+let orders = [], tab = 'active', query = '', known = null, sound = true, lastBeep = 0, timer = null, ac = null;
+
+/* ═══ API ═══ */
+const post = b => fetch(API, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(b)}).then(r => r.json());
+
+/* ═══ تنبيه صوتي ═══ */
+function beep(){
+  if (!sound) return;
+  try {
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)(); if (ac.state === 'suspended') ac.resume();
+    [0, .22, .44].forEach((d, i) => { const o = ac.createOscillator(), g = ac.createGain(); o.type = 'sine'; o.frequency.value = i === 2 ? 1175 : 880;
+      g.gain.setValueAtTime(.0001, ac.currentTime + d); g.gain.exponentialRampToValueAtTime(.35, ac.currentTime + d + .02); g.gain.exponentialRampToValueAtTime(.0001, ac.currentTime + d + .18);
+      o.connect(g); g.connect(ac.destination); o.start(ac.currentTime + d); o.stop(ac.currentTime + d + .2); });
+  } catch (e) {}
+  lastBeep = Date.now();
+}
+function toast(t){ const el = $('toast'); el.textContent = t; el.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('show'), 3200); }
+
+/* ═══ تحميل الأوردرات ═══ */
+async function load(){
+  try {
+    const j = await post({action:'adminList', pin});
+    if (!j.ok) { if (j.error === 'locked') return logout('اتقفل الدخول مؤقتًا (محاولات كتير غلط). جرّب بعد 10 دقايق.'); return logout('الرقم السري غلط'); }
+    setLive(true);
+    const fresh = j.orders.filter(o => known && !known.has(o.id) && o.status === 'new');
+    known = new Set(j.orders.map(o => o.id)); orders = j.orders;
+    const newCount = orders.filter(o => o.status === 'new').length;
+    if (fresh.length) { beep(); toast('🔔 طلب جديد: ' + fresh.map(o => o.name).join('، ')); }
+    else if (newCount && Date.now() - lastBeep > REPEAT_BEEP_MS) beep();
+    document.title = (newCount ? '(' + newCount + ') ' : '') + 'لوحة طلبات ريد روستر';
+    render(); return true;
+  } catch (e) { setLive(false); }
+}
+function setLive(on){ $('live').classList.toggle('off', !on); $('liveT').textContent = on ? 'متصل' : 'مفيش اتصال.. بنحاول تاني'; }
+
+/* ═══ مساعدات ═══ */
+const ago = t => { const m = Math.max(0, Math.round((Date.now() - t) / 60000)); return m < 1 ? 'دلوقتي' : m < 60 ? 'من ' + m + ' د' : 'من ' + Math.floor(m / 60) + ' س ' + (m % 60) + ' د'; };
+const clock = t => new Date(t).toLocaleTimeString('ar-EG', {hour:'numeric', minute:'2-digit'});
+const lbl = o => o.status === 'out' && o.type === 'pickup' ? 'جاهز للاستلام' : LABEL[o.status];
+function nextStep(o){
+  return ({new:['confirmed','✅ تأكيد الطلب'], confirmed:['preparing','👨‍🍳 ابدأ التحضير'],
+    preparing:['out', o.type === 'pickup' ? '🏪 جاهز للاستلام' : '🛵 خرج للتوصيل'], out:['delivered','🎉 تم التسليم']})[o.status];
+}
+function waLink(o){
+  const msgs = {new:'استلمنا طلبك ✅', confirmed:'تم تأكيد طلبك ✅', preparing:'طلبك بيتحضّر دلوقتي 👨‍🍳',
+    out: o.type === 'pickup' ? 'طلبك جاهز للاستلام من الفرع 🏪' : 'طلبك خرج للتوصيل 🛵', delivered:'بالهنا والشفا 🍗 شكرًا لطلبك من ريد روستر ❤️', cancelled:'للأسف اتلغى طلبك. لو محتاج أي مساعدة كلمنا هنا.'};
+  const txt = 'أهلاً ' + o.name + ' 👋\nطلبك رقم ' + o.id + ': ' + msgs[o.status] + (o.status === 'cancelled' || o.status === 'delivered' ? '' : '\nتتبّع طلبك: ' + SITE + '#track=' + o.id);
+  return 'https://wa.me/20' + o.phone.replace(/^0/, '') + '?text=' + encodeURIComponent(txt);
+}
+
+/* ═══ الرسم ═══ */
+function render(){
+  const q = query.trim().toLowerCase(), day = new Date(); day.setHours(0, 0, 0, 0);
+  const today = orders.filter(o => o.time >= day.getTime() && o.status !== 'cancelled');
+  $('stats').innerHTML =
+    '<div class="st hot"><b>' + orders.filter(o => o.status === 'new').length + '</b><span>طلبات جديدة</span></div>' +
+    '<div class="st"><b>' + orders.filter(o => ['confirmed','preparing','out'].includes(o.status)).length + '</b><span>قيد التنفيذ</span></div>' +
+    '<div class="st"><b>' + today.length + '</b><span>طلبات النهاردة</span></div>' +
+    '<div class="st"><b>' + today.reduce((s, o) => s + o.total, 0).toLocaleString('ar-EG') + ' ج</b><span>إجمالي مبيعات النهاردة</span></div>';
+  $('tabs').innerHTML = TABS.map(([k, n]) => '<button class="tab' + (k === tab ? ' on' : '') + '" data-tab="' + k + '">' + n + '<em>' + orders.filter(inTab[k]).length + '</em></button>').join('');
+  let list = orders.filter(inTab[tab]);
+  if (q) list = list.filter(o => (o.id + ' ' + o.name + ' ' + o.phone + ' ' + o.phone2).toLowerCase().includes(q));
+  list.sort((a, b) => ['active','new','doing'].includes(tab) ? a.time - b.time : b.time - a.time);
+  $('grid').innerHTML = list.length ? list.map(cardHtml).join('') : '<div class="empty">مفيش طلبات هنا 🍗</div>';
+}
+function cardHtml(o){
+  const mins = (Date.now() - o.time) / 60000, late = ACTIVE.includes(o.status) && mins > LATE_MIN, ns = nextStep(o);
+  return '<article class="card ' + o.status + (late ? ' late' : '') + '" data-id="' + esc(o.id) + '">' +
+    '<div class="top"><span class="oid">#' + esc(o.id) + '</span><span class="chip ' + o.status + '">' + esc(lbl(o)) + '</span></div>' +
+    '<div class="sub"><span>🕒 ' + clock(o.time) + ' · ' + ago(o.time) + '</span><span>' + (o.type === 'pickup' ? '🏪 استلام من الفرع' : '🛵 دليفري') + '</span>' + (late ? '<span class="late">⏰ عدّى ' + LATE_MIN + ' دقيقة</span>' : '') + '</div>' +
+    '<div class="who">' + esc(o.name) + '</div>' +
+    '<div class="ph"><a class="n" href="tel:' + esc(o.phone) + '">📞 ' + esc(o.phone) + '</a>' + (o.phone2 ? '<a class="n" href="tel:' + esc(o.phone2) + '">📱 ' + esc(o.phone2) + '</a>' : '') + '<a class="wa" target="_blank" rel="noopener" href="' + waLink(o) + '">💬 ابعت تحديث للعميل</a></div>' +
+    '<div class="addr">📍 ' + esc(o.address) + '</div>' +
+    '<div class="items">' + o.items.map(i => '<div class="it"><span><span class="q">' + i.q + '×</span>' + esc(i.n) +
+        ((i.o && i.o.length) ? '<small>' + esc(i.o.join('، ')) + '</small>' : '') + (i.t ? '<small>📝 ' + esc(i.t) + '</small>' : '') + '</span><span>' + (i.p * i.q) + '</span></div>').join('') + '</div>' +
+    '<div class="sum"><div><span>المجموع</span><span>' + o.subtotal + '</span></div>' +
+      (o.discount ? '<div><span>🎟️ خصم' + (o.coupon ? ' (' + esc(o.coupon) + ')' : '') + '</span><span>− ' + o.discount + '</span></div>' : '') +
+      '<div><span>' + (o.type === 'pickup' ? 'استلام' : 'التوصيل') + '</span><span>' + (o.fee || 'بدون رسوم') + '</span></div>' +
+      '<div class="tot"><span>الإجمالي</span><span>' + o.total + ' ج.م</span></div><div><span>الدفع</span><span>' + (PAY[o.payment] || esc(o.payment)) + '</span></div></div>' +
+    (o.notes ? '<div class="note">📝 ' + esc(o.notes) + '</div>' : '') +
+    '<div class="acts">' + (ns ? '<button class="btn main" data-act="set" data-st="' + ns[0] + '">' + ns[1] + '</button>' : '') +
+      '<button class="btn ghost" data-act="print">🖨️ طباعة</button>' +
+      (ACTIVE.includes(o.status) ? '<button class="btn danger" data-act="set" data-st="cancelled">إلغاء</button>' : '') +
+      (!ACTIVE.includes(o.status) ? '<button class="btn ghost" data-act="set" data-st="new">↩︎ رجّعه جديد</button>' : '') + '</div></article>';
+}
+
+/* ═══ تغيير الحالة ═══ */
+async function setStatus(id, st){
+  const o = orders.find(x => x.id === id); if (!o) return;
+  if (st === 'cancelled' && !confirm('إلغاء الطلب ' + id + '؟\nهيتفك كود الخصم للعميل وهتتشال النقاط.')) return;
+  const prev = o.status; o.status = st; render();
+  try {
+    const j = await post({action:'setStatus', pin, id, status:st});
+    if (!j.ok) throw new Error(j.error || 'fail');
+    o.updated = j.updated || Date.now(); toast('✅ ' + id + ' ← ' + LABEL[st]);
+  } catch (e) { o.status = prev; render(); toast('⚠️ معرفناش نحفظ التغيير، جرّب تاني'); }
+}
+
+/* ═══ أحداث ═══ */
+$('grid').addEventListener('click', e => {
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  const card = b.closest('.card'), id = card.dataset.id;
+  if (b.dataset.act === 'set') setStatus(id, b.dataset.st);
+  if (b.dataset.act === 'print') { document.body.classList.add('p1'); card.classList.add('pme'); window.print(); }
+});
+window.addEventListener('afterprint', () => { document.body.classList.remove('p1'); document.querySelectorAll('.pme').forEach(c => c.classList.remove('pme')); });
+$('tabs').addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (b) { tab = b.dataset.tab; render(); } });
+$('q').addEventListener('input', e => { query = e.target.value; render(); });
+$('rf').onclick = () => { load(); toast('🔄 اتحدّث'); };
+$('snd').onclick = () => { sound = !sound; $('snd').textContent = '🔔 الصوت: ' + (sound ? 'شغال' : 'مقفول'); if (sound) beep(); };
+$('out').onclick = () => logout('');
+setInterval(render, 60000);   // يحدّث "من كام دقيقة" والتأخير
+
+/* ═══ دخول / خروج ═══ */
+function showApp(on){ $('login').classList.toggle('hide', on); $('app').classList.toggle('hide', !on); }
+function logout(msg){
+  clearInterval(timer); pin = ''; known = null; sessionStorage.removeItem('rr_admin_pin'); localStorage.removeItem('rr_admin_pin');
+  showApp(false); $('lgErr').textContent = msg || ''; $('pin').value = ''; $('pin').focus();
+}
+async function start(){
+  showApp(true); beepUnlock();
+  if (await load()) { clearInterval(timer); timer = setInterval(load, POLL_MS); }
+}
+function beepUnlock(){ try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); if (ac.state === 'suspended') ac.resume(); } catch (e) {} }
+$('lgForm').addEventListener('submit', async e => {
+  e.preventDefault(); const v = $('pin').value.trim(); if (!v) return;
+  pin = v; $('lgErr').textContent = '⏳...';
+  beepUnlock();
+  try {
+    const j = await post({action:'adminList', pin});
+    if (!j.ok) { pin = ''; $('lgErr').textContent = j.error === 'locked' ? 'اتقفل الدخول مؤقتًا (محاولات كتير غلط). جرّب بعد 10 دقايق.' : 'الرقم السري غلط'; return; }
+    (($('remember').checked) ? localStorage : sessionStorage).setItem('rr_admin_pin', pin);
+    $('lgErr').textContent = ''; start();
+  } catch (err) { pin = ''; $('lgErr').textContent = '⚠️ مفيش اتصال، جرّب تاني'; }
+});
+if (pin) start();
+</script>
+</body>
+</html>
