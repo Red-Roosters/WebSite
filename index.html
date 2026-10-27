@@ -2689,6 +2689,8 @@ footer.pro-foot{background:var(--p-ink)!important;color:#d9cfc9;padding:0!import
             </div>
         </div>
 
+        <button type="button" id="rrTkBtn" title="تتبع طلبي" aria-label="تتبع طلبي"><span class="ic">📦</span><span class="tx">تتبع طلبي</span></button>
+
         <nav>
             <ul id="nav-list">
                 <li><button onclick="showSection('home')" class="active">الرئيسية</button></li>
@@ -2709,7 +2711,6 @@ footer.pro-foot{background:var(--p-ink)!important;color:#d9cfc9;padding:0!import
                 <li><button onclick="showSection('drinks')">🥤 مشروبات</button></li>
                 <li><button onclick="showSection('about')">عنّا</button></li>
                 <li><button onclick="showSection('branches')">الفروع</button></li>
-                <li><button onclick="window.rrTrackOpen&&rrTrackOpen()">📦 تتبع طلبي</button></li>
                 <li><button onclick="showSection('notes')">ملحوظات</button></li>
             </ul>
         </nav>
@@ -3783,7 +3784,7 @@ footer.pro-foot{background:var(--p-ink)!important;color:#d9cfc9;padding:0!import
             { name: 'الطالبية التأمين الصحي', fee: 55 },
             { name: 'العمرانية الشرقية', fee: 65 },
             { name: 'العمرانية الغربية', fee: 55 },
-            { name: 'المحولات - الهرم', fee: 45 },
+            { name: 'المحولات - الهرم', fee: 40 },
             { name: 'المريوطية - هرم 1', fee: 35 },
             { name: 'المريوطية - هرم 2', fee: 45 },
             { name: 'المريوطية - هرم 3', fee: 55 },
@@ -5453,6 +5454,14 @@ new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:tru
 
 
 <style>
+#rrTkBtn{display:inline-flex;align-items:center;gap:8px;flex:none;position:relative;max-width:200px;border:1.5px solid rgba(217,43,43,.28);background:#FDECEC;color:#B71F1F;border-radius:999px;padding:5px 8px 5px 14px;font:800 .84rem "Cairo",sans-serif;cursor:pointer;transition:background .25s,box-shadow .25s}
+#rrTkBtn:hover{background:#fbdcdc}
+#rrTkBtn .ic{width:28px;height:28px;border-radius:50%;background:#fff;display:grid;place-items:center;font-size:.95rem;box-shadow:0 1px 4px rgba(0,0,0,.14);flex:none}
+#rrTkBtn .tx{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#rrTkBtn.act{background:#D92B2B;border-color:#D92B2B;color:#fff;box-shadow:0 8px 18px -8px rgba(217,43,43,.8)}
+#rrTkBtn.act::after{content:"";position:absolute;top:-3px;left:-3px;width:11px;height:11px;border-radius:50%;background:#F5A623;border:2px solid #fff;animation:tkp 1.8s infinite}
+@keyframes tkp{0%{box-shadow:0 0 0 0 rgba(245,166,35,.7)}70%{box-shadow:0 0 0 8px rgba(245,166,35,0)}100%{box-shadow:0 0 0 0 rgba(245,166,35,0)}}
+@media(max-width:400px){#rrTkBtn:not(.act) .tx{display:none}#rrTkBtn:not(.act){padding:5px}#rrTkBtn.act{max-width:150px}}
 #rrTkOv{position:fixed;inset:0;background:rgba(20,12,10,.55);z-index:2400;opacity:0;pointer-events:none;transition:opacity .3s}
 #rrTkOv.open{opacity:1;pointer-events:auto}
 #rrTkSheet{position:fixed;left:50%;bottom:0;width:min(600px,100%);max-height:92dvh;z-index:2410;background:#fff;border-radius:28px 28px 0 0;transform:translate(-50%,105%);visibility:hidden;transition:transform .4s cubic-bezier(.2,.8,.2,1),visibility 0s linear .4s;display:flex;flex-direction:column}
@@ -5515,6 +5524,7 @@ new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:tru
   window.rrTrackSave=function(o){
     var a=get(KEY); a.unshift({id:o.id,phone:norm(o.phone),t:Date.now(),status:'new',type:o.type}); put(KEY,a.slice(0,10));
     send(o).catch(function(){ var q=get(QKEY); q.push(o); put(QKEY,q.slice(-10)); });
+    updatePill();
   };
 
   /* ── جلب الحالة ── */
@@ -5523,7 +5533,7 @@ new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:tru
   function refresh(force){
     var a=get(KEY), jobs=a.filter(function(e){return force||!FINAL[e.status]}).slice(0,5).map(function(e){
       return track(e).then(function(o){ if(o){ cache[e.id]=o; e.status=o.status; e.type=o.type; } else if(cache[e.id]===undefined) cache[e.id]=null; }).catch(function(){}); });
-    return Promise.all(jobs).then(function(){ put(KEY,a); if($('rrTkSheet').classList.contains('open')) render(); });
+    return Promise.all(jobs).then(function(){ put(KEY,a); updatePill(); if($('rrTkSheet').classList.contains('open')) render(); });
   }
 
   /* ── الرسم ── */
@@ -5550,6 +5560,16 @@ new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:tru
   }
   function render(){ var a=get(KEY); $('tkList').innerHTML=a.length?a.map(card).join(''):'<div class="tk-empty">مفيش طلبات على الجهاز ده لسه 🍗<br>اطلب دلوقتي، أو تتبّع طلب برقمه من تحت.</div>'; }
 
+  /* ── زرار التتبع في الهيدر: بيبان أوضح لما يكون فيه طلب شغال ── */
+  function updatePill(){
+    var b=$('rrTkBtn'); if(!b) return; var t=b.querySelector('.tx');
+    var a=get(KEY).filter(function(e){return !FINAL[e.status]&&Date.now()-e.t<864e5});
+    if(!a.length){ b.classList.remove('act'); t.textContent='تتبع طلبي'; b.title='تتبع طلبي'; return; }
+    var e=a[0], S=steps(e.type).filter(function(x){return x[0]===e.status})[0];
+    b.classList.add('act'); t.textContent='طلبك: '+(S?S[1]:'قيد المراجعة'); b.title='اضغط لمتابعة طلبك';
+  }
+  if($('rrTkBtn')) $('rrTkBtn').onclick=function(){ open(); };
+
   /* ── فتح/قفل ── */
   function open(id){
     $('rrTkOv').classList.add('open'); $('rrTkSheet').classList.add('open'); render();
@@ -5573,7 +5593,7 @@ new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:tru
   };
 
   /* ── تشغيل ── */
-  flush();
+  flush(); updatePill(); refresh(false);
   document.addEventListener('visibilitychange',function(){ if(!document.hidden){ flush(); if($('rrTkSheet').classList.contains('open')) refresh(false); } });
   window.addEventListener('online',flush);
   var hm=/^#track=([A-Za-z0-9]+)/.exec(location.hash||''); if(hm) setTimeout(function(){ open(hm[1].toUpperCase()); },400);
