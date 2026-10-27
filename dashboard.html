@@ -82,6 +82,20 @@ main{max-width:1280px;margin:0 auto;padding:16px}
 .btn.main{background:var(--red)}
 .btn.ghost{background:#fff;color:var(--ink);border:1.5px solid var(--line);flex:0 0 auto;min-width:0;font-weight:800;text-decoration:none;text-align:center}
 .btn.danger{background:#fff;color:#c01048;border:1.5px solid #f3c1d0;flex:0 0 auto;min-width:0}
+.rsn{background:#FDECEC;border:1px solid #f3b9b9;color:#9E1B1B;border-radius:12px;padding:8px 12px;font-size:.88rem;font-weight:800}
+.cx{position:fixed;inset:0;background:rgba(20,12,10,.6);z-index:60;display:grid;place-items:center;padding:16px}
+.cxb{background:#fff;border-radius:22px;padding:20px;width:min(460px,100%);max-height:92vh;overflow:auto}
+.cxb h2{font:900 1.2rem "Tajawal",sans-serif;margin:0 0 4px}
+.cxb p{margin:0 0 12px;color:var(--mute);font-size:.88rem}
+.cxl{display:grid;gap:8px}
+.rs{border:1.5px solid var(--line);background:#fff;border-radius:14px;padding:11px 14px;text-align:start;font-weight:800;font-size:.92rem;color:var(--ink)}
+.rs.on{border-color:var(--red);background:#FDECEC;color:#9E1B1B}
+.cxb textarea{width:100%;margin-top:10px;padding:10px 12px;border:2px solid var(--line);border-radius:12px;font:600 .92rem "Cairo",sans-serif;min-height:70px;resize:vertical}
+.cxb textarea:focus{outline:none;border-color:var(--red)}
+.cxa{display:flex;gap:8px;margin-top:14px}
+.cxa .btn{flex:1}
+.btn.cancelok{background:#c01048}
+.btn:disabled{opacity:.4;cursor:not-allowed}
 .empty{grid-column:1/-1;text-align:center;color:var(--mute);padding:50px 10px;font-size:1.05rem}
 #toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 22px;border-radius:999px;font-weight:800;z-index:50;opacity:0;pointer-events:none;transition:.3s}
 #toast.show{opacity:1}
@@ -98,7 +112,7 @@ main{max-width:1280px;margin:0 auto;padding:16px}
     <h1>🐓 لوحة طلبات ريد روستر</h1>
     <p>اكتب الرقم السري للدخول</p>
     <input id="pin" type="password" inputmode="numeric" autocomplete="current-password" placeholder="••••••" autofocus>
-    <label><input type="checkbox" id="remember"> حفظ تسجيل الدخول </label>
+    <label><input type="checkbox" id="remember"> حفظ تسجيل الدخول لهذا الجهاز</label>
     <button class="go" type="submit">دخول</button>
     <div id="lgErr"></div>
   </form>
@@ -118,12 +132,24 @@ main{max-width:1280px;margin:0 auto;padding:16px}
     <div class="grid" id="grid"></div>
   </main>
 </div>
+<div id="cx" class="cx hide" role="dialog" aria-modal="true" aria-label="سبب الإلغاء">
+  <div class="cxb">
+    <h2>❌ إلغاء الطلب <span id="cxId" style="direction:ltr;display:inline-block"></span></h2>
+    <p>اختار السبب — هيظهر للعميل في صفحة تتبع طلبه.</p>
+    <div class="cxl" id="cxList"></div>
+    <textarea id="cxOther" class="hide" maxlength="120" placeholder="اكتب السبب اللي هيظهر للعميل"></textarea>
+    <div class="cxa"><button class="btn cancelok" id="cxOk" disabled>تأكيد الإلغاء</button><button class="btn ghost" id="cxNo">رجوع</button></div>
+  </div>
+</div>
 <div id="toast"></div>
 
 <script>
 /* ═══ إعدادات ═══ */
 const API  = 'https://script.google.com/macros/s/AKfycbzoNNPfliuE1Cp87iylF0GtJGxrYSMRfnatHjIBHefLAwIzvv8T4BQzKfFYp_G2OALr/exec';
 const SITE = 'https://red-roosters.github.io/Menu/';   // رابط الموقع (بيتبعت للعميل للتتبع)
+/* أسباب الإلغاء اللي بتظهر في القايمة (بتظهر للعميل زي ما هي) — عدّل فيها براحتك */
+const CANCEL_REASONS = ['صنف من طلبك غير متوفر دلوقتي', 'عنوانك خارج نطاق التوصيل', 'الطلب جه خارج ساعات العمل', 'المحل مقفول مؤقتًا للصيانة',
+  'ماقدرناش نأكد طريقة الدفع', 'ماقدرناش نوصلّك بالتليفون', 'اتلغى بناءً على طلبك'];
 const POLL_MS = 15000, REPEAT_BEEP_MS = 30000, LATE_MIN = 60;
 
 const $ = id => document.getElementById(id);
@@ -181,7 +207,7 @@ function nextStep(o){
 }
 function waLink(o){
   const msgs = {new:'استلمنا طلبك ✅', confirmed:'تم تأكيد طلبك ✅', preparing:'طلبك بيتحضّر دلوقتي 👨‍🍳',
-    out: o.type === 'pickup' ? 'طلبك جاهز للاستلام من الفرع 🏪' : 'طلبك خرج للتوصيل 🛵', delivered:'بالهنا والشفا 🍗 شكرًا لطلبك من ريد روستر ❤️', cancelled:'للأسف اتلغى طلبك. لو محتاج أي مساعدة كلمنا هنا.'};
+    out: o.type === 'pickup' ? 'طلبك جاهز للاستلام من الفرع 🏪' : 'طلبك خرج للتوصيل 🛵', delivered:'بالهنا والشفا 🍗 شكرًا لطلبك من ريد روستر ❤️', cancelled:'للأسف اتلغى طلبك.' + (o.reason ? '\nالسبب: ' + o.reason : '') + '\nلو محتاج أي مساعدة كلمنا هنا.'};
   const txt = 'أهلاً ' + o.name + ' 👋\nطلبك رقم ' + o.id + ': ' + msgs[o.status] + (o.status === 'cancelled' || o.status === 'delivered' ? '' : '\nتتبّع طلبك: ' + SITE + '#track=' + o.id);
   return 'https://wa.me/20' + o.phone.replace(/^0/, '') + '?text=' + encodeURIComponent(txt);
 }
@@ -216,6 +242,7 @@ function cardHtml(o){
       '<div><span>' + (o.type === 'pickup' ? 'استلام' : 'التوصيل') + '</span><span>' + (o.fee || 'بدون رسوم') + '</span></div>' +
       '<div class="tot"><span>الإجمالي</span><span>' + o.total + ' ج.م</span></div><div><span>الدفع</span><span>' + (PAY[o.payment] || esc(o.payment)) + '</span></div></div>' +
     (o.notes ? '<div class="note">📝 ' + esc(o.notes) + '</div>' : '') +
+    (o.status === 'cancelled' && o.reason ? '<div class="rsn">❌ سبب الإلغاء: ' + esc(o.reason) + '</div>' : '') +
     '<div class="acts">' + (ns ? '<button class="btn main" data-act="set" data-st="' + ns[0] + '">' + ns[1] + '</button>' : '') +
       '<button class="btn ghost" data-act="print">🖨️ طباعة</button>' +
       (ACTIVE.includes(o.status) ? '<button class="btn danger" data-act="set" data-st="cancelled">إلغاء</button>' : '') +
@@ -223,16 +250,38 @@ function cardHtml(o){
 }
 
 /* ═══ تغيير الحالة ═══ */
-async function setStatus(id, st){
+async function setStatus(id, st, reason){
   const o = orders.find(x => x.id === id); if (!o) return;
-  if (st === 'cancelled' && !confirm('إلغاء الطلب ' + id + '؟\nهيتفك كود الخصم للعميل وهتتشال النقاط.')) return;
-  const prev = o.status; o.status = st; render();
+  if (st === 'cancelled' && reason === undefined) return openCancel(id);   // الأول بنسأل عن السبب
+  const prev = o.status, prevR = o.reason; o.status = st; o.reason = st === 'cancelled' ? reason : ''; render();
   try {
-    const j = await post({action:'setStatus', pin, id, status:st});
+    const j = await post({action:'setStatus', pin, id, status:st, reason: st === 'cancelled' ? reason : ''});
     if (!j.ok) throw new Error(j.error || 'fail');
     o.updated = j.updated || Date.now(); toast('✅ ' + id + ' ← ' + LABEL[st]);
-  } catch (e) { o.status = prev; render(); toast('⚠️ معرفناش نحفظ التغيير، جرّب تاني'); }
+  } catch (e) { o.status = prev; o.reason = prevR; render(); toast('⚠️ معرفناش نحفظ التغيير، جرّب تاني'); }
 }
+
+/* ═══ نافذة سبب الإلغاء ═══ */
+let cxId = null, cxPick = null;
+function cxReason(){ return cxPick === 'other' ? $('cxOther').value.trim() : cxPick; }
+function cxSync(){ $('cxOk').disabled = !cxReason(); }
+function openCancel(id){
+  cxId = id; cxPick = null; $('cxId').textContent = '#' + id; $('cxOther').value = ''; $('cxOther').classList.add('hide');
+  $('cxList').innerHTML = CANCEL_REASONS.map((r, i) => '<button type="button" class="rs" data-i="' + i + '">' + esc(r) + '</button>').join('') + '<button type="button" class="rs" data-i="other">✍️ سبب تاني...</button>';
+  $('cx').classList.remove('hide'); cxSync();
+}
+function closeCancel(){ $('cx').classList.add('hide'); cxId = null; }
+$('cxList').addEventListener('click', e => {
+  const b = e.target.closest('.rs'); if (!b) return;
+  document.querySelectorAll('#cxList .rs').forEach(x => x.classList.toggle('on', x === b));
+  const i = b.dataset.i; cxPick = i === 'other' ? 'other' : CANCEL_REASONS[+i];
+  $('cxOther').classList.toggle('hide', i !== 'other'); if (i === 'other') $('cxOther').focus(); cxSync();
+});
+$('cxOther').addEventListener('input', cxSync);
+$('cxNo').onclick = closeCancel;
+$('cx').addEventListener('click', e => { if (e.target === $('cx')) closeCancel(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && cxId) closeCancel(); });
+$('cxOk').onclick = () => { const r = cxReason(), id = cxId; if (!r) return; closeCancel(); setStatus(id, 'cancelled', r); };
 
 /* ═══ أحداث ═══ */
 $('grid').addEventListener('click', e => {
