@@ -5590,7 +5590,7 @@ new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:tru
 </style>
 <div id="rrTkOv"></div>
 <div id="rrTkSheet" role="dialog" aria-label="تتبع الطلب"><div class="tk-h"><span>📦 تتبع طلبي</span><button id="rrTkX" aria-label="إغلاق">✕</button></div>
-<div id="rrTkBody"><div id="tkList"></div>
+<div id="rrTkBody"><div class="tk-push" id="tkPush"><span id="tkPushT"></span><button type="button" id="tkPushGo">تفعيل</button></div><div id="tkList"></div>
 <div class="tk-find"><b>🔎 تتبّع طلب برقمه</b><div class="row"><input id="tkId" placeholder="رقم الطلب RRxxxxxxx" autocomplete="off" style="direction:ltr;text-transform:uppercase"><input id="tkPh" type="tel" inputmode="numeric" maxlength="11" placeholder="رقم موبايلك"><button type="button" id="tkGo">تتبّع</button></div><div id="tkMsg"></div></div></div></div>
 <script>
 (function(){
@@ -5635,6 +5635,17 @@ new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:tru
   }
 
   /* ── الرسم ── */
+  var LBL=['','سيئ 😞','مش كويس 😕','عادي 🙂','حلو 😋','ممتاز 🤩'], draft={},
+      STAR='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l2.9 6 6.5.9-4.7 4.6 1.1 6.5L12 17.7l-5.8 3.1 1.1-6.5L2.6 9.7l6.5-.9z"/></svg>';
+  function rateHTML(e){
+    if(get('rr_rated').indexOf(e.id)>=0) return '<div class="tk-rate done">شكرًا على تقييمك 💛</div>';
+    var d=draft[e.id]||(draft[e.id]={s:0,c:''});
+    return '<div class="tk-rate'+(d.s?' open':'')+'" data-rbox="'+esc(e.id)+'" data-ph="'+esc(e.phone)+'"><div class="rt-h">⭐ قيّم تجربتك مع ريد روسترز</div><div class="rt-sub">رأيك بيفرق معانا</div>'
+      +'<div class="rt-stars" role="radiogroup" aria-label="التقييم">'+[1,2,3,4,5].map(function(n){return '<button type="button" role="radio" aria-checked="'+(d.s===n)+'" aria-label="'+n+' من 5" data-star="'+n+'" class="'+(n<=d.s?'on':'')+'">'+STAR+'</button>'}).join('')+'</div>'
+      +'<div class="rt-lbl'+(d.s?' set':'')+'">'+(d.s?LBL[d.s]:'دوس على النجوم')+'</div>'
+      +'<textarea class="tk-cm" maxlength="200" rows="3" placeholder="احكيلنا تجربتك: الأكل، التوصيل، الخدمة... (اختياري)">'+esc(d.c)+'</textarea>'
+      +'<div class="rt-foot"><small><span class="rt-n">'+d.c.length+'</span>/200</small><button type="button" class="rt-send" data-send="1">إرسال التقييم</button></div><div class="rt-msg"></div></div>';
+  }
   function card(e){
     var o=cache[e.id], type=(o&&o.type)||e.type||'delivery', st=o?o.status:(e.status||'new'), S=steps(type);
     var lbl=st==='cancelled'?'ملغي':(S.filter(function(x){return x[0]===st})[0]||S[0])[1];
@@ -5657,14 +5668,14 @@ new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:tru
         +'<div class="ln"><span>'+(type==='pickup'?'استلام':'التوصيل')+'</span><span>'+(o.fee?o.fee:'بدون رسوم')+'</span></div>'
         +'<div class="ln sum"><span>الإجمالي</span><span>'+o.total+' ج.م</span></div><div class="ln"><span>الدفع</span><span>'+esc(PAY[o.payment]||o.payment)+'</span></div></details>';
     }
-    if(st==='delivered'&&o&&e.phone){ var rd=get('rr_rated'); h+=rd.indexOf(e.id)>=0?'<div class="tk-rate done">شكرًا على تقييمك 💛</div>':'<div class="tk-rate"><span>قيّم طلبك</span>'+[1,2,3,4,5].map(function(n){return '<button type="button" data-star="'+n+'" data-rid="'+esc(e.id)+'" data-ph="'+esc(e.phone)+'">★</button>'}).join('')+'</div>'; }
+    if(st==='delivered'&&o&&e.phone){ h+=rateHTML(e); }
     if(o&&o.items&&o.items.length) h+='<button type="button" class="tk-re" data-re="'+esc(e.id)+'">🔁 اطلب نفس الطلب تاني</button>';
     return h+'</div>';
   }
-  function render(){ var a=get(KEY), ch=false; a.forEach(function(e){ if(e.status==='cancelled'&&!e.seen){ e.seen=true; ch=true; } }); $('tkList').innerHTML=a.length?a.map(card).join(''):'<div class="tk-empty">مفيش طلبات على الجهاز ده لسه 🍗<br>اطلب دلوقتي، أو تتبّع طلب برقمه من تحت.</div>'; if(ch){ put(KEY,a); updatePill(); } }
+  function render(force){ var ae=document.activeElement; if(!force&&ae&&ae.classList&&ae.classList.contains('tk-cm')&&$('tkList').contains(ae)) return; var a=get(KEY), ch=false; a.forEach(function(e){ if(e.status==='cancelled'&&!e.seen){ e.seen=true; ch=true; } }); $('tkList').innerHTML=a.length?a.map(card).join(''):'<div class="tk-empty">مفيش طلبات على الجهاز ده لسه 🍗<br>اطلب دلوقتي، أو تتبّع طلب برقمه من تحت.</div>'; if(ch){ put(KEY,a); updatePill(); } }
 
   /* ── زرار التتبع في الهيدر: بيبان أوضح لما يكون فيه طلب شغال ── */
-  function updatePill(){
+  function updatePill(){ try{ window.rrPushSync&&rrPushSync(); }catch(x){}
     var b=$('rrTkBtn'); if(!b) return; var t=b.querySelector('.tx');
     var all=get(KEY), now=Date.now();
     var a=all.filter(function(e){return !FINAL[e.status]&&now-e.t<864e5});
@@ -5672,20 +5683,32 @@ new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:tru
     if(c.length){ b.classList.add('act'); t.textContent='طلبك اتلغى · اعرف السبب'; b.title='اضغط لمعرفة سبب الإلغاء'; return; }
     if(!a.length){ b.classList.remove('act'); t.textContent='تتبع طلبي'; b.title='تتبع طلبي'; return; }
     var e=a[0], S=steps(e.type).filter(function(x){return x[0]===e.status})[0];
-    var nt='طلبك: '+(S?S[1]:'قيد المراجعة'); if(t.textContent!==nt&&b.classList.contains('act')){ b.classList.remove('bump'); void b.offsetWidth; b.classList.add('bump'); if(navigator.vibrate) try{navigator.vibrate([30,40,30])}catch(x){} } if(window.Notification&&Notification.permission==='granted'&&document.hidden&&t.textContent!==nt&&b.classList.contains('act')){ try{ new Notification('Red Roosters 🐓',{body:nt}); }catch(x){} } b.classList.add('act'); t.textContent=nt; b.title='اضغط لمتابعة طلبك';
+    var nt='طلبك: '+(S?S[1]:'قيد المراجعة'); if(t.textContent!==nt&&b.classList.contains('act')){ b.classList.remove('bump'); void b.offsetWidth; b.classList.add('bump'); if(navigator.vibrate) try{navigator.vibrate([30,40,30])}catch(x){} } if(!window.rrPushOn&&window.Notification&&Notification.permission==='granted'&&document.hidden&&t.textContent!==nt&&b.classList.contains('act')){ try{ new Notification('Red Roosters 🐓',{body:nt}); }catch(x){} } b.classList.add('act'); t.textContent=nt; b.title='اضغط لمتابعة طلبك';
   }
-  if($('rrTkBtn')) $('rrTkBtn').onclick=function(){ open(); try{ if(window.Notification&&Notification.permission==='default') Notification.requestPermission(); }catch(x){} };
+  if($('rrTkBtn')) $('rrTkBtn').onclick=function(){ open(); if(!window.RR_ONESIGNAL){ try{ if(window.Notification&&Notification.permission==='default') Notification.requestPermission(); }catch(x){} } };
 
   /* ── فتح/قفل ── */
   function open(id){
+    try{ window.rrPushUI&&rrPushUI(); }catch(x){}
     $('rrTkOv').classList.add('open'); $('rrTkSheet').classList.add('open'); render();
     if(id&&!get(KEY).some(function(e){return e.id===id})){ $('tkId').value=id; try{ var c=JSON.parse(localStorage.getItem('rr_customer')||'{}'); if(c&&c.phone) $('tkPh').value=norm(c.phone); }catch(x){} }
     refresh(true); clearInterval(timer); timer=setInterval(function(){ refresh(false); },30000);
   }
   function close(){ $('rrTkOv').classList.remove('open'); $('rrTkSheet').classList.remove('open'); clearInterval(timer); }
   window.rrTrackOpen=open;
-  $('tkList').addEventListener('click',function(ev){var s=ev.target.closest('[data-star]'); if(s){ fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'rate',id:s.dataset.rid,phone:s.dataset.ph,stars:+s.dataset.star})}).then(function(r){return r.json()}).then(function(j){ if(j&&j.ok){ var a=get('rr_rated'); a.push(s.dataset.rid); put('rr_rated',a.slice(-30)); render(); } }).catch(function(){}); return; }
+  $('tkList').addEventListener('click',function(ev){var s=ev.target.closest('[data-star]'), box=ev.target.closest('[data-rbox]');
+    if(s&&box){ var id=box.dataset.rbox, d=draft[id]||(draft[id]={s:0,c:''}); d.s=+s.dataset.star;
+      [].forEach.call(box.querySelectorAll('[data-star]'),function(x){ x.classList.toggle('on',+x.dataset.star<=d.s); x.setAttribute('aria-checked',String(+x.dataset.star===d.s)); });
+      var l=box.querySelector('.rt-lbl'); l.textContent=LBL[d.s]; l.classList.add('set'); box.classList.add('open');
+      if(navigator.vibrate) try{navigator.vibrate(8)}catch(x){} return; }
+    var sd=ev.target.closest('[data-send]');
+    if(sd&&box){ var id2=box.dataset.rbox, d2=draft[id2]; if(!d2||!d2.s) return; var msg=box.querySelector('.rt-msg'); sd.disabled=true; sd.textContent='⏳ بنبعت...'; msg.textContent='';
+      fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'rate',id:id2,phone:box.dataset.ph,stars:d2.s,comment:String(d2.c||'').trim()})}).then(function(r){return r.json()})
+        .then(function(j){ if(j&&j.ok){ var a=get('rr_rated'); a.push(id2); put('rr_rated',a.slice(-30)); delete draft[id2]; render(true); } else throw 0; })
+        .catch(function(){ sd.disabled=false; sd.textContent='إرسال التقييم'; msg.textContent='⚠️ تعذّر الإرسال، جرّب تاني'; }); return; }
     var b=ev.target.closest('[data-re]');if(!b)return;var o=cache[b.dataset.re];if(!o||!o.items||!window.rrReorder)return;window.rrReorder(o.items);close();var f=document.querySelector('.cart-fab')||document.querySelector('#rrTabs [data-t=cart]');if(f)setTimeout(function(){f.click()},350);});
+  $('tkList').addEventListener('input',function(ev){ var t=ev.target; if(!t.classList||!t.classList.contains('tk-cm')) return; var bx=t.closest('[data-rbox]'); if(!bx) return;
+    var d=draft[bx.dataset.rbox]||(draft[bx.dataset.rbox]={s:0,c:''}); d.c=t.value; var n=bx.querySelector('.rt-n'); if(n) n.textContent=t.value.length; });
   $('rrTkOv').onclick=close; $('rrTkX').onclick=close;
   document.addEventListener('keydown',function(e){ if(e.key==='Escape') close(); });
 
@@ -5856,7 +5879,32 @@ html[lang="en"] body{font-family:"Cairo","Tajawal",sans-serif}
 </script>
 
 <link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#671D0F"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
-<style>.tk-rate{display:flex;align-items:center;gap:4px;margin-top:10px;font-weight:800;font-size:.9rem}.tk-rate span{margin-inline-end:6px}.tk-rate button{border:0;background:none;font-size:1.7rem;color:#F5A623;cursor:pointer;padding:0 2px}.tk-rate.done{color:#0B6E4F}#rrClosed{display:none;margin:0 0 10px;padding:10px 12px;border-radius:12px;background:#FDECEC;color:#9E1B1B;font-weight:800;font-size:.9rem;text-align:center}</style>
+<style>/* ── التقييم ── */
+.tk-rate{margin-top:14px;padding:14px 14px 12px;border:2px solid #F5D9A0;border-radius:18px;background:linear-gradient(#FFFBF1,#FFF4DA)}
+.tk-rate .rt-h{font:900 1.05rem "Tajawal","Cairo",sans-serif;color:#1E1411;text-align:center}
+.tk-rate .rt-sub{font-size:.8rem;color:#7a6a58;text-align:center;margin-top:2px}
+.rt-stars{display:flex;justify-content:center;gap:6px;margin:10px 0 4px;direction:ltr}
+.rt-stars button{border:0;background:none;padding:2px;cursor:pointer;line-height:0;-webkit-tap-highlight-color:transparent;transition:transform .15s}
+.rt-stars button:active{transform:scale(.86)}
+.rt-stars svg{width:46px;height:46px;display:block;fill:#fff;stroke:#BFAE9C;stroke-width:1.5;stroke-linejoin:round;transition:fill .15s,stroke .15s,transform .15s}
+.rt-stars button.on svg{fill:#FFB400;stroke:#D98200;transform:scale(1.07);filter:drop-shadow(0 2px 3px rgba(217,130,0,.35))}
+.rt-lbl{text-align:center;font-weight:900;font-size:1rem;min-height:1.7em;color:#9a8f8a}
+.rt-lbl.set{color:#B86B00}
+.tk-cm{display:none;width:100%;box-sizing:border-box;margin-top:8px;padding:11px 12px;border:2px solid #eadfd8;border-radius:14px;font:600 .92rem/1.6 "Cairo",sans-serif;resize:none;min-height:88px;background:#fff;color:#1E1411}
+.tk-cm:focus{outline:0;border-color:#F5A623}
+.tk-rate.open .tk-cm{display:block}
+.rt-foot{display:none;align-items:center;justify-content:space-between;gap:10px;margin-top:8px}
+.tk-rate.open .rt-foot{display:flex}
+.rt-foot small{color:#8a7d73;direction:ltr}
+.rt-send{border:0;border-radius:50px;padding:11px 24px;background:#D92B2B;color:#fff;font:900 .95rem "Cairo",sans-serif;cursor:pointer}
+.rt-send:disabled{opacity:.6}
+.rt-msg{font-size:.82rem;color:#e11d48;text-align:center;min-height:1em;margin-top:4px}
+.tk-rate.done{background:#E3F6EC;border-color:#A8DEC3;color:#0B6E4F;padding:12px;text-align:center;font-weight:900}
+/* ── بانر الإشعارات ── */
+.tk-push{display:none;align-items:center;gap:10px;margin:8px 0 2px;padding:11px 12px;border-radius:14px;background:#FFF6E5;border:1.5px solid #F5D9A0;font-size:.86rem;font-weight:700;line-height:1.6}
+.tk-push.show{display:flex}.tk-push span{flex:1}
+.tk-push button{border:0;background:#D92B2B;color:#fff;border-radius:12px;padding:9px 14px;font:800 .85rem "Cairo",sans-serif;cursor:pointer;white-space:nowrap}
+.tk-push.ok{background:#E3F6EC;border-color:#A8DEC3;color:#0B6E4F}#rrClosed{display:none;margin:0 0 10px;padding:10px 12px;border-radius:12px;background:#FDECEC;color:#9E1B1B;font-weight:800;font-size:.9rem;text-align:center}</style>
 <script>
 (function(){
   try{ if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js'); }catch(e){}
@@ -5868,6 +5916,52 @@ html[lang="en"] body{font-family:"Cairo","Tajawal",sans-serif}
     if(c){ if(!b.dataset.okt) b.dataset.okt=b.textContent; b.disabled=true; b.textContent='مقفول حاليًا'; }
     else if(b.dataset.okt&&b.textContent==='مقفول حاليًا'){ b.disabled=false; b.textContent=b.dataset.okt; delete b.dataset.okt; } }
   tick(); setInterval(tick,20000);
+})();
+</script>
+
+<script>
+/* ═══ إشعارات حالة الطلب (بتوصل حتى لو الموقع/التطبيق مقفول) — OneSignal ═══
+   1) اعمل حساب مجاني على onesignal.com ▸ New App ▸ Web ▸ Custom Code، وحط رابط موقعك.
+   2) انسخ الـ App ID وحطه هنا بين العلامتين. (فاضي = الإشعارات مقفولة). */
+window.RR_ONESIGNAL='24f07a03-ba83-4261-9f12-689fded386be';
+(function(){
+  var APP=window.RR_ONESIGNAL, OS=null, lastP='', $=function(i){return document.getElementById(i)};
+  var norm=function(p){return String(p||'').replace(/[٠-٩]/g,function(d){return '٠١٢٣٤٥٦٧٨٩'.indexOf(d)}).replace(/\D/g,'').replace(/^(0020|20)/,'0').slice(-11)};
+  function phone(){ try{ var a=JSON.parse(localStorage.getItem('rr_orders')||'[]'); for(var i=0;i<a.length;i++) if(a[i]&&a[i].phone) return norm(a[i].phone); }catch(e){}
+    try{ var c=JSON.parse(localStorage.getItem('rr_customer')||'{}'); if(c&&c.phone) return norm(c.phone); }catch(e){} return ''; }
+  function ui(){
+    var b=$('tkPush'), t=$('tkPushT'), g=$('tkPushGo'); if(!b) return;
+    if(!APP){ b.className='tk-push'; return; }
+    var ios=/iphone|ipad|ipod/i.test(navigator.userAgent), sa=(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone;
+    var sup=('Notification' in window)&&('serviceWorker' in navigator)&&('PushManager' in window);
+    g.style.display='none';
+    if(!sup){ if(ios&&!sa){ t.textContent='🔔 عشان توصلك إشعارات الطلب على الآيفون: دوس زرار المشاركة ثم Add to Home Screen، وافتح التطبيق من الأيقونة.'; b.className='tk-push show'; } else b.className='tk-push'; return; }
+    if(Notification.permission==='denied'){ t.textContent='🔕 الإشعارات مقفولة. فعّلها من إعدادات الموقع في المتصفح عشان توصلك حالة طلبك.'; b.className='tk-push show'; return; }
+    if(window.rrPushOn){ t.textContent='🔔 الإشعارات شغّالة — هتوصلك كل خطوة في طلبك حتى لو قفلت الموقع.'; b.className='tk-push show ok'; return; }
+    t.textContent='🔔 فعّل الإشعارات عشان توصلك كل خطوة في طلبك حتى لو قفلت الموقع.'; g.style.display=''; b.className='tk-push show';
+  }
+  function sync(){
+    if(!OS) return;
+    var p=phone(); try{ if(p&&p!==lastP&&OS.User.externalId!==p){ lastP=p; OS.login(p); } }catch(e){}
+    try{ window.rrPushOn=!!(OS.User.PushSubscription.optedIn&&window.Notification&&Notification.permission==='granted'); }catch(e){ window.rrPushOn=false; }
+    ui();
+  }
+  window.rrPushSync=sync; window.rrPushUI=ui;
+  if(!APP){ return; }
+  var g=$('tkPushGo');
+  if(g) g.onclick=function(){
+    if(!OS){ $('tkPushT').textContent='⏳ استنى ثانية وجرّب تاني...'; return; }
+    g.disabled=true;
+    Promise.resolve(OS.Notifications.requestPermission()).then(function(){ return OS.User.PushSubscription.optIn(); }).catch(function(){}).then(function(){ g.disabled=false; sync(); });
+  };
+  var s=document.createElement('script'); s.src='https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js'; s.defer=true; document.head.appendChild(s);
+  window.OneSignalDeferred=window.OneSignalDeferred||[];
+  var scope=location.pathname.replace(/[^\/]*$/,'');
+  OneSignalDeferred.push(async function(O){
+    await O.init({appId:APP, serviceWorkerPath:scope+'sw.js', serviceWorkerParam:{scope:scope}, notifyButton:{enable:false}, allowLocalhostAsSecureOrigin:true});
+    OS=O; sync();
+    try{ O.Notifications.addEventListener('permissionChange',sync); O.User.PushSubscription.addEventListener('change',sync); }catch(e){}
+  });
 })();
 </script>
 

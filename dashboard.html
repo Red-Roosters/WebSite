@@ -765,7 +765,7 @@ $('rtGo').addEventListener('click', async () => {
     r.forEach(x => cnt[x.stars]++);
     o.innerHTML = '<div style="font-weight:900;font-size:1.2rem">⭐ ' + avg + ' / 5 <small style="color:#6B6B6B">(' + r.length + ' تقييم)</small></div>'
       + '<div style="margin:8px 0">' + [5, 4, 3, 2, 1].map(n => '<div>' + n + '★ — ' + cnt[n] + '</div>').join('') + '</div>'
-      + r.slice(0, 50).map(x => '<div style="padding:6px 0;border-top:1px dashed #ddd"><b dir="ltr">#' + esc(x.id) + '</b> ' + '★'.repeat(x.stars) + '☆'.repeat(5 - x.stars) + ' <small style="color:#6B6B6B">' + new Date(x.time).toLocaleString('ar-EG', {day:'numeric', month:'short', hour:'numeric', minute:'2-digit'}) + '</small>' + (x.comment ? '<div>' + esc(x.comment) + '</div>' : '') + '</div>').join('');
+      + r.slice(0, 50).map(x => '<div style="padding:6px 0;border-top:1px dashed #ddd"><b dir="ltr">#' + esc(x.id) + '</b> ' + '<span style="color:#F5A623;letter-spacing:1px">' + '★'.repeat(x.stars) + '<span style="color:#d8cfc8">' + '★'.repeat(5 - x.stars) + '</span></span>' + ' <small style="color:#6B6B6B">' + new Date(x.time).toLocaleString('ar-EG', {day:'numeric', month:'short', hour:'numeric', minute:'2-digit'}) + '</small>' + (x.comment ? '<div style="margin-top:6px;padding:8px 10px;background:#FFF8EA;border-radius:10px;line-height:1.6">💬 ' + esc(x.comment) + '</div>' : '') + '</div>').join('');
   } catch (e) { o.textContent = 'تعذّر الاتصال'; }
 });
 
