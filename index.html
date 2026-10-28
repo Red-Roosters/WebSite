@@ -3594,13 +3594,6 @@ footer.pro-foot{background:var(--p-ink)!important;color:#d9cfc9;padding:0!import
 
 </main>
 
-<div class="order-btn-wrap">
-    <div class="order-tooltip">اطلب الآن عبر واتساب 🛵</div>
-    <a class="order-btn" href="https://wa.me/201023278000?text=%D8%A3%D9%87%D9%84%D8%A7%D9%8B%20%F0%9F%90%93%20%D8%B9%D8%A7%D9%8A%D8%B2%20%D8%A3%D8%B7%D9%84%D8%A8%20%D9%85%D9%86%20Red%20Roosters" target="_blank" rel="noopener">
-        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-        اطلب الآن 🛒
-    </a>
-</div>
 <div class="rr-overlay" id="rrOverlay"></div>
 
 <!-- السلة -->
@@ -3674,8 +3667,8 @@ footer.pro-foot{background:var(--p-ink)!important;color:#d9cfc9;padding:0!import
             <button type="button" data-v="instapay"><span>🏦</span>حساب بنكي<small>إنستا باي</small></button>
         </div>
         <input type="hidden" id="f_pay" value="cash">
-        <div class="pay-note" id="payNote">💵 الدفع كاش عند الاستلام. الطلب بيتبعت على واتساب وهنأكده معاك.</div>
-        <button type="submit" class="rr-btn wa">إرسال الطلب على واتساب 🚀</button>
+        <div class="pay-note" id="payNote">💵 الدفع كاش عند الاستلام. الطلب بيوصلنا مباشرة من الموقع وهنكلمك نأكده.</div>
+        <button type="submit" class="rr-btn">تأكيد الطلب 🚀</button>
     </form>
 </div>
 <!-- بوب أب اختيار الصنف -->
@@ -3769,7 +3762,7 @@ footer.pro-foot{background:var(--p-ink)!important;color:#d9cfc9;padding:0!import
         minOrder: 0,
 
         // ⏰ ساعات العمل (خليها enabled:true لتفعيلها). لو الإغلاق بعد منتصف الليل اكتب close أصغر من open
-        hours: { enabled: false, open: '12:00', close: '02:00', tz: 'Africa/Cairo' },
+        hours: { enabled: true, open: '11:00', close: '05:00', tz: 'Africa/Cairo' },
 
         // 🌐 رابط سكريبت Google (Apps Script) للتحقق من الكوبون لأول طلب من أي جهاز. سيبه فاضي = تحقق على نفس الجهاز بس
         couponApi: 'https://script.google.com/macros/s/AKfycbzoNNPfliuE1Cp87iylF0GtJGxrYSMRfnatHjIBHefLAwIzvv8T4BQzKfFYp_G2OALr/exec',
@@ -3874,7 +3867,7 @@ footer.pro-foot{background:var(--p-ink)!important;color:#d9cfc9;padding:0!import
         { name:'تومية',              en:'Tomia',                price:15, hot:false, img:'https://i.ibb.co/wZYNK0hj/image.jpg' },
         { name:'تكساس كب',           en:'Texas Cup',            price:25, hot:false, img:'https://i.ibb.co/4wbRHXdF/image.jpg' },
         { name:'ثاوزند أيلاند',      en:'Thousand Island',      price:20, hot:false, img:'https://i.ibb.co/FbSQppY7/image.jpg' },
-       //{ name:'مانجو صوص',          en:'Mango Sauce',          price:25, hot:false, img:'' },//
+        { name:'مانجو صوص',          en:'Mango Sauce',          price:25, hot:false, img:'', off:true },   // off:true = غير متاح حاليًا (مخفي) — شيل off أو خليه false لإرجاعه
 
         { name:'شيلي مايونيز كب',    en:'Chili Mayonnaise Cup', price:25, hot:true,  img:'' },
         { name:'تايجر كب',           en:'Tiger Cup',            price:20, hot:true,  img:'' },
@@ -3957,7 +3950,16 @@ footer.pro-foot{background:var(--p-ink)!important;color:#d9cfc9;padding:0!import
         const n = m(now), o = m(h.open), c = m(h.close);
         return o <= c ? (n >= o && n < c) : (n >= o || n < c);
     }
-    const closedMsg = () => `⏰ إحنا مقفولين دلوقتي. مواعيد الشغل من ${CONFIG.hours.open} إلى ${CONFIG.hours.close}`;
+    const t12 = t => { const h = +t.split(':')[0], m = t.split(':')[1], hh = (h % 12) || 12; return hh + (m !== '00' ? ':' + m : '') + ' ' + (h < 6 ? 'فجرًا' : h < 12 ? 'صباحًا' : 'مساءً'); };
+    const closedMsg = () => `⏰ المطعم حاليًا مغلق لأنه خارج ساعات العمل، هننتظر تشريفك لينا بطلب في مواعيد العمل من ${t12(CONFIG.hours.open)} إلى ${t12(CONFIG.hours.close)} 🐓`;
+    /* شريط "مقفولين دلوقتي" أعلى الصفحة */
+    (function closedBar() {
+        const bar = document.createElement('div');
+        bar.style.cssText = 'display:none;background:#9E1B1B;color:#fff;text-align:center;font:800 .92rem Cairo,sans-serif;padding:9px 12px;position:relative;z-index:50';
+        document.body.insertBefore(bar, document.body.firstChild);
+        const sync = () => { const c = !isOpenNow(); bar.style.display = c ? 'block' : 'none'; if (c) bar.textContent = closedMsg(); };
+        sync(); setInterval(sync, 30000);
+    })();
 
     /* ═══ الحسابات ═══ */
     const subtotal = () => cart.reduce((s, i) => s + i.price * i.qty, 0);
@@ -4400,8 +4402,8 @@ imChips.previousElementSibling.style.display = noChips ? 'none' : '';
         $('f_pay').value = v;
         document.querySelectorAll('#paygrid button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
         const n = $('payNote');
-        if (v === 'cash') n.innerHTML = '💵 الدفع كاش عند الاستلام. الطلب بيتبعت على واتساب وهنأكده معاك.';
-        else n.innerHTML = '📲 برجاء التحويل على الرقم التالي: <b class="pay-num" id="payNum">' + PAY_NUM + '</b> <button type="button" id="payCopy">نسخ الرقم</button><br>📸 بعد التحويل هنطلب منك تبعتلنا <b>صورة التحويل على الواتساب</b> لتأكيد طلبك.';
+        if (v === 'cash') n.innerHTML = '💵 الدفع كاش عند الاستلام. الطلب بيوصلنا مباشرة من الموقع وهنكلمك نأكده.';
+        else n.innerHTML = '📲 برجاء التحويل على الرقم التالي: <b class="pay-num" id="payNum">' + PAY_NUM + '</b> <button type="button" id="payCopy">نسخ الرقم</button><br>📸 بعد تأكيد الطلب ابعتلنا <b>صورة التحويل على الواتساب (01023278000)</b> لتأكيده.';
     }
     document.querySelectorAll('#paygrid button').forEach(b => b.addEventListener('click', () => setPay(b.dataset.v)));
     document.addEventListener('click', e => { if (e.target.id === 'payCopy') { (navigator.clipboard ? navigator.clipboard.writeText(PAY_NUM) : Promise.reject()).then(() => toast('✅ تم نسخ الرقم'), () => toast('الرقم: ' + PAY_NUM)); } });
@@ -4461,24 +4463,15 @@ imChips.previousElementSibling.style.display = noChips ? 'none' : '';
 
     $('f_phone').addEventListener('change', () => { if (!dropUsedCoupon($('f_phone').value)) serverDrop($('f_phone').value); });
 
+    let sending = false, pendingId = null, pendingSig = '';
     $('checkoutForm').addEventListener('submit', async e => {
         e.preventDefault();
+        if (sending) return;
         if (!cart.length) { toast('السلة فاضية'); return; }
         if (!isOpenNow()) { toast(closedMsg()); return; }
         if (!validate()) return;
         if (dropUsedCoupon($('f_phone').value)) return;
-        /* حجز الكوبون على السيرفر قبل الإرسال (نافذة الواتساب بتتفتح الأول عشان المتصفح مايمنعهاش) */
-        let pre = null;
-        const sbtn = $('checkoutForm').querySelector('[type=submit]');
-        if (coupon && coupon.def.firstOrderOnly && discount() > 0 && CONFIG.couponApi) {
-            pre = window.open('', '_blank'); if (sbtn) sbtn.disabled = true; toast('⏳ بنتحقق من كود الخصم...');
-            const r = await claimCoupon(coupon.code, $('f_phone').value);
-            if (sbtn) sbtn.disabled = false;
-            if (r === 'used') {
-                if (pre) pre.close();
-                markCouponUsed(coupon.code, $('f_phone').value); dropUsedCoupon($('f_phone').value); return;
-            }
-        }
+        if (!window.rrTrackSave) { toast('⚠️ في مشكلة مؤقتة، كلمنا على 0237721525', 6000); return; }
 
         const v = id => $(id).value.trim();
         const pickup = pk();
@@ -4486,74 +4479,53 @@ imChips.previousElementSibling.style.display = noChips ? 'none' : '';
         const fmtT = s => { const [h, m] = s.split(':').map(Number); return ((h % 12) || 12) + ':' + String(m).padStart(2, '0') + ' ' + (h >= 12 ? 'م' : 'ص'); };
         const sub = subtotal(), d = discount(), total = sub - d + area.fee;
         const num = id => toEn(v(id));
-        const orderId = 'RR' + Date.now().toString(36).toUpperCase().slice(-7);
 
-        const itemLines = [];
-        cart.forEach((i, n) => {
-            itemLines.push(`${n + 1}. ${i.name} × ${i.qty} = ${i.price * i.qty} ج.م`);
-            const extra = [...(i.opts || [])];
-            if (extra.length) itemLines.push('    ↳ ' + extra.join(' | '));
-            if (i.note) itemLines.push('    ↳ 📝 ' + i.note);
-        });
-
-        const lines = [
-            '🐓 *طلب جديد - Red Roosters*',
-            '🔖 *رقم الطلب:* ' + orderId,
-            '━━━━━━━━━━━━━━',
-            '👤 *الاسم:* ' + v('f_name'),
-            '📞 *الموبايل:* ' + num('f_phone'),
-            (!pickup && v('f_phone2')) ? '📱 *رقم إضافي:* ' + num('f_phone2') : null,
-            '',
-            ...(pickup ? ['🏪 *استلام من الفرع*', '📍 *الفرع:* فرع فيصل المريوطية', '🗺️ *العنوان:* شارع المريوطية الرئيسي، بجوار كشري العريس وأسفل بهجت جيم', '🔗 *الموقع:* https://share.google/mH8rRsAZG6cKkEdwe', '⏰ *موعد الاستلام:* ' + fmtT(v('f_ptime'))] : [
-            '📍 *العنوان*',
-            '• المنطقة: ' + area.name,
-            '• الشارع: ' + v('f_street'),
-            v('f_station') ? '• المحطة: ' + v('f_station') : null,
-            '• رقم العمارة: ' + v('f_building'),
-            '• الدور: ' + v('f_floor'),
-            '• الشقة: ' + v('f_apt'),
-            '• علامة مميزة: ' + v('f_landmark')
-        ]),
-            '',
-            '🛒 *الطلبات*',
-            ...itemLines,
-            '',
-            '━━━━━━━━━━━━━━',
-            '💰 المجموع: ' + sub + ' ج.م',
-            d ? '🎟️ خصم (' + coupon.code + '): − ' + d + ' ج.م' : null,
-            pickup ? '🏪 استلام من فرع فيصل المريوطية (بدون رسوم توصيل)' : '🛵 التوصيل (' + area.name + '): ' + area.fee + ' ج.م',
-            '✅ *الإجمالي: ' + total + ' ج.م*',
-            pickup ? null : '⏱️ وقت التوصيل يبدأ من تأكيد الأوردر ويستغرق 60 دقيقة كحد أقصى',
-            ...payLines(),
-            v('f_notes') ? '\n📝 *ملاحظات عامة:* ' + v('f_notes') : null
-        ].filter(l => l !== null).join('\n');
+        /* نفس رقم الطلب لو العميل ضغط تاني بعد فشل (والسيرفر بيمنع التكرار) — ولو السلة اتغيرت بنعمل رقم جديد */
+        const sig = JSON.stringify([cart.map(i => [i.key, i.qty]), total, num('f_phone')]);
+        if (!pendingId || sig !== pendingSig) { pendingId = 'RR' + Date.now().toString(36).toUpperCase().slice(-7); pendingSig = sig; }
+        const orderId = pendingId;
 
         const data = pickup ? Object.assign({}, saved, { name: v('f_name'), phone: v('f_phone') }) : { area: +areaVal.value };
         if (!pickup) fields.forEach(f => data[f] = v('f_' + f));
         LS.set('rr_customer', data);
-        /* حفظ الأوردر في الشيت عشان الداشبورد والتتبع (مش بيعطّل إرسال الواتساب) */
+
+        const addr = pickup ? ('استلام من الفرع — ' + fmtT(v('f_ptime'))) : [area.name, v('f_street'), v('f_station') && ('محطة ' + v('f_station')), 'عمارة ' + v('f_building'), 'دور ' + v('f_floor'), 'شقة ' + v('f_apt'), v('f_landmark') && ('علامة: ' + v('f_landmark'))].filter(Boolean).join(' - ');
+        const claim = !!(coupon && coupon.def.firstOrderOnly && d > 0 && CONFIG.couponApi);
+
+        /* الإرسال المباشر للسيرفر — مفيش واتساب. السلة مابتتمسحش غير بعد ما السيرفر يأكد استلام الطلب */
+        const sbtn = $('checkoutForm').querySelector('[type=submit]'), lbl = sbtn ? sbtn.textContent : '';
+        sending = true; if (sbtn) { sbtn.disabled = true; sbtn.textContent = '⏳ بنبعت طلبك...'; }
+        let res = 'fail';
         try {
-            const addr = pickup ? ('استلام من الفرع — ' + fmtT(v('f_ptime'))) : [area.name, v('f_street'), v('f_station') && ('محطة ' + v('f_station')), 'عمارة ' + v('f_building'), 'دور ' + v('f_floor'), 'شقة ' + v('f_apt'), v('f_landmark') && ('علامة: ' + v('f_landmark'))].filter(Boolean).join(' - ');
-            window.rrTrackSave && window.rrTrackSave({ id: orderId, name: v('f_name'), phone: num('f_phone'), phone2: pickup ? '' : num('f_phone2'), type: pickup ? 'pickup' : 'delivery', address: addr,
-                items: cart.map(i => ({ n: i.name, q: i.qty, p: i.price, o: i.opts || [], t: i.note || '' })), subtotal: sub, discount: d, coupon: d ? coupon.code : '', fee: area.fee, total: total, payment: $('f_pay').value, notes: v('f_notes') });
+            res = await window.rrTrackSave({ id: orderId, name: v('f_name'), phone: num('f_phone'), phone2: pickup ? '' : num('f_phone2'), type: pickup ? 'pickup' : 'delivery', address: addr,
+                items: cart.map(i => ({ n: i.name, q: i.qty, p: i.price, o: i.opts || [], t: i.note || '' })), subtotal: sub, discount: d, coupon: d ? coupon.code : '', claim: claim, fee: area.fee, total: total, payment: $('f_pay').value, notes: v('f_notes') });
         } catch (err) {}
+        sending = false; if (sbtn) { sbtn.disabled = false; sbtn.textContent = lbl; }
 
-        const waUrl = 'https://wa.me/' + CONFIG.phone + '?text=' + encodeURIComponent(lines);
-        if (pre && !pre.closed) pre.location.href = waUrl; else window.open(waUrl, '_blank');
+        if (res === 'coupon_used') {
+            pendingId = null;
+            if (coupon) markCouponUsed(coupon.code, v('f_phone'));
+            dropUsedCoupon(v('f_phone')); return;
+        }
+        if (res === 'closed') { pendingId = null; toast(closedMsg(), 7000); return; }
+        if (res !== 'ok') { toast('⚠️ الطلب ماوصلناش (النت ضعيف). اضغط تأكيد الطلب تاني — أو كلمنا على 0237721525', 7000); return; }
 
+        pendingId = null;
         if (coupon && coupon.def.firstOrderOnly && d > 0) markCouponUsed(coupon.code, v('f_phone'));
-        if (window.rrOrderHook) rrOrderHook({ orderId: orderId, phone: v('f_phone'), total: Math.max(0, subtotal() - d), code: (coupon && coupon.def.loyalty) ? coupon.code : '' });
+        if (window.rrOrderHook) rrOrderHook({ orderId: orderId, phone: v('f_phone'), total: Math.max(0, sub - d), code: (coupon && coupon.def.loyalty) ? coupon.code : '' });
+        const pay = $('f_pay').value;
         cart = []; coupon = null; $('couponInput').value = ''; setCouponMsg('', true);
         LS.set('rr_cart', cart); render(); closeAll();
-        toast('تم تجهيز طلبك ✅ رقم الطلب ' + orderId + ' — اضغط إرسال في الواتساب لتأكيده');
+        toast(pay === 'cash' ? '✅ وصلنا طلبك رقم ' + orderId + ' — هنكلمك نأكده 🐓'
+                             : '✅ وصلنا طلبك رقم ' + orderId + ' — ابعت صورة التحويل على واتساب 01023278000 لتأكيده', pay === 'cash' ? 4500 : 8000);
         if (window.rrTrackOpen) setTimeout(() => window.rrTrackOpen(orderId), 1200);
     });
 
     /* ═══ Toast ═══ */
     let tt;
-    function toast(msg) {
+    function toast(msg, ms) {
         const t = $('rrToast'); t.textContent = msg; t.classList.add('show');
-        clearTimeout(tt); tt = setTimeout(() => t.classList.remove('show'), 2600);
+        clearTimeout(tt); tt = setTimeout(() => t.classList.remove('show'), ms || 2600);
     }
 
     /* ═══ رسم قسم الإضافات ═══ */
@@ -4587,12 +4559,12 @@ imChips.previousElementSibling.style.display = noChips ? 'none' : '';
             </div>`;
         wrap.innerHTML = `
             <p class="offer-section-title">🥣 صوصات عادية</p>
-            <div class="menu-grid">${SAUCES.filter(x => !x.hot).map(card).join('')}</div>
+            <div class="menu-grid">${SAUCES.filter(x => !x.hot && !x.off).map(card).join('')}</div>
             <div class="hot-banner">
                 <div class="hot-banner-ico">🌶️🔥</div>
                 <div><h3>صوصات سبايسي</h3><p>تنبيه: الصوصات دي حارة — اختار على قد حرارتك!</p></div>
             </div>
-            <div class="menu-grid hot-grid">${SAUCES.filter(x => x.hot).map(card).join('')}</div>`;
+            <div class="menu-grid hot-grid">${SAUCES.filter(x => x.hot && !x.off).map(card).join('')}</div>`;
     })();
 
     /* ═══ زراير "أضف للسلة" على كل الكروت — بتفتح البوب أب ═══ */
@@ -5521,10 +5493,18 @@ new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:tru
     .then(function(r){return r.json()}).then(function(j){ if(!j||!j.ok) throw 0; });}
   function flush(){ var q=get(QKEY); if(!q.length) return; put(QKEY,[]);
     q.forEach(function(o){ send(o).catch(function(){ var n=get(QKEY); n.push(o); put(QKEY,n.slice(-10)); }); }); }
+  function post1(o,ms){ var ctl=window.AbortController?new AbortController():null, to=ctl?setTimeout(function(){ctl.abort()},ms):0;
+    return fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({action:'newOrder'},o)),signal:ctl?ctl.signal:undefined})
+      .then(function(r){return r.json()}).then(function(j){clearTimeout(to);return j},function(e){clearTimeout(to);throw e}); }
+  /* بيرجّع 'ok' | 'coupon_used' | 'fail' — محاولتين (السيرفر بيتجاهل التكرار بنفس رقم الطلب) */
   window.rrTrackSave=function(o){
-    var a=get(KEY); a.unshift({id:o.id,phone:norm(o.phone),t:Date.now(),status:'new',type:o.type}); put(KEY,a.slice(0,10));
-    send(o).catch(function(){ var q=get(QKEY); q.push(o); put(QKEY,q.slice(-10)); });
-    updatePill();
+    function attempt(n){ return post1(o,18000).then(function(j){
+        if(j&&j.ok) return 'ok'; if(j&&j.error==='coupon_used') return 'coupon_used'; if(j&&j.error==='closed') return 'closed';
+        return n<2?attempt(n+1):'fail';
+      },function(){ return n<2?attempt(n+1):'fail'; }); }
+    return attempt(1).then(function(r){
+      if(r==='ok'){ var a=get(KEY); if(!a.some(function(e){return e.id===o.id})){ a.unshift({id:o.id,phone:norm(o.phone),t:Date.now(),status:'new',type:o.type}); put(KEY,a.slice(0,10)); } updatePill(); }
+      return r; });
   };
 
   /* ── جلب الحالة ── */
