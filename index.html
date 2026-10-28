@@ -3981,6 +3981,11 @@ footer.pro-foot{background:var(--p-ink)!important;color:#d9cfc9;padding:0!import
         LS.set('rr_cart', cart); render(); toast('✅ تمت إضافة ' + full);
     }
 
+    window.rrReorder = function (items) {
+        const cur = {}; document.querySelectorAll('.card').forEach(c => { const n = c.querySelector('.card-name'), p = c.querySelectorAll('.price-badge'); if (!n || p.length !== 1) return;
+            const nm = (n.__nm !== undefined ? n.__nm : n.textContent).replace(/\s+/g, ' ').trim(), v = parseInt((p[0].textContent.match(/\d+/) || [0])[0], 10); if (nm && v) cur[nm] = v; });
+        (items || []).forEach(i => { const nm = String(i.n).replace(/\s+/g, ' ').trim(), fresh = (!(i.o && i.o.length) && cur[nm]) ? cur[nm] : (+i.p || 0);
+            addItem({ name: String(i.n), price: fresh, qty: Math.min(99, +i.q || 1), opts: i.o || [], note: i.t || '' }); }); };
     function render() {
         const count = cart.reduce((s, i) => s + i.qty, 0);
         document.querySelectorAll('.cart-count').forEach(e => { e.textContent = count; e.style.display = count ? 'flex' : 'none'; });
@@ -4078,6 +4083,20 @@ footer.pro-foot{background:var(--p-ink)!important;color:#d9cfc9;padding:0!import
     subBtn.parentNode.insertBefore(cBox, subBtn);
     if (!Object.keys(CONFIG.coupons).length) cBox.style.display = 'none';
 
+    const cpList = document.createElement('div'); cpList.className = 'cp-list';
+    cBox.insertBefore(cpList, cBox.querySelector('.coupon-row'));
+    function buildCpList() {
+        const items = Object.keys(CONFIG.coupons).map(c => { const d = CONFIG.coupons[c];
+            return { code: c, txt: (d.type === 'percent' ? 'خصم ' + d.value + '%' : 'خصم ' + d.value + ' ج.م') + (d.min ? ' على طلب ' + d.min + ' ج.م+' : '') + (d.firstOrderOnly ? ' · لأول طلب' : '') }; });
+        let mine = []; try { mine = JSON.parse(localStorage.getItem('rr_my_codes') || '[]'); } catch (e) {}
+        mine.slice(0, 4).forEach(m => { if (m && m.code) items.push({ code: m.code, txt: '⭐ كود نقاطك — خصم ' + m.value + ' ج.م' }); });
+        cpList.innerHTML = items.map(i => { const on = coupon && coupon.code === i.code;
+            return '<button type="button" class="cp-item' + (on ? ' on' : '') + '" data-c="' + i.code + '"><span><b>' + i.code + '</b><small>' + i.txt + '</small></span><span class="go">' + (on ? '✓ مطبّق' : 'استخدم') + '</span></button>'; }).join('');
+    }
+    cpList.addEventListener('click', e => { const b = e.target.closest('.cp-item'); if (!b || b.classList.contains('on')) return; $('couponInput').value = b.dataset.c; $('couponBtn').click(); });
+    buildCpList();
+    new MutationObserver(buildCpList).observe($('couponMsg'), { childList: true, characterData: true, subtree: true });
+    new MutationObserver(buildCpList).observe($('checkoutModal'), { attributes: true, attributeFilter: ['class'] });
     function setCouponMsg(t, ok) { const m = $('couponMsg'); m.textContent = t; m.className = 'coupon-msg ' + (ok ? 'ok' : 'bad'); }
     function refreshCouponMsg() {
         const d = coupon.def;
@@ -5529,6 +5548,9 @@ new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:tru
     else if(st==='cancelled') h+='<div class="tk-cancel">❌ الطلب ده اتلغى'+(o.reason?'<br>السبب: '+esc(o.reason):'')+'<br><small>لو محتاج مساعدة أو ده غلط كلمنا على الواتساب.</small></div>';
     else{
       var idx=S.map(function(x){return x[0]}).indexOf(st);
+      var MSG={new:['استلمنا طلبك','هنكلمك دلوقتي نأكده معاك'],confirmed:['طلبك اتأكد','بدأنا نجهّز الطلب'],preparing:['بنجهّز طلبك دلوقتي','الدجاج بيتحضّر طازج'],out:type==='pickup'?['طلبك جاهز','تقدر تستلمه من الفرع']:['طلبك في الطريق','الطيار هيوصلك قريب'],delivered:['تم التسليم','بالهنا والشفا 🐓']}[st]||['',''];
+      var pct=Math.max(6,Math.round((idx<0?0:idx)/(S.length-1)*100));
+      h+='<div class="tk-now"><span class="e">'+(idx<0?'':S[idx][2])+'</span><div><b>'+MSG[0]+'</b><small>'+MSG[1]+'</small></div></div><div class="tk-bar'+(st==='delivered'?' fin':'')+'"><i style="width:'+pct+'%"></i></div>';
       h+='<div class="tk-steps">'+S.map(function(x,i){return '<div class="tk-step'+(i<=idx?' on':'')+(i===idx?' cur':'')+'"><i>'+x[2]+'</i>'+esc(x[1])+'</div>'}).join('')+'</div>';
       if(o.updated) h+='<div class="tk-meta">آخر تحديث: '+when(o.updated)+'</div>';
     }
@@ -5538,6 +5560,8 @@ new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:tru
         +'<div class="ln"><span>'+(type==='pickup'?'استلام':'التوصيل')+'</span><span>'+(o.fee?o.fee:'بدون رسوم')+'</span></div>'
         +'<div class="ln sum"><span>الإجمالي</span><span>'+o.total+' ج.م</span></div><div class="ln"><span>الدفع</span><span>'+esc(PAY[o.payment]||o.payment)+'</span></div></details>';
     }
+    if(st==='delivered'&&o&&e.phone){ var rd=get('rr_rated'); h+=rd.indexOf(e.id)>=0?'<div class="tk-rate done">شكرًا على تقييمك 💛</div>':'<div class="tk-rate"><span>قيّم طلبك</span>'+[1,2,3,4,5].map(function(n){return '<button type="button" data-star="'+n+'" data-rid="'+esc(e.id)+'" data-ph="'+esc(e.phone)+'">★</button>'}).join('')+'</div>'; }
+    if(o&&o.items&&o.items.length) h+='<button type="button" class="tk-re" data-re="'+esc(e.id)+'">🔁 اطلب نفس الطلب تاني</button>';
     return h+'</div>';
   }
   function render(){ var a=get(KEY), ch=false; a.forEach(function(e){ if(e.status==='cancelled'&&!e.seen){ e.seen=true; ch=true; } }); $('tkList').innerHTML=a.length?a.map(card).join(''):'<div class="tk-empty">مفيش طلبات على الجهاز ده لسه 🍗<br>اطلب دلوقتي، أو تتبّع طلب برقمه من تحت.</div>'; if(ch){ put(KEY,a); updatePill(); } }
@@ -5551,9 +5575,9 @@ new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:tru
     if(c.length){ b.classList.add('act'); t.textContent='طلبك اتلغى · اعرف السبب'; b.title='اضغط لمعرفة سبب الإلغاء'; return; }
     if(!a.length){ b.classList.remove('act'); t.textContent='تتبع طلبي'; b.title='تتبع طلبي'; return; }
     var e=a[0], S=steps(e.type).filter(function(x){return x[0]===e.status})[0];
-    var nt='طلبك: '+(S?S[1]:'قيد المراجعة'); if(t.textContent!==nt&&b.classList.contains('act')){ b.classList.remove('bump'); void b.offsetWidth; b.classList.add('bump'); if(navigator.vibrate) try{navigator.vibrate([30,40,30])}catch(x){} } b.classList.add('act'); t.textContent=nt; b.title='اضغط لمتابعة طلبك';
+    var nt='طلبك: '+(S?S[1]:'قيد المراجعة'); if(t.textContent!==nt&&b.classList.contains('act')){ b.classList.remove('bump'); void b.offsetWidth; b.classList.add('bump'); if(navigator.vibrate) try{navigator.vibrate([30,40,30])}catch(x){} } if(window.Notification&&Notification.permission==='granted'&&document.hidden&&t.textContent!==nt&&b.classList.contains('act')){ try{ new Notification('Red Roosters 🐓',{body:nt}); }catch(x){} } b.classList.add('act'); t.textContent=nt; b.title='اضغط لمتابعة طلبك';
   }
-  if($('rrTkBtn')) $('rrTkBtn').onclick=function(){ open(); };
+  if($('rrTkBtn')) $('rrTkBtn').onclick=function(){ open(); try{ if(window.Notification&&Notification.permission==='default') Notification.requestPermission(); }catch(x){} };
 
   /* ── فتح/قفل ── */
   function open(id){
@@ -5563,6 +5587,8 @@ new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:tru
   }
   function close(){ $('rrTkOv').classList.remove('open'); $('rrTkSheet').classList.remove('open'); clearInterval(timer); }
   window.rrTrackOpen=open;
+  $('tkList').addEventListener('click',function(ev){var s=ev.target.closest('[data-star]'); if(s){ fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'rate',id:s.dataset.rid,phone:s.dataset.ph,stars:+s.dataset.star})}).then(function(r){return r.json()}).then(function(j){ if(j&&j.ok){ var a=get('rr_rated'); a.push(s.dataset.rid); put('rr_rated',a.slice(-30)); render(); } }).catch(function(){}); return; }
+    var b=ev.target.closest('[data-re]');if(!b)return;var o=cache[b.dataset.re];if(!o||!o.items||!window.rrReorder)return;window.rrReorder(o.items);close();var f=document.querySelector('.cart-fab')||document.querySelector('#rrTabs [data-t=cart]');if(f)setTimeout(function(){f.click()},350);});
   $('rrTkOv').onclick=close; $('rrTkX').onclick=close;
   document.addEventListener('keydown',function(e){ if(e.key==='Escape') close(); });
 
@@ -5660,6 +5686,86 @@ new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:tru
     r.onclick=function(){ if(typeof closeMobileNav==='function') closeMobileNav(); var c=tabs.querySelector('[data-t="call"]'); if(c) setTimeout(function(){c.click()},150); };
     mb.appendChild(r);
   }
+})();
+</script>
+
+<style id="rrFeat">
+.cp-list{display:flex;flex-direction:column;gap:8px;margin:0 0 12px}
+.cp-item{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;border:1.5px dashed #D92B2B;background:#FFF6F6;border-radius:14px;padding:10px 12px;cursor:pointer;text-align:start;font-family:"Cairo",sans-serif}
+.cp-item b{display:block;letter-spacing:1px;direction:ltr;text-align:start;color:#D92B2B;font-weight:900}
+.cp-item small{color:#6B6B6B;font-weight:700}
+.cp-item .go{flex:none;background:#D92B2B;color:#fff;border-radius:20px;padding:4px 14px;font-weight:800;font-size:.8rem}
+.cp-item.on{border-style:solid;border-color:#0B6E4F;background:#E3F6EC}.cp-item.on .go{background:#0B6E4F}
+.tk-re{width:100%;margin-top:10px;border:0;background:#D92B2B;color:#fff;border-radius:12px;padding:11px;font:800 .95rem "Cairo",sans-serif;cursor:pointer}
+.tk-now{display:flex;align-items:center;gap:12px;margin:14px 0 8px}
+.tk-now .e{width:46px;height:46px;border-radius:50%;background:#FDECEC;display:grid;place-items:center;font-size:1.5rem;flex:none}
+.tk-now b{display:block;font:900 1.02rem "Tajawal",sans-serif}.tk-now small{color:#6B6B6B;font-weight:700}
+.tk-bar{height:10px;border-radius:10px;background:#eee;overflow:hidden}
+.tk-bar i{display:block;height:100%;border-radius:10px;background:repeating-linear-gradient(45deg,#D92B2B 0 10px,#E85454 10px 20px);background-size:28px 28px;animation:tkStripe 1s linear infinite;transition:width .6s}
+.tk-bar.fin i{background:#0B6E4F;animation:none}
+@keyframes tkStripe{to{background-position:28px 0}}
+#rrLang{border:1.5px solid #eadfd8;background:#fff;color:#1E1411;border-radius:999px;padding:6px 14px;font:800 .82rem "Cairo",sans-serif;cursor:pointer}
+.mn-head #rrLang{margin-inline-start:auto;margin-inline-end:10px}
+header .header-inner>#rrLang{flex:none}
+@media(max-width:900px){header .header-inner>#rrLang{display:none}}
+html[lang="en"] .card-name-en{display:none!important}
+html[lang="en"] body{font-family:"Cairo","Tajawal",sans-serif}
+</style>
+<script>
+(function(){
+  var D={"تتبع طلبي":"Track my order","صواني ريد روستر":"Red Roosters Trays","العروض":"Offers","ناشڤيل":"Nashville","برجر اللحم":"Beef Burgers","ساندوتشات الدجاج":"Chicken Sandwiches","تويستر وسوبريم":"Twister & Supreme","فردية":"Individual","عائلية":"Family","أطفال":"Kids","مقبلات":"Appetizers","إضافات":"Extras","صوصات":"Sauces","مشروبات":"Drinks","عنّا":"About us","الفروع":"Branches","ملحوظات":"Notes","نقاطي":"My points","اختار منطقتك":"Choose your area","تغيير":"Change","جديد":"New","القائمة":"Menu","الرئيسية":"Home","المفضلة":"Favorites","السلة":"Cart","اتصل":"Call","العروض والجديد":"Offers & New","المنيو":"Menu","برجر اللحم البقري":"Beef Burgers","الوجبات الفردية":"Individual Meals","الوجبات العائلية":"Family Meals","وجبات الأطفال":"Kids Meals","المقبلات":"Appetizers","الإضافات":"Extras","الصوصات":"Sauces","المشروبات":"Drinks","المزيد":"More","ملحوظات هامة":"Important notes","تواصل معنا":"Contact us","عرض الافتتاح":"Opening offer","اتصل بنا":"Call us","دليفري":"Delivery","استلام من الفرع":"Pickup from branch","كاش":"Cash","فودافون كاش":"Vodafone Cash","إنستا باي":"InstaPay","الأكثر طلباً":"Most ordered","الأقسام":"Sections","اجمع نقاط مع كل طلب":"Earn points with every order","شوف نقاطي":"See my points","أضف للسلة":"Add to cart","أضف":"Add","أضف للسلة — صغير":"Add to cart — Small","أضف للسلة — كبير":"Add to cart — Large","العروض الحصرية":"Exclusive offers","منيو ناشڤيل":"Nashville Menu","الجودة أولاً":"Quality first","ليه ريد روستر؟":"Why Red Roosters?","فروعنا":"Our branches","سلة الطلبات":"Your cart","السلة فاضية.. ضيف أكلتك المفضلة!":"Your cart is empty.. add your favorites!","خصم الكوبون":"Coupon discount","الإجمالي (بدون التوصيل)":"Total (before delivery)","التوصيل":"Delivery","الإجمالي بعد التوصيل":"Total with delivery","متابعة الطلب ←":"Continue →","بيانات التوصيل":"Delivery details","طريقة الاستلام":"Order type","بيانات العميل":"Your details","الاسم بالكامل":"Full name","رقم الموبايل":"Mobile number","رقم إضافي":"Extra number","موعد استلام الطلب من الفرع":"Pickup time","العنوان بالتفصيل":"Full address","المنطقة":"Area","اسم الشارع":"Street name","رقم العمارة":"Building no.","الدور":"Floor","الشقة":"Apartment","علامة مميزة":"Landmark","ملاحظات على الطلب":"Order notes","طريقة الدفع":"Payment method","محفظة إلكترونية":"E-wallet","حساب بنكي":"Bank account","كود الخصم":"Discount code","خصم الكوبون":"Coupon discount","تطبيق":"Apply","تأكيد الطلب":"Place order","الكمية":"Quantity","النوع":"Type","تعديلات سريعة":"Quick edits","خصم":"Discount","يلا نطلب أول طلب":"Order now","خدماتنا":"Our services","عرض السلة":"View cart","عرض نقاطي":"Show my points","طلبك هيوصل فين؟":"Where should we deliver?","تتبّع":"Track","اطلب نفس الطلب تاني":"Reorder this order","تتبّع طلب برقمه":"Track by order number","إغلاق":"Close","استخدم":"Use","✓ مطبّق":"✓ Applied","تم الاستلام":"Received","تم التأكيد":"Confirmed","بنجهّزه":"Preparing","خرج للتوصيل":"Out for delivery","جاهز للاستلام":"Ready for pickup","تم التسليم":"Delivered","استلمنا طلبك":"We got your order","طلبك اتأكد":"Order confirmed","بنجهّز طلبك دلوقتي":"Preparing your order","طلبك في الطريق":"On the way","طلبك جاهز":"Order ready","تفاصيل الطلب":"Order details","الإجمالي":"Total","الدفع":"Payment","المجموع":"Subtotal","طلبك":"Your order","طلبك اتلغى · اعرف السبب":"Order cancelled · see why","بحث في المنيو":"Search the menu","دوّر على أكلتك... (مثال: زينجر، ناشفيل، ريزو)":"Search for your meal… (e.g. Zinger, Nashville)","رقم الطلب RRxxxxxxx":"Order no. RRxxxxxxx","رقم موبايلك":"Your mobile","اكتب رقم موبايلك":"Your mobile"};
+  var EM={"ج.م":"EGP"}, RX=[[/ج\.م/g,'EGP'],[/(\d+)\s*صنف/g,'$1 items'],[/جنيه/g,'EGP']];
+  var LEAD=/^[^\u0600-\u06FFA-Za-z0-9]*/, TRAIL=/[^\u0600-\u06FFA-Za-z0-9]*$/, en=false;
+  function conv(s){
+    var l=LEAD.exec(s)[0], r=TRAIL.exec(s.slice(l.length))[0], c=s.slice(l.length,s.length-r.length).replace(/\s+/g,' ');
+    if(!c||!/[\u0600-\u06FF]/.test(s)) return s;
+    if(D[c]) return l+D[c]+r;
+    var o=s; RX.forEach(function(x){o=o.replace(x[0],x[1])}); return o;
+  }
+  function tn(n){ var v=n.nodeValue; if(n.__en===v) return; var o=conv(v); if(o!==v){ n.__ar=v; n.__en=o; n.nodeValue=o; } }
+  function ta(el){ ['placeholder','title','aria-label'].forEach(function(a){ var v=el.getAttribute&&el.getAttribute(a); if(!v) return; var k='data-ar-'+a; if(el.hasAttribute(k)&&el.getAttribute(a)===el.__e2) return; var o=conv(v); if(o!==v){ el.setAttribute(k,v); el.__e2=o; el.setAttribute(a,o); } }); }
+  function names(root){ (root.querySelectorAll?root.querySelectorAll('.card-name'):[]).forEach(function(n){ if(n.__nm!==undefined) return; var e=n.parentElement&&n.parentElement.querySelector('.card-name-en'); var s=e&&e.textContent.trim(); if(s){ n.__nm=n.textContent; n.textContent=s; n.__nv=s; } }); }
+  function walk(root){
+    if(root.nodeType===3){ if(!/^(SCRIPT|STYLE)$/.test(root.parentNode.nodeName)&&!(root.parentNode.closest&&root.parentNode.closest('.card-desc'))) tn(root); return; }
+    if(root.nodeType!==1||/^(SCRIPT|STYLE)$/.test(root.nodeName)) return;
+    ta(root); names(root);
+    var w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT|NodeFilter.SHOW_ELEMENT,null),n; 
+    while(n=w.nextNode()){ if(n.nodeType===3){ var p=n.parentNode; if(/^(SCRIPT|STYLE)$/.test(p.nodeName)||(p.closest&&p.closest('.card-desc'))) continue; tn(n); } else ta(n); }
+  }
+  function restore(){
+    var w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT),n; while(n=w.nextNode()){ if(n.__ar!==undefined&&n.nodeValue===n.__en){ n.nodeValue=n.__ar; } n.__en=undefined; }
+    document.querySelectorAll('[data-ar-placeholder],[data-ar-title],[data-ar-aria-label]').forEach(function(e){ ['placeholder','title','aria-label'].forEach(function(a){ var k='data-ar-'+a; if(e.hasAttribute(k)){ e.setAttribute(a,e.getAttribute(k)); e.removeAttribute(k); } }); e.__e2=undefined; });
+    document.querySelectorAll('.card-name').forEach(function(n){ if(n.__nm!==undefined){ n.textContent=n.__nm; n.__nm=undefined; } });
+  }
+  var pend=[], raf=0;
+  var mo=new MutationObserver(function(ms){ if(!en) return; ms.forEach(function(m){ if(m.type==='characterData') pend.push(m.target); else m.addedNodes.forEach(function(a){ pend.push(a); }); });
+    if(!raf) raf=requestAnimationFrame(function(){ raf=0; var p=pend; pend=[]; p.forEach(function(x){ if(document.body.contains(x)) walk(x); }); }); });
+  mo.observe(document.body,{childList:true,subtree:true,characterData:true});
+  function set(on){ en=on; var h=document.documentElement; h.lang=on?'en':'ar'; h.dir=on?'ltr':'rtl';
+    try{ localStorage.setItem('rr_lang',on?'en':'ar'); }catch(e){}
+    if(on) walk(document.body); else restore();
+    [].forEach.call(document.querySelectorAll('#rrLang'),function(b){ b.textContent=on?'عربي':'EN'; }); }
+  function mk(){ var b=document.createElement('button'); b.type='button'; b.id='rrLang'; b.textContent=en?'عربي':'EN'; b.setAttribute('aria-label','Language'); b.onclick=function(){ set(!en); }; return b; }
+  var hi=document.querySelector('header .header-inner'); if(hi) hi.insertBefore(mk(),document.getElementById('hamburger'));
+  function mnHook(){ var h=document.querySelector('#mobileNav .mn-head'); if(h&&!h.querySelector('#rrLang')) h.insertBefore(mk(),h.querySelector('.mn-x')); }
+  mnHook(); new MutationObserver(mnHook).observe(document.getElementById('mobileNav'),{childList:true,subtree:true});
+  try{ if(localStorage.getItem('rr_lang')==='en') setTimeout(function(){ set(true); },300); }catch(e){}
+})();
+</script>
+
+<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#671D0F"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
+<style>.tk-rate{display:flex;align-items:center;gap:4px;margin-top:10px;font-weight:800;font-size:.9rem}.tk-rate span{margin-inline-end:6px}.tk-rate button{border:0;background:none;font-size:1.7rem;color:#F5A623;cursor:pointer;padding:0 2px}.tk-rate.done{color:#0B6E4F}#rrClosed{display:none;margin:0 0 10px;padding:10px 12px;border-radius:12px;background:#FDECEC;color:#9E1B1B;font-weight:800;font-size:.9rem;text-align:center}</style>
+<script>
+(function(){
+  try{ if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js'); }catch(e){}
+  function isOpen(){ try{ var p=new Intl.DateTimeFormat('en-GB',{timeZone:'Africa/Cairo',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date()); return p>='11:00'||p<'05:00'; }catch(e){ return true; } }
+  var f=document.getElementById('checkoutForm'); if(!f) return;
+  var msg=document.createElement('div'); msg.id='rrClosed'; msg.textContent='🕙 المطعم مقفول دلوقتي — بنفتح 11 صباحًا. تقدر تجهّز طلبك وتبعته بعد الفتح.';
+  function tick(){ var b=f.querySelector('[type=submit]'); if(!b) return; if(!msg.parentNode) b.parentNode.insertBefore(msg,b);
+    var c=!isOpen(); msg.style.display=c?'block':'none';
+    if(c){ if(!b.dataset.okt) b.dataset.okt=b.textContent; b.disabled=true; b.textContent='مقفول حاليًا'; }
+    else if(b.dataset.okt&&b.textContent==='مقفول حاليًا'){ b.disabled=false; b.textContent=b.dataset.okt; delete b.dataset.okt; } }
+  tick(); setInterval(tick,20000);
 })();
 </script>
 </body>

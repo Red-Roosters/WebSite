@@ -195,6 +195,7 @@ main.wide{max-width:none}
         <button class="btn main" id="anGo">عرض التحليل</button><button class="btn ghost" id="anXls" disabled>⬇️ تحميل Excel</button></div>
       <div class="hint">اليوم التشغيلي بيبدأ الساعة ٦ الصبح — الطلبات اللي بعد منتصف الليل بتتحسب على اليوم اللي قبله.</div>
     </div>
+    <div class="panel"><h2>⭐ تقييمات العملاء</h2><button class="btn ghost" id="rtGo" type="button">عرض التقييمات</button><div id="rtOut" style="margin-top:12px"></div></div>
     <div id="anOut"></div>
   </main>
   <main id="stMain" class="hide">
@@ -654,6 +655,20 @@ $('lgForm').addEventListener('submit', async e => {
   } catch (err) { user = pass = ''; $('lgErr').textContent = '⚠️ مفيش اتصال، جرّب تاني'; }
 });
 if (user && pass) start();
+$('rtGo').addEventListener('click', async () => {
+  const o = $('rtOut'); o.textContent = '⏳ بنحمّل...';
+  try {
+    const j = await post({action:'adminRatings', user, pass});
+    if (!j.ok) { o.textContent = j.error === 'forbidden' ? 'التقييمات للمدير بس' : 'تعذّر التحميل'; return; }
+    const r = j.ratings; if (!r.length) { o.textContent = 'مفيش تقييمات لسه'; return; }
+    const avg = (r.reduce((s, x) => s + x.stars, 0) / r.length).toFixed(1), cnt = [0, 0, 0, 0, 0, 0];
+    r.forEach(x => cnt[x.stars]++);
+    o.innerHTML = '<div style="font-weight:900;font-size:1.2rem">⭐ ' + avg + ' / 5 <small style="color:#6B6B6B">(' + r.length + ' تقييم)</small></div>'
+      + '<div style="margin:8px 0">' + [5, 4, 3, 2, 1].map(n => '<div>' + n + '★ — ' + cnt[n] + '</div>').join('') + '</div>'
+      + r.slice(0, 50).map(x => '<div style="padding:6px 0;border-top:1px dashed #ddd"><b dir="ltr">#' + esc(x.id) + '</b> ' + '★'.repeat(x.stars) + '☆'.repeat(5 - x.stars) + ' <small style="color:#6B6B6B">' + new Date(x.time).toLocaleString('ar-EG', {day:'numeric', month:'short', hour:'numeric', minute:'2-digit'}) + '</small>' + (x.comment ? '<div>' + esc(x.comment) + '</div>' : '') + '</div>').join('');
+  } catch (e) { o.textContent = 'تعذّر الاتصال'; }
+});
+
 </script>
 </body>
 </html>
