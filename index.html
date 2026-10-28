@@ -5605,12 +5605,11 @@ new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:tru
     box-shadow:0 -4px 22px rgba(30,20,17,.10)!important}
   html body.tabs-hide #rrTabs{transform:translateY(calc(100% + 44px))}
   html body #rrTabs .tb-ind{display:none!important}
-  html body #rrTabs button[data-t="call"]{display:none!important}
-  html body #rrTabs button[data-t="menu"]{order:1}
+  html body #rrTabs button[data-t="menu"]{order:5}
   html body #rrTabs button[data-t="fav"]{order:2}
   html body #rrTabs button[data-t="cart"]{order:3}
   html body #rrTabs button[data-t="pts"]{order:4}
-  html body #rrTabs button[data-t="home"]{order:5}
+  html body #rrTabs button[data-t="home"]{order:1}
   html body #rrTabs button[data-t]{position:relative;display:flex!important;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px!important;
     height:66px;padding:0 0 9px!important;margin:0!important;background:none!important;border:0!important;border-radius:0!important;
     color:#9AA3B2!important;font:700 .74rem "Cairo",sans-serif!important;transform:none!important;overflow:visible}
@@ -5619,6 +5618,7 @@ new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:tru
   html body #rrTabs button[data-t] span svg,html body #rrTabs button[data-t].on span svg{width:28px!important;height:28px!important;stroke-width:1.9!important;fill:none}
   /* السلة */
   html body #rrTabs button[data-t="cart"],html body #rrTabs button[data-t="cart"].on{margin-top:0!important;color:#3b2a26!important}
+  html body #rrTabs button[data-t="call"][data-t]:not(.x){display:none!important;order:9}
   html body #rrTabs button[data-t="cart"] span,html body #rrTabs button[data-t="cart"].on span{position:absolute;top:-32px;left:50%;margin-left:-33px;width:66px!important;height:66px!important;box-sizing:border-box;
     border-radius:50%;background:#671D0F!important;border:6px solid #fff!important;color:#fff;box-shadow:0 -5px 14px rgba(30,20,17,.10),0 8px 16px -8px rgba(103,29,15,.55)!important}
   html body #rrTabs button[data-t="cart"] span svg{width:28px!important;height:28px!important;color:#fff;stroke:#fff}
