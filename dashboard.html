@@ -99,6 +99,24 @@ main{max-width:1280px;margin:0 auto;padding:16px}
 .empty{grid-column:1/-1;text-align:center;color:var(--mute);padding:50px 10px;font-size:1.05rem}
 #toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 22px;border-radius:999px;font-weight:800;z-index:50;opacity:0;pointer-events:none;transition:.3s}
 #toast.show{opacity:1}
+.board{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(310px,1fr);gap:12px;overflow-x:auto;align-items:start;padding-bottom:14px;scroll-snap-type:x proximity}
+main.wide{max-width:none}
+.col{background:rgba(0,0,0,.04);border-radius:18px;padding:10px;min-height:140px;scroll-snap-align:start}
+.col h3{margin:2px 4px 10px;font:900 1rem "Tajawal",sans-serif;display:flex;justify-content:space-between;align-items:center}
+.col h3 em{font-style:normal;background:#fff;border-radius:999px;padding:1px 10px;font-size:.85rem}
+.col.c-new{background:#FDECEC;outline:2px solid rgba(217,43,43,.35)}
+.col.c-new h3{color:var(--red)}
+.col.c-new h3 em{background:var(--red);color:#fff}
+.cl{display:grid;gap:12px}
+.ce{text-align:center;color:var(--mute);padding:26px 6px;font-size:.9rem}
+.card.new{animation:ringc 1.1s ease-in-out infinite}
+@keyframes ringc{0%,100%{box-shadow:0 0 0 3px rgba(217,43,43,.15)}50%{box-shadow:0 0 0 9px rgba(217,43,43,.35)}}
+.card.moved{animation:mv 1.6s ease-out}
+@keyframes mv{0%{box-shadow:0 0 0 0 rgba(11,110,79,.7);transform:scale(1.03)}100%{box-shadow:0 0 0 14px rgba(11,110,79,0);transform:none}}
+#alertBar{position:sticky;top:54px;z-index:19;background:var(--red);color:#fff;text-align:center;font-weight:900;padding:11px 14px;cursor:pointer;animation:fl 1s steps(2) infinite}
+@keyframes fl{50%{background:#a81d1d}}
+#unlock{position:fixed;inset:0;z-index:80;background:rgba(20,12,10,.85);color:#fff;display:grid;place-items:center;text-align:center;padding:24px;font:900 1.4rem "Tajawal",sans-serif;cursor:pointer}
+#unlock small{display:block;margin-top:8px;font:600 .95rem "Cairo",sans-serif;color:#e6dcd6}
 @media print{
   body.p1 .bar,body.p1 .stats,body.p1 .tools,body.p1 .card:not(.pme),body.p1 .acts{display:none!important}
   body.p1 .pme{border:0;box-shadow:none}
@@ -118,6 +136,7 @@ main{max-width:1280px;margin:0 auto;padding:16px}
   </form>
 </section>
 
+<div id="unlock" class="hide">🔔 اضغط هنا لتفعيل صوت التنبيه<small>المتصفح بيمنع الصوت لحد ما تضغط مرة واحدة</small></div>
 <div id="app" class="hide">
   <div class="bar">
     <h1>🐓 طلبات ريد روستر</h1>
@@ -126,7 +145,8 @@ main{max-width:1280px;margin:0 auto;padding:16px}
     <button class="ib" id="rf">🔄 تحديث</button>
     <button class="ib" id="out">خروج</button>
   </div>
-  <main>
+  <div id="alertBar" class="hide"></div>
+  <main id="mainEl">
     <div class="stats" id="stats"></div>
     <div class="tools"><div class="tabs" id="tabs"></div><input id="q" type="search" placeholder="🔎 ابحث بالاسم / الموبايل / رقم الطلب"></div>
     <div class="grid" id="grid"></div>
@@ -150,34 +170,60 @@ const SITE = 'https://red-roosters.github.io/Menu/';   // رابط الموقع 
 /* أسباب الإلغاء اللي بتظهر في القايمة (بتظهر للعميل زي ما هي) — عدّل فيها براحتك */
 const CANCEL_REASONS = ['صنف من طلبك غير متوفر دلوقتي', 'عنوانك خارج نطاق التوصيل', 'الطلب جه خارج ساعات العمل', 'المحل مقفول مؤقتًا للصيانة',
   'ماقدرناش نأكد طريقة الدفع', 'ماقدرناش نوصلّك بالتليفون', 'اتلغى بناءً على طلبك'];
-const POLL_MS = 15000, REPEAT_BEEP_MS = 30000, LATE_MIN = 60;
+const POLL_MS = 10000, RING_MS = 3500, LATE_MIN = 60;
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const LABEL = {new:'جديد', confirmed:'مؤكد', preparing:'بيتحضّر', out:'خرج للتوصيل', delivered:'تم التسليم', cancelled:'ملغي'};
 const PAY = {cash:'💵 كاش عند الاستلام', wallet:'📱 محفظة إلكترونية', instapay:'🏦 إنستا باي'};
 const ACTIVE = ['new','confirmed','preparing','out'];
-const TABS = [['active','النشطة'],['new','جديد'],['doing','قيد التنفيذ'],['delivered','تم التسليم'],['cancelled','ملغي'],['all','الكل']];
-const inTab = {active:o=>ACTIVE.includes(o.status), new:o=>o.status==='new', doing:o=>['confirmed','preparing','out'].includes(o.status),
+const COLS = [['new','🆕 جديد'],['confirmed','✅ مؤكد'],['preparing','👨‍🍳 بيتحضّر'],['out','🛵 خرج / جاهز'],['delivered','🎉 تم التسليم (النهاردة)'],['cancelled','❌ ملغي (النهاردة)']];
+const TABS = [['board','🗂️ اللوحة'],['active','النشطة'],['new','جديد'],['doing','قيد التنفيذ'],['delivered','تم التسليم'],['cancelled','ملغي'],['all','الكل']];
+const inTab = {board:o=>ACTIVE.includes(o.status), active:o=>ACTIVE.includes(o.status), new:o=>o.status==='new', doing:o=>['confirmed','preparing','out'].includes(o.status),
                delivered:o=>o.status==='delivered', cancelled:o=>o.status==='cancelled', all:()=>true};
 
 let pin = sessionStorage.getItem('rr_admin_pin') || localStorage.getItem('rr_admin_pin') || '';
-let orders = [], tab = 'active', query = '', known = null, sound = true, lastBeep = 0, timer = null, ac = null;
+let orders = [], tab = 'board', query = '', known = null, sound = true, lastBeep = 0, timer = null, ac = null, ringT = null, wl = null, flip = false;
 
 /* ═══ API ═══ */
 const post = b => fetch(API, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(b)}).then(r => r.json());
 
-/* ═══ تنبيه صوتي ═══ */
+/* ═══ تنبيه صوتي (بيرن كل RING_MS لحد ما مفيش طلب "جديد") ═══ */
+function audioOk(){
+  try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); if (ac.state === 'suspended') ac.resume(); return ac.state === 'running'; } catch (e) { return false; }
+}
 function beep(){
-  if (!sound) return;
+  if (!sound || !audioOk()) return;
   try {
-    ac = ac || new (window.AudioContext || window.webkitAudioContext)(); if (ac.state === 'suspended') ac.resume();
-    [0, .22, .44].forEach((d, i) => { const o = ac.createOscillator(), g = ac.createGain(); o.type = 'sine'; o.frequency.value = i === 2 ? 1175 : 880;
-      g.gain.setValueAtTime(.0001, ac.currentTime + d); g.gain.exponentialRampToValueAtTime(.35, ac.currentTime + d + .02); g.gain.exponentialRampToValueAtTime(.0001, ac.currentTime + d + .18);
-      o.connect(g); g.connect(ac.destination); o.start(ac.currentTime + d); o.stop(ac.currentTime + d + .2); });
+    [0, .2, .4, .75, .95, 1.15].forEach((d, i) => { const o = ac.createOscillator(), g = ac.createGain(); o.type = 'square'; o.frequency.value = i % 3 === 2 ? 1175 : 880;
+      g.gain.setValueAtTime(.0001, ac.currentTime + d); g.gain.exponentialRampToValueAtTime(.3, ac.currentTime + d + .02); g.gain.exponentialRampToValueAtTime(.0001, ac.currentTime + d + .16);
+      o.connect(g); g.connect(ac.destination); o.start(ac.currentTime + d); o.stop(ac.currentTime + d + .18); });
   } catch (e) {}
   lastBeep = Date.now();
 }
+const newOrders = () => orders.filter(o => o.status === 'new');
+function ringTick(){
+  const n = newOrders().length;
+  syncAlert();
+  if (!n) return;
+  flip = !flip; document.title = (flip ? '🔔 ' : '(' + n + ') ') + 'طلب جديد!';
+  if (sound) {
+    if (!audioOk()) $('unlock').classList.remove('hide'); else $('unlock').classList.add('hide');
+    if (Date.now() - lastBeep > 1500) beep();
+    try { navigator.vibrate && navigator.vibrate([300, 150, 300]); } catch (e) {}
+  }
+}
+function syncAlert(){
+  const n = newOrders().length, bar = $('alertBar');
+  bar.classList.toggle('hide', !n);
+  if (n) bar.textContent = '🔔 ' + n + ' طلب جديد مستني تأكيدك — اضغط هنا';
+  else { document.title = 'لوحة طلبات ريد روستر'; $('unlock').classList.add('hide'); }
+}
+$('alertBar').onclick = () => { tab = 'board'; render(); const c = document.querySelector('.c-new'); if (c) c.scrollIntoView({behavior:'smooth', inline:'center', block:'nearest'}); };
+$('unlock').onclick = () => { audioOk(); $('unlock').classList.add('hide'); beep(); };
+['pointerdown', 'keydown', 'touchstart'].forEach(ev => document.addEventListener(ev, () => { if (ac && ac.state === 'suspended') ac.resume(); }, {passive:true}));
+async function keepAwake(){ try { if (navigator.wakeLock && document.visibilityState === 'visible') wl = await navigator.wakeLock.request('screen'); } catch (e) {} }
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && !$('app').classList.contains('hide')) { keepAwake(); load(); } });
 function toast(t){ const el = $('toast'); el.textContent = t; el.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('show'), 3200); }
 
 /* ═══ تحميل الأوردرات ═══ */
@@ -188,11 +234,9 @@ async function load(){
     setLive(true);
     const fresh = j.orders.filter(o => known && !known.has(o.id) && o.status === 'new');
     known = new Set(j.orders.map(o => o.id)); orders = j.orders;
-    const newCount = orders.filter(o => o.status === 'new').length;
-    if (fresh.length) { beep(); toast('🔔 طلب جديد: ' + fresh.map(o => o.name).join('، ')); }
-    else if (newCount && Date.now() - lastBeep > REPEAT_BEEP_MS) beep();
-    document.title = (newCount ? '(' + newCount + ') ' : '') + 'لوحة طلبات ريد روستر';
-    render(); return true;
+    render();
+    if (fresh.length) { toast('🔔 طلب جديد: ' + fresh.map(o => o.name).join('، ')); ringTick(); }
+    return true;
   } catch (e) { setLive(false); }
 }
 function setLive(on){ $('live').classList.toggle('off', !on); $('liveT').textContent = on ? 'متصل' : 'مفيش اتصال.. بنحاول تاني'; }
@@ -225,7 +269,21 @@ function render(){
   let list = orders.filter(inTab[tab]);
   if (q) list = list.filter(o => (o.id + ' ' + o.name + ' ' + o.phone + ' ' + o.phone2).toLowerCase().includes(q));
   list.sort((a, b) => ['active','new','doing'].includes(tab) ? a.time - b.time : b.time - a.time);
-  $('grid').innerHTML = list.length ? list.map(cardHtml).join('') : '<div class="empty">مفيش طلبات هنا 🍗</div>';
+  $('mainEl').classList.toggle('wide', tab === 'board');
+  if (tab === 'board') {
+    let src = orders; if (q) src = src.filter(o => (o.id + ' ' + o.name + ' ' + o.phone + ' ' + o.phone2).toLowerCase().includes(q));
+    $('grid').className = 'board';
+    $('grid').innerHTML = COLS.map(([st, title]) => {
+      let l = src.filter(o => o.status === st);
+      if (st === 'delivered' || st === 'cancelled') l = l.filter(o => (o.updated || o.time) >= day.getTime());
+      l.sort((a, b) => ACTIVE.includes(st) ? a.time - b.time : b.time - a.time);
+      return '<section class="col c-' + st + '"><h3>' + title + '<em>' + l.length + '</em></h3><div class="cl">' + (l.length ? l.map(cardHtml).join('') : '<div class="ce">—</div>') + '</div></section>';
+    }).join('');
+  } else {
+    $('grid').className = 'grid';
+    $('grid').innerHTML = list.length ? list.map(cardHtml).join('') : '<div class="empty">مفيش طلبات هنا 🍗</div>';
+  }
+  syncAlert();
 }
 function cardHtml(o){
   const mins = (Date.now() - o.time) / 60000, late = ACTIVE.includes(o.status) && mins > LATE_MIN, ns = nextStep(o);
@@ -253,7 +311,9 @@ function cardHtml(o){
 async function setStatus(id, st, reason){
   const o = orders.find(x => x.id === id); if (!o) return;
   if (st === 'cancelled' && reason === undefined) return openCancel(id);   // الأول بنسأل عن السبب
-  const prev = o.status, prevR = o.reason; o.status = st; o.reason = st === 'cancelled' ? reason : ''; render();
+  const prev = o.status, prevR = o.reason; o.status = st; o.reason = st === 'cancelled' ? reason : ''; o.updated = Date.now(); render();
+  const mv = document.querySelector('.card[data-id="' + id + '"]');
+  if (mv) { mv.classList.add('moved'); const c = mv.closest('.col'); if (c) c.scrollIntoView({behavior:'smooth', inline:'center', block:'nearest'}); }
   try {
     const j = await post({action:'setStatus', pin, id, status:st, reason: st === 'cancelled' ? reason : ''});
     if (!j.ok) throw new Error(j.error || 'fail');
@@ -301,12 +361,13 @@ setInterval(render, 60000);   // يحدّث "من كام دقيقة" والتأ�
 /* ═══ دخول / خروج ═══ */
 function showApp(on){ $('login').classList.toggle('hide', on); $('app').classList.toggle('hide', !on); }
 function logout(msg){
-  clearInterval(timer); pin = ''; known = null; sessionStorage.removeItem('rr_admin_pin'); localStorage.removeItem('rr_admin_pin');
+  clearInterval(timer); clearInterval(ringT); document.title = 'لوحة طلبات ريد روستر'; pin = ''; known = null; orders = []; sessionStorage.removeItem('rr_admin_pin'); localStorage.removeItem('rr_admin_pin');
   showApp(false); $('lgErr').textContent = msg || ''; $('pin').value = ''; $('pin').focus();
 }
 async function start(){
-  showApp(true); beepUnlock();
-  if (await load()) { clearInterval(timer); timer = setInterval(load, POLL_MS); }
+  showApp(true); beepUnlock(); keepAwake();
+  clearInterval(ringT); ringT = setInterval(ringTick, RING_MS);
+  if (await load()) { clearInterval(timer); timer = setInterval(load, POLL_MS); ringTick(); }
 }
 function beepUnlock(){ try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); if (ac.state === 'suspended') ac.resume(); } catch (e) {} }
 $('lgForm').addEventListener('submit', async e => {
