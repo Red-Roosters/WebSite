@@ -153,6 +153,14 @@ main.wide{max-width:none}
   body.p1 .bar,body.p1 .stats,body.p1 .tools,body.p1 .card:not(.pme),body.p1 .acts{display:none!important}
   body.p1 .pme{border:0;box-shadow:none}
 }
+.mnrow{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 4px;border-top:1px solid var(--line)}
+.mnrow:first-child{border-top:0}
+.mnrow .mnn b{display:block;font-size:.95rem}
+.mnrow .mnn small{color:var(--mute);font-size:.78rem}
+.mnrow.off{background:#FDECEC;border-radius:12px;padding-inline:10px;border-top-color:transparent}
+.mnrow.off .mnn b{text-decoration:line-through;color:#9E1B1B}
+.mnsec{font:900 1rem "Tajawal",sans-serif;margin:16px 4px 6px;color:var(--red)}
+#mnQ{min-width:220px}
 </style>
 </head>
 <body>
@@ -175,6 +183,7 @@ main.wide{max-width:none}
     <h1>🐓 طلبات ريد روستر</h1>
     <span id="who"></span>
     <button class="ib act hide" id="vOrders">🗂️ الطلبات</button>
+    <button class="ib hide" id="vMenu">🚫 الأصناف</button>
     <button class="ib hide" id="vAn">📊 التحليلات</button>
     <button class="ib hide" id="vStaff">👥 الموظفين</button>
     <div class="live" id="live"><i></i><span id="liveT">متصل</span></div>
@@ -203,6 +212,16 @@ main.wide{max-width:none}
       <div class="frm"><input id="stU" dir="ltr" maxlength="20" placeholder="اسم المستخدم (حروف إنجليزي/أرقام)" autocapitalize="none"><input id="stN" maxlength="40" placeholder="الاسم الظاهر (مثلاً: أحمد)"><input id="stP" dir="ltr" maxlength="40" placeholder="كلمة السر (4 على الأقل)"><button class="btn ghost" id="stGen" type="button">🎲 توليد</button><button class="btn main" id="stAdd" type="button">إنشاء</button></div>
       <div class="hint">الموظف يقدر يشوف الطلبات ويغيّر حالتها ويلغي بسبب، لكن مايشوفش التحليلات ولا المبيعات ولا يقدر يرجّع طلب منتهي.</div></div>
     <div class="panel"><h2>👥 الموظفين</h2><div id="stList">⏳...</div></div>
+  </main>
+  <main id="mnMain" class="hide">
+    <div class="panel"><h2>🚫 إيقاف الأصناف اللي نفدت</h2>
+      <div class="hint" style="margin:0 0 10px">اضغط "وقّفه" على أي صنف خلص عندك — هيتقفل على الموقع (خلال دقيقة) ومحدش يقدر يطلبه، وأي طلب فيه الصنف ده السيرفر هيرفضه. "رجّعه" بيرجّعه تاني.</div>
+      <div class="rng"><input id="mnQ" type="search" placeholder="🔎 ابحث عن صنف"><button class="btn ghost" id="mnReload" type="button">🔄 تحديث القايمة</button><button class="btn ghost" id="mnClear" type="button">↩︎ رجّع كل الأصناف</button></div>
+    </div>
+    <div class="panel hide" id="mnOffP"><h2>⛔ موقوف دلوقتي (<span id="mnOffN">0</span>)</h2><div id="mnOff"></div></div>
+    <div id="mnList"><div class="empty">⏳...</div></div>
+    <div class="panel"><h2>✍️ وقّف صنف باسمه</h2><div class="frm"><input id="mnMan" maxlength="120" placeholder="اكتب اسم الصنف زي ما هو متكتوب في الموقع"><button class="btn main" id="mnManGo" type="button">⛔ وقّفه</button></div>
+      <div class="hint">للأصناف اللي مش ظاهرة في القايمة فوق.</div></div>
   </main>
 </div>
 <div id="cx" class="cx hide" role="dialog" aria-modal="true" aria-label="سبب الإلغاء">
@@ -290,6 +309,7 @@ async function load(){
     setLive(true); role = j.role || 'staff'; myName = j.name || user; applyRole();
     const fresh = j.orders.filter(o => known && !known.has(o.id) && o.status === 'new');
     known = new Set(j.orders.map(o => o.id)); orders = j.orders;
+    if (Array.isArray(j.soldout) && !soBusy && Date.now() - soLast > 4000) { soList = j.soldout; mnRender(); }
     render();
     if (fresh.length) { toast('🔔 طلب جديد: ' + fresh.map(o => o.name).join('، ')); ringTick(); }
     return true;
@@ -407,17 +427,18 @@ $('cxOk').onclick = () => { const r = cxReason(), id = cxId; if (!r) return; clo
 /* ═══ الأدوار والتنقل ═══ */
 function applyRole(){
   const m = role === 'manager';
-  ['vOrders','vAn','vStaff'].forEach(id => $(id).classList.toggle('hide', !m));
+  ['vOrders','vMenu'].forEach(id => $(id).classList.remove('hide'));   // الموظف والمدير الاتنين يقدروا يوقّفوا الأصناف
+  ['vAn','vStaff'].forEach(id => $(id).classList.toggle('hide', !m));
   $('who').textContent = (m ? '👑 ' : '👤 ') + myName;
-  if (!m && view !== 'orders') setView('orders');
+  if (!m && view !== 'orders' && view !== 'menu') setView('orders');
 }
 function setView(v){
   view = v;
-  $('mainEl').classList.toggle('hide', v !== 'orders'); $('anMain').classList.toggle('hide', v !== 'analytics'); $('stMain').classList.toggle('hide', v !== 'staff');
-  [['vOrders','orders'],['vAn','analytics'],['vStaff','staff']].forEach(([id, k]) => $(id).classList.toggle('act', k === v));
-  if (v === 'orders') render(); if (v === 'analytics') anInit(); if (v === 'staff') stLoad();
+  $('mainEl').classList.toggle('hide', v !== 'orders'); $('anMain').classList.toggle('hide', v !== 'analytics'); $('stMain').classList.toggle('hide', v !== 'staff'); $('mnMain').classList.toggle('hide', v !== 'menu');
+  [['vOrders','orders'],['vMenu','menu'],['vAn','analytics'],['vStaff','staff']].forEach(([id, k]) => $(id).classList.toggle('act', k === v));
+  if (v === 'orders') render(); if (v === 'analytics') anInit(); if (v === 'staff') stLoad(); if (v === 'menu') mnLoad();
 }
-$('vOrders').onclick = () => setView('orders'); $('vAn').onclick = () => setView('analytics'); $('vStaff').onclick = () => setView('staff');
+$('vOrders').onclick = () => setView('orders'); $('vAn').onclick = () => setView('analytics'); $('vStaff').onclick = () => setView('staff'); $('vMenu').onclick = () => setView('menu');
 
 /*ANALYZE-START*/
 const pad2 = n => String(n).padStart(2, '0');
@@ -610,6 +631,85 @@ $('stList').addEventListener('click', e => {
   else if (confirm((b.dataset.a === '1' ? 'إيقاف' : 'تفعيل') + ' حساب ' + u + '؟')) stSave({username:u, active:b.dataset.a !== '1'}, b.dataset.a === '1' ? '⏸️ اتوقّف الحساب' : '▶️ اتفعّل الحساب');
 });
 
+/* ═══ إيقاف الأصناف اللي نفدت ═══ */
+const nz = s => String(s == null ? '' : s).replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).toLowerCase().replace(/[\u064B-\u065F\u0670\u0640]/g, '').replace(/[أإآ]/g, 'ا').replace(/ى/g, 'ي').replace(/ة/g, 'ه').replace(/\s+/g, ' ').trim();
+let soList = [], menu = null, menuErr = '', mnQ = '', mnRows = [], soBusy = 0, soLast = 0;
+const soHas = n => soList.some(x => nz(x.name) === nz(n));
+const MN_TYPES = [['.card', '.card-name', '.price-badge'], ['.siniya-card', '.siniya-card-name', '.siniya-price'], ['.siniya-featured', '.siniya-featured-name', '.siniya-price'],
+                  ['.school-featured', '.school-featured-name', '.price-badge'], ['.zsb-banner', 'h2', '.zsb-price'], ['.power-deal-banner', 'h2', '.power-deal-price']];
+function mnClean(el){ const c = el.cloneNode(true); c.querySelectorAll('span').forEach(s => s.remove()); return c.textContent.replace(/[\u{1F300}-\u{1FAFF}\u2600-\u27BF]/gu, '').replace(/\s+/g, ' ').trim(); }
+function mnParse(html){
+  const doc = new DOMParser().parseFromString(html, 'text/html'), out = [], seen = new Set();
+  const add = (sec, name, en, price) => { const k = nz(name); if (!name || seen.has(k)) return; seen.add(k); out.push({sec, name, en, price}); };
+  MN_TYPES.forEach(([sel, ns, ps]) => doc.querySelectorAll(sel).forEach(box => {
+    const n = box.querySelector(ns), p = box.querySelector(ps); if (!n || !p || !/\d/.test(p.textContent)) return;   // صنف من غير سعر (— LE) مش بيتباع أصلاً
+    const s = box.closest('section'), h = s && s.querySelector('.section-title, h2'), e = box.querySelector('.card-name-en');
+    add(h ? mnClean(h) : 'أخرى', mnClean(n), e ? e.textContent.trim() : '', p.textContent.replace(/\s+/g, ' ').trim());
+  }));
+  /* الإضافات والصوصات بتترسم من الجافاسكربت في الموقع، فبنقراها من الداتا نفسها */
+  const grab = (key, sec) => {
+    const m = html.match(new RegExp('const ' + key + '\\s*=\\s*\\[([\\s\\S]*?)\\n\\s*\\];')); if (!m) return;
+    (m[1].match(/\{[^{}]*\}/g) || []).forEach(o => {
+      if (/\boff\s*:\s*true/.test(o)) return;
+      const a = o.match(/\bname\s*:\s*'([^']+)'/), e = o.match(/\ben\s*:\s*'([^']*)'/), p = o.match(/\bprice\s*:\s*(\d+)/);
+      if (a) add(sec, a[1], e ? e[1] : '', p ? p[1] + ' LE' : '');
+    });
+  };
+  grab('EXTRAS', '➕ الإضافات'); grab('SAUCES', '🥣 الصوصات');
+  return out;
+}
+async function mnLoad(force){
+  if (menu && !force) return mnRender();
+  $('mnList').innerHTML = '<div class="empty">⏳ بنحمّل قايمة الأصناف...</div>';
+  menu = null; menuErr = '';
+  for (const u of [new URL('index.html', location.href).href, SITE + 'index.html']) {
+    try { const r = await fetch(u, {cache:'no-store'}); if (!r.ok) continue; const m = mnParse(await r.text()); if (m.length) { menu = m; break; } } catch (e) {}
+  }
+  if (!menu) menuErr = '⚠️ معرفناش نحمّل قايمة الأصناف من الموقع. تقدر توقّف أي صنف بكتابة اسمه تحت.';
+  mnRender();
+}
+function mnRender(){
+  const off = soList.slice().sort((a, b) => b.time - a.time), q = nz(mnQ);
+  $('vMenu').textContent = '🚫 الأصناف' + (off.length ? ' (' + off.length + ')' : '');
+  if (view !== 'menu') return;
+  $('mnOffP').classList.toggle('hide', !off.length); $('mnOffN').textContent = off.length;
+  mnRows = [];
+  const row = (name, sub, isOff) => { const i = mnRows.push(name) - 1;
+    return '<div class="mnrow' + (isOff ? ' off' : '') + '"><div class="mnn"><b>' + esc(name) + '</b><small>' + esc(sub) + '</small></div>' +
+      '<button type="button" class="btn tiny ' + (isOff ? 'main' : 'danger') + '" data-mn="' + i + '" data-off="' + (isOff ? 0 : 1) + '">' + (isOff ? '✅ رجّعه' : '⛔ وقّفه') + '</button></div>'; };
+  $('mnOff').innerHTML = off.map(x => row(x.name, (x.by ? '👤 ' + (staffNames[x.by] || x.by) : '') + (x.time ? ' · ' + ago(x.time) : ''), true)).join('');
+  let h = menuErr ? '<div class="note" style="margin-bottom:12px">' + esc(menuErr) + '</div>' : '';
+  if (menu) {
+    const groups = new Map();
+    menu.forEach(m => { if (q && !nz(m.name + ' ' + m.en + ' ' + m.sec).includes(q)) return; if (!groups.has(m.sec)) groups.set(m.sec, []); groups.get(m.sec).push(m); });
+    groups.forEach((l, s) => { h += '<h3 class="mnsec">' + esc(s) + '</h3><div class="panel" style="padding:4px 14px">' + l.map(m => row(m.name, (m.en ? m.en + ' · ' : '') + m.price, soHas(m.name))).join('') + '</div>'; });
+    if (!groups.size) h += '<div class="empty">مفيش صنف بالاسم ده</div>';
+  }
+  $('mnList').innerHTML = h;
+}
+async function mnSend(body, okMsg){
+  const prev = soList.slice(); soBusy++; soLast = Date.now();
+  try {
+    const j = await post(Object.assign({user, pass}, body));
+    if (!j.ok) throw new Error(j.error || 'fail');
+    soList = j.soldout || []; soLast = Date.now(); mnRender(); toast(okMsg); return true;
+  } catch (e) { soList = prev; mnRender(); toast('⚠️ معرفناش نحفظ التغيير، جرّب تاني'); return false; }
+  finally { soBusy--; }
+}
+function mnToggle(name, off){
+  if (off) { if (!soHas(name)) soList.push({name, by:user, time:Date.now()}); } else soList = soList.filter(x => nz(x.name) !== nz(name));
+  mnRender();
+  return mnSend({action:'setSoldout', name, soldout:off}, off ? '⛔ اتوقّف: ' + name + ' — هيختفي من الموقع خلال دقيقة' : '✅ رجع: ' + name);
+}
+$('mnMain').addEventListener('click', e => {
+  const b = e.target.closest('[data-mn]'); if (b) mnToggle(mnRows[+b.dataset.mn], b.dataset.off === '1');
+});
+$('mnQ').addEventListener('input', e => { mnQ = e.target.value; mnRender(); });
+$('mnReload').onclick = () => mnLoad(true);
+$('mnClear').onclick = () => { if (!soList.length) return toast('مفيش أصناف موقوفة'); if (confirm('ترجّع كل الأصناف الموقوفة (' + soList.length + ')؟')) { soList = []; mnRender(); mnSend({action:'soldoutClear'}, '✅ اتّرجّعت كل الأصناف'); } };
+$('mnManGo').onclick = () => { const n = $('mnMan').value.trim(); if (!n) return; $('mnMan').value = ''; mnToggle(n, true); };
+$('mnMan').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('mnManGo').click(); } });
+
 /* ═══ أحداث ═══ */
 function copyText(t){
   const done = () => toast('📋 تم نسخ الرقم ' + t);
@@ -634,7 +734,7 @@ setInterval(render, 60000);   // يحدّث "من كام دقيقة" والتأ�
 /* ═══ دخول / خروج ═══ */
 function showApp(on){ $('login').classList.toggle('hide', on); $('app').classList.toggle('hide', !on); }
 function logout(msg){
-  clearInterval(timer); clearInterval(ringT); document.title = 'لوحة طلبات ريد روستر'; user = pass = ''; role = 'staff'; view = 'orders'; lastA = null; known = null; orders = []; sessionStorage.removeItem('rr_admin_cred'); localStorage.removeItem('rr_admin_cred');
+  clearInterval(timer); clearInterval(ringT); document.title = 'لوحة طلبات ريد روستر'; user = pass = ''; role = 'staff'; view = 'orders'; lastA = null; known = null; orders = []; soList = []; sessionStorage.removeItem('rr_admin_cred'); localStorage.removeItem('rr_admin_cred');
   showApp(false); $('lgErr').textContent = msg || ''; $('pin').value = ''; $('usr').focus();
 }
 async function start(){

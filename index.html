@@ -2674,6 +2674,22 @@ footer.pro-foot{background:var(--p-ink)!important;color:#d9cfc9;padding:0!import
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"Restaurant","name":"ريد روستر – Red Roosters","url":"https://red-roosters.github.io/Menu/","image":"https://i.ibb.co/5xh70cWh/Whats-App-Image-2026-07-25-at-8-21-17-PM.jpg","telephone":"0237721525","servesCuisine":["Fried Chicken","Burgers","Sandwiches"],"address":{"@type":"PostalAddress","addressLocality":"فيصل المريوطية","addressCountry":"EG"},"sameAs":["https://www.facebook.com/redrooster.eg/"],"hasMenu":"https://red-roosters.github.io/Menu/"}
 </script>
+<style id="rr-v2-css">
+#rrFail{display:none;margin:12px 0;padding:12px 14px;border-radius:14px;background:#FDECEC;border:1.5px solid #f3b9b9;color:#9E1B1B;font-weight:800;font-size:.92rem;line-height:1.7;text-align:center}
+#rrFail.show{display:block}
+#rrFail .fx-row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:10px}
+#rrFail .fx-retry,#rrFail .fx-call{border-radius:12px;padding:10px 18px;font:800 .92rem "Cairo",sans-serif;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+#rrFail .fx-retry{border:0;background:#D92B2B;color:#fff}
+#rrFail .fx-call{border:1.5px solid #eadfd8;background:#fff;color:#1E1411}
+.rr-so{position:relative}
+.rr-so .card-img,.rr-so .card-img-placeholder,.rr-so img{filter:grayscale(1);opacity:.5}
+.rr-so-badge{position:absolute;top:58px;left:10px;z-index:5;pointer-events:none;background:#1E1411;color:#fff;font:800 .74rem "Cairo",sans-serif;padding:4px 11px;border-radius:999px;box-shadow:0 4px 12px rgba(0,0,0,.25)}
+.rr-so-badge::before{content:"نفد مؤقتًا"}
+html[lang="en"] .rr-so-badge::before{content:"Sold out"}
+.rr-so .add-cart-btn[disabled]{background:#ddd!important;color:#777!important;border-color:#ddd!important;cursor:not-allowed;box-shadow:none!important;transform:none!important}
+.opt-row button.rr-so-opt{opacity:.45;text-decoration:line-through;cursor:not-allowed}
+.rr-so-tag{color:#9E1B1B;font-weight:800;font-size:.78rem;margin-top:2px}
+</style>
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
@@ -3668,6 +3684,7 @@ footer.pro-foot{background:var(--p-ink)!important;color:#d9cfc9;padding:0!import
         </div>
         <input type="hidden" id="f_pay" value="cash">
         <div class="pay-note" id="payNote">💵 الدفع كاش عند الاستلام. الطلب بيوصلنا مباشرة من الموقع وهنكلمك نأكده.</div>
+        <div id="rrFail" role="alert" aria-live="assertive"></div>
         <button type="submit" class="rr-btn">تأكيد الطلب 🚀</button>
     </form>
 </div>
@@ -3902,6 +3919,30 @@ footer.pro-foot{background:var(--p-ink)!important;color:#d9cfc9;padding:0!import
     const NO_SPICE_NAMES = ['كومبو الروقان', 'عرض الفسحة 3'].map(s => norm(s));
     let cart = LS.get('rr_cart', []);
     let coupon = null; // { code, def }
+
+    /* ═══ أصناف نفدت مؤقتًا — بتتحكم فيها من الداشبورد (تبويب "الأصناف") ═══ */
+    const T = (ar, en) => document.documentElement.lang === 'en' ? en : ar;
+    let SO = new Set((LS.get('rr_so', []) || []).map(norm));
+    const baseName = s => String(s).replace(/\s*\(.*\)\s*$/, '');
+    const optName = o => String(o).replace(/^➕\s*/, '').replace(/\s*\(\+\d+\)\s*$/, '').replace(/^[^:]*:\s*/, '');
+    const isSO = n => SO.size > 0 && (SO.has(norm(n)) || SO.has(norm(baseName(n))));
+    const soItem = i => isSO(i.name) || (i.opts || []).some(x => SO.has(norm(optName(x))));
+    const soInCart = () => cart.filter(soItem).map(i => i.name);
+    const soTag = i => soItem(i) ? `<div class="rr-so-tag">⛔ ${T('نفد مؤقتًا — احذفه من السلة', 'Sold out — please remove it')}</div>` : '';
+    function soEn(n) {
+        const k = norm(baseName(n)), el = [...document.querySelectorAll('[data-nm]')].find(b => norm(b.dataset.nm) === k || norm(baseName(b.dataset.nm)) === k);
+        return (el && el.dataset.en) || n;
+    }
+    const soMsg = names => T('⛔ الأصناف دي نفدت مؤقتًا: ', '⛔ These items just sold out: ')
+        + [...new Set(names)].map(n => T(n, soEn(n))).join(T('، ', ', '))
+        + T(' — احذفها من السلة وكمّل طلبك.', ' — please remove them from your cart and continue.');
+    function soBlocked(o) {
+        if (isSO(o.name) || (o.opts || []).some(x => SO.has(norm(optName(x))))) {
+            toast(T('⛔ الصنف ده نفد مؤقتًا — اختار حاجة تانية', '⛔ This item is currently sold out — please pick something else'), 4000);
+            return true;
+        }
+        return false;
+    }
     /* ═══ اختيارات العروض ═══ */
     const CHICKEN  = ['تركي ميلت', 'وايلد مشروم', 'تشيلي جان', 'سموكي تشيكن', 'مانجو فاير']; // كل الدجاج عدا المايتي زينجر
     const BEEF     = ['كلاسيك كينج', 'مشروم كراون', 'بيكون ستار', 'ريد وار', 'رويال بايت', 'ميكسكانو']; // عدا تاستي لورد وبيف تاشيو
@@ -3973,6 +4014,7 @@ footer.pro-foot{background:var(--p-ink)!important;color:#d9cfc9;padding:0!import
 
     /* ═══ السلة ═══ */
     function addItem(o) {
+        if (soBlocked(o)) return;
         const full = o.label ? `${o.name} (${o.label})` : o.name;
         const opts = o.opts || [];
         const key = [full, o.price, opts.join(','), o.note || ''].join('|');
@@ -4028,7 +4070,7 @@ footer.pro-foot{background:var(--p-ink)!important;color:#d9cfc9;padding:0!import
             return `
             <div class="ct-row">
                 <div class="ct-img">${src ? `<img src="${esc(src)}" alt="" loading="lazy" decoding="async">` : '🍗'}</div>
-                <div class="ct-name"><div class="cart-line-name">${esc(i.name)}</div>${optsHtml}</div>
+                <div class="ct-name"><div class="cart-line-name">${esc(i.name)}</div>${soTag(i)}${optsHtml}</div>
                 <div class="ct-unit" data-l="السعر">${fmt(i.price)}</div>
                 <div class="ct-qty">
                     <button type="button" data-act="inc" data-i="${idx}" aria-label="زيادة">+</button>
@@ -4233,7 +4275,7 @@ footer.pro-foot{background:var(--p-ink)!important;color:#d9cfc9;padding:0!import
     const SUGGEST_BY_NAME = {};
     Object.keys(SUGGEST_BY_NAME_RAW).forEach(k => SUGGEST_BY_NAME[norm(k)] = SUGGEST_BY_NAME_RAW[k]);
     const suggestFor = o => (SUGGEST_BY_NAME[norm(o.name)] || SUGGEST_BY_SECTION[o.sec] || [])
-        .map(getExtra).filter(Boolean);
+        .map(getExtra).filter(Boolean).filter(x => !isSO(x.name));
     let cur = null;
     const imType = $('im_type'), imChips = $('im_chips');
     const imChoices = $('im_choices');
@@ -4306,7 +4348,7 @@ imChips.previousElementSibling.style.display = noChips ? 'none' : '';
         imChoices.innerHTML = groups.map(g => `
             <div class="choice-group" data-title="${esc(g.title)}">
                 <div class="form-title">${esc(g.title)} <i class="req">*</i></div>
-                <div class="opt-row">${g.options.map(x => `<button type="button" data-v="${esc(x)}">${esc(x)}</button>`).join('')}</div>
+                <div class="opt-row">${g.options.map(x => `<button type="button" data-v="${esc(x)}"${isSO(x) ? ' class="rr-so-opt" disabled' : ''}>${esc(x)}</button>`).join('')}</div>
             </div>`).join('');
         nashN = 0; nashLvl = 'Mild'; nashMax = o.nash ? 0 : chickenPieces(o);
         imNash.innerHTML = nashMax ? `
@@ -4456,6 +4498,7 @@ imChips.previousElementSibling.style.display = noChips ? 'none' : '';
     $('goCheckout').addEventListener('click', () => {
         if (!isOpenNow()) { toast(closedMsg()); return; }
         if (CONFIG.minOrder && subtotal() < CONFIG.minOrder) { toast(`أقل قيمة للطلب ${fmt(CONFIG.minOrder)}`); return; }
+        { const so = soInCart(); if (so.length) { toast(soMsg(so), 6500); return; } refreshSoldout(); }
         closeAll(); renderSummary(); openEl('checkoutModal');
     });
 
@@ -4482,6 +4525,31 @@ imChips.previousElementSibling.style.display = noChips ? 'none' : '';
 
     $('f_phone').addEventListener('change', () => { if (!dropUsedCoupon($('f_phone').value)) serverDrop($('f_phone').value); });
 
+    /* ═══ رسالة فشل الإرسال + زرار "حاول تاني" ═══ */
+    const failBox = $('rrFail');
+    let failSt = null;
+    function paintFail() {
+        if (!failSt) { failBox.classList.remove('show'); failBox.innerHTML = ''; return; }
+        const so = failSt.k === 'so';
+        failBox.innerHTML =
+            `<div>${esc(so ? soMsg(failSt.names) : T('⚠️ الطلب ماوصلناش (النت ضعيف). بياناتك محفوظة — اضغط حاول تاني.', '⚠️ Your order didn\'t reach us (weak connection). Your details are saved — tap Try again.'))}</div>` +
+            `<div class="fx-row">${so
+                ? `<button type="button" class="fx-retry" data-fx="cart">${T('🛒 راجع السلة', '🛒 Review cart')}</button>`
+                : `<button type="button" class="fx-retry" data-fx="retry">${T('🔄 حاول تاني', '🔄 Try again')}</button>`}` +
+            `<a class="fx-call" href="tel:0237721525">${T('📞 اتصل بينا', '📞 Call us')}</a></div>`;
+        failBox.classList.add('show');
+    }
+    function showFail(k, names) { failSt = { k, names: names || [] }; paintFail(); try { failBox.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e) {} }
+    function hideFail() { failSt = null; paintFail(); }
+    new MutationObserver(() => { if (failSt) paintFail(); }).observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] });
+    failBox.addEventListener('click', e => {
+        const b = e.target.closest('[data-fx]'); if (!b) return;
+        hideFail();
+        if (b.dataset.fx === 'cart') { openCart(); return; }
+        const f = $('checkoutForm');
+        if (f.requestSubmit) f.requestSubmit(); else f.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+    });
+
     let sending = false, pendingId = null, pendingSig = '';
     $('checkoutForm').addEventListener('submit', async e => {
         e.preventDefault();
@@ -4490,6 +4558,8 @@ imChips.previousElementSibling.style.display = noChips ? 'none' : '';
         if (!isOpenNow()) { toast(closedMsg()); return; }
         if (!validate()) return;
         if (dropUsedCoupon($('f_phone').value)) return;
+        hideFail();
+        { const so = soInCart(); if (so.length) { showFail('so', so); return; } }
         if (!window.rrTrackSave) { toast('⚠️ في مشكلة مؤقتة، كلمنا على 0237721525', 6000); return; }
 
         const v = id => $(id).value.trim();
@@ -4527,9 +4597,10 @@ imChips.previousElementSibling.style.display = noChips ? 'none' : '';
             dropUsedCoupon(v('f_phone')); return;
         }
         if (res === 'closed') { pendingId = null; toast(closedMsg(), 7000); return; }
-        if (res !== 'ok') { toast('⚠️ الطلب ماوصلناش (النت ضعيف). اضغط تأكيد الطلب تاني — أو كلمنا على 0237721525', 7000); return; }
+        if (res === 'soldout') { pendingId = null; refreshSoldout(); showFail('so', window.rrSoNames && window.rrSoNames.length ? window.rrSoNames : soInCart()); return; }
+        if (res !== 'ok') { showFail('net'); return; }
 
-        pendingId = null;
+        pendingId = null; hideFail();
         if (coupon && coupon.def.firstOrderOnly && d > 0) markCouponUsed(coupon.code, v('f_phone'));
         if (window.rrOrderHook) rrOrderHook({ orderId: orderId, phone: v('f_phone'), total: Math.max(0, sub - d), code: (coupon && coupon.def.loyalty) ? coupon.code : '' });
         const pay = $('f_pay').value;
@@ -4616,6 +4687,7 @@ imChips.previousElementSibling.style.display = noChips ? 'none' : '';
         if (!prices.length) return;
         box.dataset.cart = '1';
         const name = cleanName(nEl);
+        box.dataset.nm = name; { const enEl = box.querySelector('.card-name-en'); if (enEl) box.dataset.en = enEl.textContent.trim(); }
         const desc = ((box.querySelector('.card-desc, .school-featured-includes') || {}).textContent || '').replace(/\s+/g, ' ').trim();
         const sec = (box.closest('section') || {}).id || '';
         const nash = sec === 'nashville' || !!box.querySelector('.nashville') || /ناش/.test(name);
@@ -4625,11 +4697,36 @@ imChips.previousElementSibling.style.display = noChips ? 'none' : '';
             const b = document.createElement('button');
             b.type = 'button';
             b.className = 'add-cart-btn';
-            b.textContent = '🛒 أضف للسلة' + (p.label ? ' — ' + p.label : '');
+            b.textContent = '🛒 أضف للسلة' + (p.label ? ' — ' + p.label : ''); b.dataset.lbl = b.textContent;
             b.onclick = () => openItem({ name, price: p.price, label: p.label, nash, spice, sec, desc });
             ft.appendChild(b);
         });
     }));
+    /* ═══ تطبيق حالة "نفد" على الكروت + تحديثها من السيرفر كل دقيقة ═══ */
+    function applySO() {
+        document.querySelectorAll('[data-nm]').forEach(box => {
+            const so = isSO(box.dataset.nm);
+            box.classList.toggle('rr-so', so);
+            let bd = box.querySelector(':scope > .rr-so-badge');
+            if (so && !bd) { bd = document.createElement('span'); bd.className = 'rr-so-badge'; box.appendChild(bd); }
+            else if (!so && bd) bd.remove();
+            box.querySelectorAll('.add-cart-btn').forEach(b => {
+                if (so && !b.dataset.so) { b.dataset.so = '1'; b.disabled = true; b.textContent = '⛔ نفد مؤقتًا'; }
+                else if (!so && b.dataset.so) { delete b.dataset.so; b.disabled = false; b.textContent = b.dataset.lbl || b.textContent; }
+            });
+        });
+    }
+    function refreshSoldout() {
+        if (!CONFIG.couponApi) return Promise.resolve();
+        return fetch(CONFIG.couponApi + '?action=soldout&t=' + Date.now()).then(r => r.json()).then(j => {
+            if (!j || !j.ok || !Array.isArray(j.list)) return;
+            const n = new Set(j.list.map(norm)), changed = n.size !== SO.size || [...n].some(x => !SO.has(x));
+            SO = n; LS.set('rr_so', j.list);
+            if (changed) { applySO(); render(); if (failSt && failSt.k === 'so' && !soInCart().length) hideFail(); }
+        }).catch(() => {});
+    }
+    applySO(); refreshSoldout(); setInterval(refreshSoldout, 60000);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) refreshSoldout(); });
     /* ═══ بوب أب الخصم عند فتح الموقع ═══ */
     const promo = $('promoModal');
     function closePromo() { promo.classList.remove('open'); $('rrOverlay').classList.remove('open'); document.body.classList.remove('no-scroll'); }
@@ -5520,7 +5617,7 @@ new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:tru
   /* بيرجّع 'ok' | 'coupon_used' | 'fail' — محاولتين (السيرفر بيتجاهل التكرار بنفس رقم الطلب) */
   window.rrTrackSave=function(o){
     function attempt(n){ return post1(o,18000).then(function(j){
-        if(j&&j.ok) return 'ok'; if(j&&j.error==='coupon_used') return 'coupon_used'; if(j&&j.error==='closed') return 'closed';
+        if(j&&j.ok) return 'ok'; if(j&&j.error==='coupon_used') return 'coupon_used'; if(j&&j.error==='closed') return 'closed'; if(j&&j.error==='soldout'){ window.rrSoNames=j.items||[]; return 'soldout'; }
         return n<2?attempt(n+1):'fail';
       },function(){ return n<2?attempt(n+1):'fail'; }); }
     return attempt(1).then(function(r){
@@ -5713,7 +5810,8 @@ html[lang="en"] body{font-family:"Cairo","Tajawal",sans-serif}
 </style>
 <script>
 (function(){
-  var D={"تتبع طلبي":"Track my order","صواني ريد روستر":"Red Roosters Trays","العروض":"Offers","ناشڤيل":"Nashville","برجر اللحم":"Beef Burgers","ساندوتشات الدجاج":"Chicken Sandwiches","تويستر وسوبريم":"Twister & Supreme","فردية":"Individual","عائلية":"Family","أطفال":"Kids","مقبلات":"Appetizers","إضافات":"Extras","صوصات":"Sauces","مشروبات":"Drinks","عنّا":"About us","الفروع":"Branches","ملحوظات":"Notes","نقاطي":"My points","اختار منطقتك":"Choose your area","تغيير":"Change","جديد":"New","القائمة":"Menu","الرئيسية":"Home","المفضلة":"Favorites","السلة":"Cart","اتصل":"Call","العروض والجديد":"Offers & New","المنيو":"Menu","برجر اللحم البقري":"Beef Burgers","الوجبات الفردية":"Individual Meals","الوجبات العائلية":"Family Meals","وجبات الأطفال":"Kids Meals","المقبلات":"Appetizers","الإضافات":"Extras","الصوصات":"Sauces","المشروبات":"Drinks","المزيد":"More","ملحوظات هامة":"Important notes","تواصل معنا":"Contact us","عرض الافتتاح":"Opening offer","اتصل بنا":"Call us","دليفري":"Delivery","استلام من الفرع":"Pickup from branch","كاش":"Cash","فودافون كاش":"Vodafone Cash","إنستا باي":"InstaPay","الأكثر طلباً":"Most ordered","الأقسام":"Sections","اجمع نقاط مع كل طلب":"Earn points with every order","شوف نقاطي":"See my points","أضف للسلة":"Add to cart","أضف":"Add","أضف للسلة — صغير":"Add to cart — Small","أضف للسلة — كبير":"Add to cart — Large","العروض الحصرية":"Exclusive offers","منيو ناشڤيل":"Nashville Menu","الجودة أولاً":"Quality first","ليه ريد روستر؟":"Why Red Roosters?","فروعنا":"Our branches","سلة الطلبات":"Your cart","السلة فاضية.. ضيف أكلتك المفضلة!":"Your cart is empty.. add your favorites!","خصم الكوبون":"Coupon discount","الإجمالي (بدون التوصيل)":"Total (before delivery)","التوصيل":"Delivery","الإجمالي بعد التوصيل":"Total with delivery","متابعة الطلب ←":"Continue →","بيانات التوصيل":"Delivery details","طريقة الاستلام":"Order type","بيانات العميل":"Your details","الاسم بالكامل":"Full name","رقم الموبايل":"Mobile number","رقم إضافي":"Extra number","موعد استلام الطلب من الفرع":"Pickup time","العنوان بالتفصيل":"Full address","المنطقة":"Area","اسم الشارع":"Street name","رقم العمارة":"Building no.","الدور":"Floor","الشقة":"Apartment","علامة مميزة":"Landmark","ملاحظات على الطلب":"Order notes","طريقة الدفع":"Payment method","محفظة إلكترونية":"E-wallet","حساب بنكي":"Bank account","كود الخصم":"Discount code","خصم الكوبون":"Coupon discount","تطبيق":"Apply","تأكيد الطلب":"Place order","الكمية":"Quantity","النوع":"Type","تعديلات سريعة":"Quick edits","خصم":"Discount","يلا نطلب أول طلب":"Order now","خدماتنا":"Our services","عرض السلة":"View cart","عرض نقاطي":"Show my points","طلبك هيوصل فين؟":"Where should we deliver?","تتبّع":"Track","اطلب نفس الطلب تاني":"Reorder this order","تتبّع طلب برقمه":"Track by order number","إغلاق":"Close","استخدم":"Use","✓ مطبّق":"✓ Applied","تم الاستلام":"Received","تم التأكيد":"Confirmed","بنجهّزه":"Preparing","خرج للتوصيل":"Out for delivery","جاهز للاستلام":"Ready for pickup","تم التسليم":"Delivered","استلمنا طلبك":"We got your order","طلبك اتأكد":"Order confirmed","بنجهّز طلبك دلوقتي":"Preparing your order","طلبك في الطريق":"On the way","طلبك جاهز":"Order ready","تفاصيل الطلب":"Order details","الإجمالي":"Total","الدفع":"Payment","المجموع":"Subtotal","طلبك":"Your order","طلبك اتلغى · اعرف السبب":"Order cancelled · see why","بحث في المنيو":"Search the menu","دوّر على أكلتك... (مثال: زينجر، ناشفيل، ريزو)":"Search for your meal… (e.g. Zinger, Nashville)","رقم الطلب RRxxxxxxx":"Order no. RRxxxxxxx","رقم موبايلك":"Your mobile","اكتب رقم موبايلك":"Your mobile"};
+  var D={"نفد مؤقتًا":"Sold out","حاول تاني":"Try again","اتصل بينا":"Call us","راجع السلة":"Review cart","تتبع طلبي":"Track my order","صواني ريد روستر":"Red Roosters Trays","العروض":"Offers","ناشڤيل":"Nashville","برجر اللحم":"Beef Burgers","ساندوتشات الدجاج":"Chicken Sandwiches","تويستر وسوبريم":"Twister & Supreme","فردية":"Individual","عائلية":"Family","أطفال":"Kids","مقبلات":"Appetizers","إضافات":"Extras","صوصات":"Sauces","مشروبات":"Drinks","عنّا":"About us","الفروع":"Branches","ملحوظات":"Notes","نقاطي":"My points","اختار منطقتك":"Choose your area","تغيير":"Change","جديد":"New","القائمة":"Menu","الرئيسية":"Home","المفضلة":"Favorites","السلة":"Cart","اتصل":"Call","العروض والجديد":"Offers & New","المنيو":"Menu","برجر اللحم البقري":"Beef Burgers","الوجبات الفردية":"Individual Meals","الوجبات العائلية":"Family Meals","وجبات الأطفال":"Kids Meals","المقبلات":"Appetizers","الإضافات":"Extras","الصوصات":"Sauces","المشروبات":"Drinks","المزيد":"More","ملحوظات هامة":"Important notes","تواصل معنا":"Contact us","عرض الافتتاح":"Opening offer","اتصل بنا":"Call us","دليفري":"Delivery","استلام من الفرع":"Pickup from branch","كاش":"Cash","فودافون كاش":"Vodafone Cash","إنستا باي":"InstaPay","الأكثر طلباً":"Most ordered","الأقسام":"Sections","اجمع نقاط مع كل طلب":"Earn points with every order","شوف نقاطي":"See my points","أضف للسلة":"Add to cart","أضف":"Add","أضف للسلة — صغير":"Add to cart — Small","أضف للسلة — كبير":"Add to cart — Large","العروض الحصرية":"Exclusive offers","منيو ناشڤيل":"Nashville Menu","الجودة أولاً":"Quality first","ليه ريد روستر؟":"Why Red Roosters?","فروعنا":"Our branches","سلة الطلبات":"Your cart","السلة فاضية.. ضيف أكلتك المفضلة!":"Your cart is empty.. add your favorites!","خصم الكوبون":"Coupon discount","الإجمالي (بدون التوصيل)":"Total (before delivery)","التوصيل":"Delivery","الإجمالي بعد التوصيل":"Total with delivery","متابعة الطلب ←":"Continue →","بيانات التوصيل":"Delivery details","طريقة الاستلام":"Order type","بيانات العميل":"Your details","الاسم بالكامل":"Full name","رقم الموبايل":"Mobile number","رقم إضافي":"Extra number","موعد استلام الطلب من الفرع":"Pickup time","العنوان بالتفصيل":"Full address","المنطقة":"Area","اسم الشارع":"Street name","رقم العمارة":"Building no.","الدور":"Floor","الشقة":"Apartment","علامة مميزة":"Landmark","ملاحظات على الطلب":"Order notes","طريقة الدفع":"Payment method","محفظة إلكترونية":"E-wallet","حساب بنكي":"Bank account","كود الخصم":"Discount code","خصم الكوبون":"Coupon discount","تطبيق":"Apply","تأكيد الطلب":"Place order","الكمية":"Quantity","النوع":"Type","تعديلات سريعة":"Quick edits","خصم":"Discount","يلا نطلب أول طلب":"Order now","خدماتنا":"Our services","عرض السلة":"View cart","عرض نقاطي":"Show my points","طلبك هيوصل فين؟":"Where should we deliver?","تتبّع":"Track","هدية أول طلب":"First-order gift","خصم 20% لأول طلب ليك":"20% off your first order","الخصم لأول طلب بس لكل عميل":"Discount valid on first order only","اضغط للنسخ":"Tap to copy","يلا نطلب أول طلب":"Order now","اطلب نفس الطلب تاني":"Reorder this order","تتبّع طلب برقمه":"Track by order number","إغلاق":"Close","استخدم":"Use","✓ مطبّق":"✓ Applied","تم الاستلام":"Received","تم التأكيد":"Confirmed","بنجهّزه":"Preparing","خرج للتوصيل":"Out for delivery","جاهز للاستلام":"Ready for pickup","تم التسليم":"Delivered","استلمنا طلبك":"We got your order","طلبك اتأكد":"Order confirmed","بنجهّز طلبك دلوقتي":"Preparing your order","طلبك في الطريق":"On the way","طلبك جاهز":"Order ready","تفاصيل الطلب":"Order details","الإجمالي":"Total","الدفع":"Payment","المجموع":"Subtotal","طلبك":"Your order","طلبك اتلغى · اعرف السبب":"Order cancelled · see why","بحث في المنيو":"Search the menu","دوّر على أكلتك... (مثال: زينجر، ناشفيل، ريزو)":"Search for your meal… (e.g. Zinger, Nashville)","رقم الطلب RRxxxxxxx":"Order no. RRxxxxxxx","رقم موبايلك":"Your mobile","اكتب رقم موبايلك":"Your mobile"};
+  var DESC={"خس + قطعة من صدور دجاج زنجر + صوص مانجو + أصابع موتزريلا": "Lettuce + zinger chicken breast piece + mango sauce + mozzarella sticks", "شريحة جبنة أمريكي + خس + قطعتين من صدور دجاج زينجر + مايونيز + تشيلي مايونيز": "American cheese slice + lettuce + two zinger chicken breast pieces + mayonnaise + chili mayonnaise", "ساندوتش تويستر 🌯 + قطعة دجاج 🍗 + بطاطس صغير 🍟": "Twister sandwich 🌯 + chicken piece 🍗 + small fries 🍟", "ريزو 🍚 + قطعة دجاج 🍗 + بطاطس صغير 🍟": "Rizo 🍚 + chicken piece 🍗 + small fries 🍟", "أرز مبهر 🍚 + قطعة دجاج 🍗 + قطعة كريسبي 🍗": "Spiced rice 🍚 + chicken piece 🍗 + crispy piece 🍗", "7 قطع دجاج 🍗 + بطاطس وسط 🍟 + 2 كايزر 🍔 + 2 كول سلو صغير 🥗": "7 chicken pieces 🍗 + medium fries 🍟 + 2 Kaiser buns 🍔 + 2 small coleslaw 🥗", "ساندوتش تويستر 🌯 + ساندوتش سوبريم 🥪 + ساندوتش تشيكن 🍔 + بطاطس وسط 🍟 + 2 كول سلو صغير 🥗": "Twister sandwich 🌯 + supreme sandwich 🥪 + chicken sandwich 🍔 + medium fries 🍟 + 2 small coleslaw 🥗", "2 ساندوتش بيف 🥩🍔 + بطاطس وسط فريسكس 🍟": "2 beef sandwiches 🥩🍔 + medium Frisks fries 🍟", "اتنين ساندوتش سوبريم (فيلية أو زينجر) من اختيار العميل": "Two supreme sandwiches (fillet or zinger) of your choice", "أرز كبير + 2 قطعة دجاج أو 4 قطعة استربس + صوص + مشروب": "Large rice + 2 chicken pieces or 4 strips + sauce + drink", "قطعة دجاج + ساندوتش تشيكن (عدا المايتي زينجر) أو زينجر سوبريم أو فيليه سوبريم + 1 مشروب": "Chicken piece + chicken sandwich (except Mighty Zinger) or Zinger Supreme or Fillet Supreme + 1 drink", "قطعة دجاج + تويستر تشيكن أو فاهيتا + كول سلو + مشروب": "Chicken piece + chicken twister or fajita + coleslaw + drink", "قطعة دجاج + قطعة كرسبي + خبز + ريزو + 1 مشروب": "Chicken piece + crispy piece + bread + rizo + 1 drink", "تويستر تشيكن أو فاهيتا + سوبريم + كول سلو": "Chicken twister or fajita + supreme + coleslaw", "قطعتين دجاج + قطعتين كرسبي استربس + أرز + 1 خبز": "2 chicken pieces + 2 crispy strips + rice + 1 bread", "طبق ريزو كبير": "Large rizo plate", "3 قطع دجاج + 1 خبز": "3 chicken pieces + 1 bread", "5 قطع استربس + 1 خبز": "5 strips + 1 bread", "ارز كبير (400) جرام + 3 قطع استريبس + كب صوص": "Large rice (400 g) + 3 strips + sauce cup", "ساندوتش تشيكن (من اختيار العميل) (عدا المايتي زينجر) أو زينجر سوبريم أو فيليه سوبريم + كول سلو أو مشروب (من اختيار العميل)": "Chicken sandwich of your choice (except Mighty Zinger) or Zinger Supreme or Fillet Supreme + coleslaw or a drink (your choice)", "2 ساندوتش راب (تويستر عادي أو فاهيتا)": "2 wrap sandwiches (regular twister or fajita)", "ساندوتش برجر (120 جرام) + فرايز + مشروب": "Burger sandwich (120 g) + fries + drink", "6 قطع دجاج + 3 أرز + 3 خبز كايزر": "6 chicken pieces + 3 rice + 3 Kaiser buns", "10 قطع دجاج + 2 أرز + كول سلو فاملي + 5 خبز + مشروب لتر": "10 chicken pieces + 2 rice + family coleslaw + 5 bread + 1 L drink", "أربع قطع استريبس بالإضافة إلى بطاطس وخبز وصوص كب": "Four strips plus fries, bread and a sauce cup", "2 قطعة دجاج + خبز + 1 كول سلو + 1 فرايز وسط": "2 chicken pieces + bread + 1 coleslaw + 1 medium fries", "3 قطعة دجاج + خبز + 1 كول سلو + 1 فرايز وسط": "3 chicken pieces + bread + 1 coleslaw + 1 medium fries", "2 قطعة استربس + 1 خبز + 1 كول سلو + 1 فرايز وسط": "2 strips + 1 bread + 1 coleslaw + 1 medium fries", "3 قطعة استربس + 1 خبز + 1 كول سلو + 1 فرايز وسط": "3 strips + 1 bread + 1 coleslaw + 1 medium fries", "أرز مبهر + صوص سبايسي روستر + دجاج ناشفيل": "Spiced rice + Rooster spicy sauce + Nashville chicken", "صوص سويت شيلي + فرايز + دجاج ناشفيل": "Sweet chili sauce + fries + Nashville chicken", "صوص روستر الخاص + فرايز + دجاج ناشفيل": "Rooster special sauce + fries + Nashville chicken", "عيش التورتيلا + قطع السبايسي ناشفيل + خس وصوص خاص": "Tortilla bread + spicy Nashville pieces + lettuce and special sauce", "زينجر + سلو + روستر الميز + خس + خيار": "Zinger + slaw + Rooster mayo sauce + lettuce + cucumber", "زينجر + جبنة أمريكي + سويت شيلي + خس + خيار": "Zinger + American cheese + sweet chili + lettuce + cucumber", "شريحة من الجبن الأمريكي المذاب، وخس طازج، وقطعتان من فيليه صدور دجاج \"ناش\" المقرمش، مع طبقات من المايونيز الكريمي ومايونيز الفلفل الحار.": "Melted American cheese slice, fresh lettuce, and two crispy \"Nash\" chicken breast fillets, layered with creamy mayonnaise and spicy pepper mayonnaise.", "صوص تكساس + خيار مخلل + خس + قطعة برجر + بصل + جبنة أمريكي": "Texas sauce + pickles + lettuce + burger patty + onion + American cheese", "صوص مايونيز + خيار مخلل + خس + قطعة برجر + بصل + جبنة أمريكي + مشروم فريش": "Mayonnaise + pickles + lettuce + burger patty + onion + American cheese + fresh mushrooms", "صوص بوسطن + خيار مخلل + خس + قطعة برجر + صوص ساور كريم + بيف بيكون": "Boston sauce + pickles + lettuce + burger patty + sour cream sauce + beef bacon", "صوص تكساس + خيار مخلل + خس + قطعة برجر + بصل + صوص بصل فرنسي": "Texas sauce + pickles + lettuce + burger patty + onion + French onion sauce", "صوص ديناميت + فلفل هالبينو + خس + قطعة برجر + بصل + صوص روستر + أصابع شيدر هالبينو": "Dynamite sauce + jalapeño peppers + lettuce + burger patty + onion + Rooster sauce + jalapeño cheddar sticks", "صوص باربكيو + خيار مخلل + خس + قطعة برجر + بصل + بيف بيكون + حلقات بصل + صوص بوسطن": "BBQ sauce + pickles + lettuce + burger patty + onion + beef bacon + onion rings + Boston sauce", "صوص بوسطن + خيار مخلل + قطعة برجر + بصل + جبنة أمريكي + ناتشوز + فلفل ألوان سوتية": "Boston sauce + pickles + burger patty + onion + American cheese + nachos + sautéed bell peppers", "صوص تكساس + خيار مخلل + قطعة برجر + بصل + جبنة أمريكي + صوص بستاشيو": "Texas sauce + pickles + burger patty + onion + American cheese + pistachio sauce", "صوص الرانش + خيار مخلل + خس + صدور دجاج كريسبي + لحم تركي مدخن + صوص الجبنة": "Ranch sauce + pickles + lettuce + crispy chicken breast + smoked turkey + cheese sauce", "صوص الروستر + خيار مخلل + خس + صدور دجاج كريسبي + جبنة أمريكي + مشروم فريش + صوص رانش": "Rooster sauce + pickles + lettuce + crispy chicken breast + American cheese + fresh mushrooms + ranch sauce", "صوص دناميت + هالبينو + خس + صدور دجاج كريسبي + أصابع شيدر هالبينو + صوص شيلي مايونيز": "Dynamite sauce + jalapeño + lettuce + crispy chicken breast + jalapeño cheddar sticks + chili mayonnaise", "صوص باربكيو + خيار مخلل + خس + صدور دجاج كريسبي + مايونيز + حلقات بصل": "BBQ sauce + pickles + lettuce + crispy chicken breast + mayonnaise + onion rings", "صوص مايونيز + خيار مخلل + خس + قطعة زينجر + سويت شيلي + تركي مدخن + جبنة أمريكي": "Mayonnaise + pickles + lettuce + zinger piece + sweet chili + smoked turkey + American cheese", "صوص مايونيز + خيار مخلل + خس + قطعة دجاج كريسبي + صوص روستر + روست بيف + جبنة أمريكي": "Mayonnaise + pickles + lettuce + crispy chicken piece + Rooster sauce + roast beef + American cheese", "فاهيتا + باربكيو (حار أو عادي)": "Fajita + BBQ (spicy or regular)", "2 قطعة كرسبي استربس + طماطم + خس + مايونيز حار": "2 crispy strips + tomato + lettuce + spicy mayonnaise", "2 قطعة كرسبي استربس + طماطم + خس + مايونيز بالفلفل الأسود": "2 crispy strips + tomato + lettuce + black pepper mayonnaise", "2 قطعة دجاج + فرايز + كايزر": "2 chicken pieces + fries + Kaiser bun", "2 قطعة دجاج + فرايز + كايزر + كول سلو + مشروب": "2 chicken pieces + fries + Kaiser bun + coleslaw + drink", "3 قطعة دجاج + فرايز + كايزر + كول سلو": "3 chicken pieces + fries + Kaiser bun + coleslaw", "4 قطعة دجاج + فرايز + كايزر + كول سلو + مشروب": "4 chicken pieces + fries + Kaiser bun + coleslaw + drink", "2 قطعة دجاج + 2 قطعة استربس + فرايز + كايزر + كول سلو + مشروب": "2 chicken pieces + 2 strips + fries + Kaiser bun + coleslaw + drink", "3 قطعة استربس + فرايز + كايزر": "3 strips + fries + Kaiser bun", "5 قطعة استربس + فرايز + كايزر + كول سلو": "5 strips + fries + Kaiser bun + coleslaw", "5 قطع دجاج + 5 قطع استريبس + فرايز فاملي + كايزر + كول سلو فاملي + لتر مشروب": "5 chicken pieces + 5 strips + family fries + Kaiser bun + family coleslaw + 1 L drink", "9 قطع دجاج + فرايز فاملي + 3 كايزر + كول سلو فاملي + لتر مشروب": "9 chicken pieces + family fries + 3 Kaiser buns + family coleslaw + 1 L drink", "12 قطع دجاج + فرايز فاملي + 4 كايزر + كول سلو فاملي + لتر مشروب": "12 chicken pieces + family fries + 4 Kaiser buns + family coleslaw + 1 L drink", "15 قطع دجاج + فرايز فاملي + 5 كايزر + كول سلو فاملي + لتر مشروب": "15 chicken pieces + family fries + 5 Kaiser buns + family coleslaw + 1 L drink", "18 قطع دجاج + فرايز فاملي + 6 كايزر + كول سلو فاملي + لتر مشروب": "18 chicken pieces + family fries + 6 Kaiser buns + family coleslaw + 1 L drink", "قطعة دجاج + فرايز + كايزر + عصير + لعبة 🧸": "Chicken piece + fries + Kaiser bun + juice + toy 🧸", "5 قطع ناجتس + فرايز + صوص باربكيو + عصير + لعبة 🧸": "5 nuggets + fries + BBQ sauce + juice + toy 🧸", "ساندوتش تشيكن + فرايز + عصير + لعبة 🧸": "Chicken sandwich + fries + juice + toy 🧸", "برجر + فرايز + عصير + لعبة 🧸": "Burger + fries + juice + toy 🧸", "كولا / رمان / برتقال": "Cola / pomegranate / orange", "بيبسي / سفن أب / ميرندا": "Pepsi / 7Up / Mirinda", "مياه معبأة": "Bottled water", "عصير معلب": "Canned juice"};
   var EM={"ج.م":"EGP"}, RX=[[/ج\.م/g,'EGP'],[/(\d+)\s*صنف/g,'$1 items'],[/جنيه/g,'EGP']];
   var LEAD=/^[^\u0600-\u06FFA-Za-z0-9]*/, TRAIL=/[^\u0600-\u06FFA-Za-z0-9]*$/, en=false;
   function conv(s){
@@ -5725,10 +5823,13 @@ html[lang="en"] body{font-family:"Cairo","Tajawal",sans-serif}
   function tn(n){ var v=n.nodeValue; if(n.__en===v) return; var o=conv(v); if(o!==v){ n.__ar=v; n.__en=o; n.nodeValue=o; } }
   function ta(el){ ['placeholder','title','aria-label'].forEach(function(a){ var v=el.getAttribute&&el.getAttribute(a); if(!v) return; var k='data-ar-'+a; if(el.hasAttribute(k)&&el.getAttribute(a)===el.__e2) return; var o=conv(v); if(o!==v){ el.setAttribute(k,v); el.__e2=o; el.setAttribute(a,o); } }); }
   function names(root){ (root.querySelectorAll?root.querySelectorAll('.card-name'):[]).forEach(function(n){ if(n.__nm!==undefined) return; var e=n.parentElement&&n.parentElement.querySelector('.card-name-en'); var s=e&&e.textContent.trim(); if(s){ n.__nm=n.textContent; n.textContent=s; n.__nv=s; } }); }
+  var DSEL='.card-desc';
+  function d1(n){ if(n.__dd!==undefined) return; var e=DESC[n.textContent.replace(/\s+/g,' ').trim()]; if(e){ n.__dd=n.innerHTML; n.textContent=e; } }
+  function descs(root){ if(root.matches&&root.matches(DSEL)) d1(root); (root.querySelectorAll?root.querySelectorAll(DSEL):[]).forEach(d1); }
   function walk(root){
     if(root.nodeType===3){ if(!/^(SCRIPT|STYLE)$/.test(root.parentNode.nodeName)&&!(root.parentNode.closest&&root.parentNode.closest('.card-desc'))) tn(root); return; }
     if(root.nodeType!==1||/^(SCRIPT|STYLE)$/.test(root.nodeName)) return;
-    ta(root); names(root);
+    ta(root); names(root); descs(root);
     var w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT|NodeFilter.SHOW_ELEMENT,null),n; 
     while(n=w.nextNode()){ if(n.nodeType===3){ var p=n.parentNode; if(/^(SCRIPT|STYLE)$/.test(p.nodeName)||(p.closest&&p.closest('.card-desc'))) continue; tn(n); } else ta(n); }
   }
@@ -5736,6 +5837,7 @@ html[lang="en"] body{font-family:"Cairo","Tajawal",sans-serif}
     var w=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT),n; while(n=w.nextNode()){ if(n.__ar!==undefined&&n.nodeValue===n.__en){ n.nodeValue=n.__ar; } n.__en=undefined; }
     document.querySelectorAll('[data-ar-placeholder],[data-ar-title],[data-ar-aria-label]').forEach(function(e){ ['placeholder','title','aria-label'].forEach(function(a){ var k='data-ar-'+a; if(e.hasAttribute(k)){ e.setAttribute(a,e.getAttribute(k)); e.removeAttribute(k); } }); e.__e2=undefined; });
     document.querySelectorAll('.card-name').forEach(function(n){ if(n.__nm!==undefined){ n.textContent=n.__nm; n.__nm=undefined; } });
+    document.querySelectorAll(DSEL).forEach(function(n){ if(n.__dd!==undefined){ n.innerHTML=n.__dd; n.__dd=undefined; } });
   }
   var pend=[], raf=0;
   var mo=new MutationObserver(function(ms){ if(!en) return; ms.forEach(function(m){ if(m.type==='characterData') pend.push(m.target); else m.addedNodes.forEach(function(a){ pend.push(a); }); });
@@ -5766,6 +5868,26 @@ html[lang="en"] body{font-family:"Cairo","Tajawal",sans-serif}
     if(c){ if(!b.dataset.okt) b.dataset.okt=b.textContent; b.disabled=true; b.textContent='مقفول حاليًا'; }
     else if(b.dataset.okt&&b.textContent==='مقفول حاليًا'){ b.disabled=false; b.textContent=b.dataset.okt; delete b.dataset.okt; } }
   tick(); setInterval(tick,20000);
+})();
+</script>
+
+<link rel="apple-touch-icon" href="https://i.ibb.co/5gZ1LZ9z/492195028-993889166231890-6539753522077003326-n.jpg">
+<style>#rrInst{position:fixed;left:12px;right:12px;bottom:calc(84px + env(safe-area-inset-bottom));z-index:2050;display:none;align-items:center;gap:10px;padding:10px 12px;border-radius:16px;background:#1E1411;color:#fff;font:700 .85rem "Cairo",sans-serif;box-shadow:0 12px 28px -10px rgba(0,0,0,.5)}#rrInst.show{display:flex}#rrInst span{flex:1}#rrInst button{border:0;border-radius:10px;padding:8px 14px;font:800 .82rem "Cairo",sans-serif;cursor:pointer}#rrInst .go{background:#D92B2B;color:#fff}#rrInst .x{background:none;color:#bbb;padding:8px}@media(min-width:821px){#rrInst{display:none!important}}</style>
+<div id="rrInst"><span id="rrInstT">📲 ثبّت تطبيق ريد روسترز على موبايلك</span><button class="go" id="rrInstGo" type="button">تثبيت</button><button class="x" id="rrInstX" type="button" aria-label="إغلاق">✕</button></div>
+<script>
+/* تحليلات اختيارية: حط رقم Google Analytics هنا (مثال G-XXXXXXX) — فاضي = مقفول */
+window.RR_GA='';
+(function(){
+  if(window.RR_GA){ var s=document.createElement('script'); s.async=true; s.src='https://www.googletagmanager.com/gtag/js?id='+window.RR_GA; document.head.appendChild(s);
+    window.dataLayer=window.dataLayer||[]; window.gtag=function(){dataLayer.push(arguments)}; gtag('js',new Date()); gtag('config',window.RR_GA); }
+  var bar=document.getElementById('rrInst'), ev=null, KEY='rr_inst_x';
+  var standalone=(window.matchMedia&&matchMedia('(display-mode: standalone)').matches)||navigator.standalone;
+  try{ if(standalone||localStorage.getItem(KEY)) return; }catch(e){}
+  var ios=/iphone|ipad|ipod/i.test(navigator.userAgent);
+  window.addEventListener('beforeinstallprompt',function(e){ e.preventDefault(); ev=e; setTimeout(function(){ bar.classList.add('show'); },4000); });
+  if(ios){ document.getElementById('rrInstT').textContent='📲 للتثبيت: دوس زرار المشاركة ثم Add to Home Screen'; document.getElementById('rrInstGo').style.display='none'; setTimeout(function(){ bar.classList.add('show'); },6000); }
+  document.getElementById('rrInstGo').onclick=function(){ if(!ev) return; ev.prompt(); ev.userChoice.finally(function(){ bar.classList.remove('show'); ev=null; }); };
+  document.getElementById('rrInstX').onclick=function(){ bar.classList.remove('show'); try{ localStorage.setItem(KEY,'1'); }catch(e){} };
 })();
 </script>
 </body>
