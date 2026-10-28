@@ -3787,7 +3787,7 @@ html[lang="en"] .rr-so-badge::before{content:"Sold out"}
         // 🎟️ الكوبونات: percent = نسبة %, fixed = مبلغ ثابت, min = أقل مجموع للطلب (اختياري)
         coupons: {
             'RED20':   { type: 'percent', value: 20, firstOrderOnly: true },
-            'WELCOME': { type: 'fixed',   value: 20, min: 150, firstOrderOnly: true }
+            'WELCOME': { type: 'fixed',   value: 20, min: 150, firstOrderOnly: true, hidden: true }
         },
 
         areas: [
@@ -4128,7 +4128,7 @@ html[lang="en"] .rr-so-badge::before{content:"Sold out"}
     const cpList = document.createElement('div'); cpList.className = 'cp-list';
     cBox.insertBefore(cpList, cBox.querySelector('.coupon-row'));
     function buildCpList() {
-        const items = Object.keys(CONFIG.coupons).map(c => { const d = CONFIG.coupons[c];
+        const items = Object.keys(CONFIG.coupons).filter(c => !CONFIG.coupons[c].hidden).map(c => { const d = CONFIG.coupons[c];
             return { code: c, txt: (d.type === 'percent' ? 'خصم ' + d.value + '%' : 'خصم ' + d.value + ' ج.م') + (d.min ? ' على طلب ' + d.min + ' ج.م+' : '') + (d.firstOrderOnly ? ' · لأول طلب' : '') }; });
         let mine = []; try { mine = JSON.parse(localStorage.getItem('rr_my_codes') || '[]'); } catch (e) {}
         mine.slice(0, 4).forEach(m => { if (m && m.code) items.push({ code: m.code, txt: '⭐ كود نقاطك — خصم ' + m.value + ' ج.م' }); });
