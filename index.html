@@ -5549,7 +5549,7 @@ new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:tru
     if(c.length){ b.classList.add('act'); t.textContent='طلبك اتلغى · اعرف السبب'; b.title='اضغط لمعرفة سبب الإلغاء'; return; }
     if(!a.length){ b.classList.remove('act'); t.textContent='تتبع طلبي'; b.title='تتبع طلبي'; return; }
     var e=a[0], S=steps(e.type).filter(function(x){return x[0]===e.status})[0];
-    b.classList.add('act'); t.textContent='طلبك: '+(S?S[1]:'قيد المراجعة'); b.title='اضغط لمتابعة طلبك';
+    var nt='طلبك: '+(S?S[1]:'قيد المراجعة'); if(t.textContent!==nt&&b.classList.contains('act')){ b.classList.remove('bump'); void b.offsetWidth; b.classList.add('bump'); if(navigator.vibrate) try{navigator.vibrate([30,40,30])}catch(x){} } b.classList.add('act'); t.textContent=nt; b.title='اضغط لمتابعة طلبك';
   }
   if($('rrTkBtn')) $('rrTkBtn').onclick=function(){ open(); };
 
@@ -5577,9 +5577,87 @@ new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:tru
 
   /* ── تشغيل ── */
   flush(); updatePill(); refresh(false);
+  setInterval(function(){ if(!document.hidden) refresh(false); },40000);
   document.addEventListener('visibilitychange',function(){ if(!document.hidden){ flush(); if($('rrTkSheet').classList.contains('open')) refresh(false); } });
   window.addEventListener('online',flush);
   var hm=/^#track=([A-Za-z0-9]+)/.exec(location.hash||''); if(hm) setTimeout(function(){ open(hm[1].toUpperCase()); },400);
+})();
+</script>
+
+<style id="rrNavFix">
+@keyframes tkBump{0%{transform:scale(1)}30%{transform:scale(1.08)}60%{transform:scale(.97)}100%{transform:scale(1)}}
+#rrTkBtn.bump{animation:tkBump .7s ease 2}
+@media(max-width:820px){
+  /* الهيدر: شيل زرار القائمة (كان أبيض على أبيض) وسيب التتبع لوحده */
+  html body .hamburger,html body #hamburger{display:none!important}
+  html body #rrTkBtn{margin-inline-start:auto;max-width:min(260px,64vw)}
+  html body #rrTkBtn:not(.act) .tx{display:block!important}
+  html body #rrTkBtn:not(.act){padding:5px 8px 5px 14px!important}
+  html body #rrTkBtn.act{max-width:min(250px,64vw)!important}
+  /* المفضلة العايمة بقت في الشريط السفلي */
+  html body #rrFavBar{display:none!important}
+
+  /* الشريط السفلي: أبيض مسطح + سلة دايرة بارزة في النص */
+  html body #rrTabs{position:fixed!important;left:0!important;right:0!important;bottom:0!important;top:auto!important;inset:auto 0 0 0!important;
+    height:calc(66px + env(safe-area-inset-bottom))!important;padding:0 4px env(safe-area-inset-bottom)!important;margin:0!important;
+    display:grid!important;grid-template-columns:repeat(5,1fr)!important;align-items:stretch!important;
+    background:#fff!important;border:0!important;border-radius:0!important;overflow:visible!important;
+    box-shadow:0 -4px 22px rgba(30,20,17,.10)!important}
+  html body.tabs-hide #rrTabs{transform:translateY(calc(100% + 44px))}
+  html body #rrTabs .tb-ind{display:none!important}
+  html body #rrTabs button[data-t="call"]{display:none!important}
+  html body #rrTabs button[data-t="menu"]{order:1}
+  html body #rrTabs button[data-t="fav"]{order:2}
+  html body #rrTabs button[data-t="cart"]{order:3}
+  html body #rrTabs button[data-t="pts"]{order:4}
+  html body #rrTabs button[data-t="home"]{order:5}
+  html body #rrTabs button[data-t]{position:relative;display:flex!important;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px!important;
+    height:66px;padding:0 0 9px!important;margin:0!important;background:none!important;border:0!important;border-radius:0!important;
+    color:#9AA3B2!important;font:700 .74rem "Cairo",sans-serif!important;transform:none!important;overflow:visible}
+  html body #rrTabs button[data-t].on{color:#671D0F!important;background:none!important}
+  html body #rrTabs button[data-t] span,html body #rrTabs button[data-t].on span{width:28px!important;height:28px!important;display:grid;place-items:center;transform:none!important;font-size:0!important;background:none}
+  html body #rrTabs button[data-t] span svg,html body #rrTabs button[data-t].on span svg{width:28px!important;height:28px!important;stroke-width:1.9!important;fill:none}
+  /* السلة */
+  html body #rrTabs button[data-t="cart"],html body #rrTabs button[data-t="cart"].on{margin-top:0!important;color:#3b2a26!important}
+  html body #rrTabs button[data-t="cart"] span,html body #rrTabs button[data-t="cart"].on span{position:absolute;top:-32px;left:50%;margin-left:-33px;width:66px!important;height:66px!important;box-sizing:border-box;
+    border-radius:50%;background:#671D0F!important;border:6px solid #fff!important;color:#fff;box-shadow:0 -5px 14px rgba(30,20,17,.10),0 8px 16px -8px rgba(103,29,15,.55)!important}
+  html body #rrTabs button[data-t="cart"] span svg{width:28px!important;height:28px!important;color:#fff;stroke:#fff}
+  html body #rrTabs button:active{opacity:.7}
+  /* عدّادات */
+  html body #rrTabs b{position:absolute!important;top:-30px!important;left:auto!important;right:calc(50% - 40px)!important;min-width:20px;height:20px;padding:0 4px;border-radius:10px;
+    background:#F5A623;color:#1E1411;font:800 .72rem "Cairo",sans-serif;border:2px solid #fff;box-sizing:content-box;align-items:center;justify-content:center}
+  html body #rrTabs b.rr-fb{top:6px!important;right:calc(50% - 22px)!important;min-width:16px;height:16px;background:#D92B2B;color:#fff;font-size:.66rem}
+  html body{padding-bottom:calc(88px + env(safe-area-inset-bottom))!important}
+  html body #rrCartBar{bottom:calc(98px + env(safe-area-inset-bottom))!important}
+}
+</style>
+<script>
+(function(){
+  var tabs=document.getElementById('rrTabs'); if(!tabs||tabs.dataset.nf) return; tabs.dataset.nf=1;
+  var svg=function(p){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">'+p+'</svg>'};
+  var IC={
+    home:'<path d="M3.5 11L12 3.5 20.5 11"/><path d="M5.5 9.5V20h13V9.5"/><path d="M10 20v-5.5h4V20"/>',
+    menu:'<path d="M4 7h16M4 12h16M4 17h16"/>',
+    heart:'<path d="M12 20.5s-7.5-4.6-7.5-10.2A4.3 4.3 0 0112 7.6a4.3 4.3 0 017.5 2.7c0 5.6-7.5 10.2-7.5 10.2z"/>',
+    bag:'<path d="M5.5 8h13l-1 12h-11z"/><path d="M9 10V7a3 3 0 016 0v3"/>',
+    user:'<circle cx="12" cy="8" r="4"/><path d="M4.5 20.5c.8-3.8 3.8-5.8 7.5-5.8s6.7 2 7.5 5.8"/>'};
+  var fav=document.createElement('button'); fav.type='button'; fav.setAttribute('data-t','fav');
+  fav.innerHTML='<span></span>المفضلة<b class="rr-fb"></b>'; tabs.appendChild(fav);
+  var fb=fav.querySelector('b'); fb.style.display='none';
+  fav.addEventListener('click',function(e){ e.stopImmediatePropagation(); var bar=document.getElementById('rrFavBar'); if(bar) bar.click(); },true);
+  var map={home:'home',menu:'menu',fav:'heart',cart:'bag',pts:'user'};
+  [].forEach.call(tabs.querySelectorAll('button'),function(b){ var k=map[b.dataset.t], s=b.querySelector('span'); if(k&&s) s.innerHTML=svg(IC[k]); });
+  /* عدّاد المفضلة */
+  function fn(){ var bar=document.getElementById('rrFavBar'), n=bar?(parseInt(bar.dataset.n)||((bar.textContent.match(/\d+/)||[0])[0]|0)):0; fb.textContent=n; fb.style.display=n?'flex':'none'; }
+  fn(); setInterval(fn,1200);
+  /* القائمة: صف "تواصل معنا" (بديل تاب اتصل) */
+  var mb=document.querySelector('#mobileNav .mn-body');
+  if(mb&&!mb.querySelector('.mn-call')){
+    var r=document.createElement('button'); r.type='button'; r.className='mn-row mn-call';
+    r.innerHTML='<span class="mn-th">'+svg('<path d="M5 4h4l2 5-2.5 1.5a11 11 0 005 5L15 13l5 2v4a2 2 0 01-2 2A15 15 0 013 6a2 2 0 012-2z"/>')+'</span><span class="mn-t">تواصل معنا</span>';
+    r.onclick=function(){ if(typeof closeMobileNav==='function') closeMobileNav(); var c=tabs.querySelector('[data-t="call"]'); if(c) setTimeout(function(){c.click()},150); };
+    mb.appendChild(r);
+  }
 })();
 </script>
 </body>
