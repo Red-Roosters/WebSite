@@ -5124,7 +5124,7 @@ new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:tru
 <script>
 (function(){
   var nav=document.querySelector('#mobileNav .mobile-nav-inner'); if(!nav||nav.dataset.pro) return; nav.dataset.pro=1;
-  var EM=/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\uFE0F\u200D]+/gu;
+  var EM=/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u2139\u{2B00}-\u{2BFF}\uFE0F\u200D]+/gu;
   var clean=function(s){return s.replace(EM,'').replace(/\s+/g,' ').trim()};
   var svg=function(p){return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">'+p+'</svg>'};
   var IC={home:'<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/>',
@@ -5145,6 +5145,8 @@ new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:tru
   label.home='الرئيسية';
   var MORE={home:'home',about:'info',branches:'pin',notes:'note'};
   function thumb(id){
+    var IMG={extras:'https://i.ibb.co/gBfWM1B/Combo.png',sauces:'https://i.ibb.co/6JWXhXkT/ransh.png',drinks:'https://i.ibb.co/PssjBFrY/image.webp',about:((document.querySelector('.logo-wrap img')||{}).src||'')};
+    if(IMG[id]) return '<img src="'+IMG[id]+'" alt="" loading="lazy">';
     var im=document.querySelector('.cat-card[onclick*="\''+id+'\'"] img'); if(im) return '<img src="'+im.getAttribute('src')+'" alt="" loading="lazy">';
     return svg(IC[MORE[id]||'dish']);
   }
