@@ -99,6 +99,36 @@ main{max-width:1280px;margin:0 auto;padding:16px}
 .empty{grid-column:1/-1;text-align:center;color:var(--mute);padding:50px 10px;font-size:1.05rem}
 #toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 22px;border-radius:999px;font-weight:800;z-index:50;opacity:0;pointer-events:none;transition:.3s}
 #toast.show{opacity:1}
+.ib.act{background:rgba(255,255,255,.22)}
+#who{color:#fff;font-weight:800}
+.lg input#usr{letter-spacing:1px;margin-bottom:10px}
+.panel{background:#fff;border:1.5px solid var(--line);border-radius:18px;padding:14px 16px;margin-bottom:14px}
+.panel h2{font:900 1.1rem "Tajawal",sans-serif;margin:0 0 10px}
+.presets{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.rng{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+.rng label{font-size:.82rem;color:var(--mute);display:grid;gap:3px;font-weight:700}
+.rng input,.frm input{padding:9px 12px;border:1.5px solid var(--line);border-radius:12px;font:600 .92rem "Cairo",sans-serif}
+.rng .btn{flex:0 0 auto;min-width:110px}
+.hint{font-size:.8rem;color:var(--mute);margin-top:8px}
+.kp{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.kp .st b{font-size:1.25rem}
+.tw{overflow-x:auto}
+table.t{width:100%;border-collapse:collapse;font-size:.88rem}
+table.t th{background:var(--paper);text-align:start;padding:8px 10px;font-weight:800;white-space:nowrap}
+table.t td{padding:7px 10px;border-top:1px solid var(--line)}
+table.t td.ce{text-align:center;color:var(--mute)}
+.bars{display:grid;gap:6px;margin-top:12px}
+.br{display:grid;grid-template-columns:minmax(90px,170px) 1fr minmax(70px,auto);gap:8px;align-items:center;font-size:.84rem}
+.bt{background:var(--paper);border-radius:999px;height:12px;overflow:hidden}
+.bt i{display:block;height:100%;background:var(--red);border-radius:999px}
+.bv{font-weight:800;text-align:end}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:14px}
+.frm{display:flex;gap:8px;flex-wrap:wrap}
+.frm input{flex:1;min-width:140px}
+.frm .btn{flex:0 0 auto;min-width:90px}
+.bdg{font-size:.75rem;font-weight:800;padding:3px 10px;border-radius:999px}
+.bdg.on{background:#E3F6EC;color:var(--green)}.bdg.off{background:#eee;color:#777}
+.tiny{padding:5px 10px;font-size:.78rem;min-width:0;flex:0 0 auto}
 .board{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(310px,1fr);gap:12px;overflow-x:auto;align-items:start;padding-bottom:14px;scroll-snap-type:x proximity}
 main.wide{max-width:none}
 .col{background:rgba(0,0,0,.04);border-radius:18px;padding:10px;min-height:140px;scroll-snap-align:start}
@@ -128,8 +158,9 @@ main.wide{max-width:none}
 <section id="login">
   <form class="lg" id="lgForm">
     <h1>🐓 لوحة طلبات ريد روستر</h1>
-    <p>اكتب الرقم السري للدخول</p>
-    <input id="pin" type="password" inputmode="numeric" autocomplete="current-password" placeholder="••••••" autofocus>
+    <p>سجّل دخولك باسم المستخدم وكلمة السر</p>
+    <input id="usr" type="text" autocomplete="username" placeholder="اسم المستخدم" autocapitalize="none" autocorrect="off" spellcheck="false" autofocus>
+    <input id="pin" type="password" autocomplete="current-password" placeholder="كلمة السر">
     <label><input type="checkbox" id="remember"> حفظ تسجيل الدخول لهذا الجهاز</label>
     <button class="go" type="submit">دخول</button>
     <div id="lgErr"></div>
@@ -140,6 +171,10 @@ main.wide{max-width:none}
 <div id="app" class="hide">
   <div class="bar">
     <h1>🐓 طلبات ريد روستر</h1>
+    <span id="who"></span>
+    <button class="ib act hide" id="vOrders">🗂️ الطلبات</button>
+    <button class="ib hide" id="vAn">📊 التحليلات</button>
+    <button class="ib hide" id="vStaff">👥 الموظفين</button>
     <div class="live" id="live"><i></i><span id="liveT">متصل</span></div>
     <button class="ib" id="snd">🔔 الصوت: شغال</button>
     <button class="ib" id="rf">🔄 تحديث</button>
@@ -150,6 +185,21 @@ main.wide{max-width:none}
     <div class="stats" id="stats"></div>
     <div class="tools"><div class="tabs" id="tabs"></div><input id="q" type="search" placeholder="🔎 ابحث بالاسم / الموبايل / رقم الطلب"></div>
     <div class="grid" id="grid"></div>
+  </main>
+  <main id="anMain" class="hide">
+    <div class="panel">
+      <div class="presets" id="anPresets"></div>
+      <div class="rng"><label>من يوم<input type="date" id="anFrom"></label><label>إلى يوم<input type="date" id="anTo"></label>
+        <button class="btn main" id="anGo">عرض التحليل</button><button class="btn ghost" id="anXls" disabled>⬇️ تحميل Excel</button></div>
+      <div class="hint">اليوم التشغيلي بيبدأ الساعة ٦ الصبح — الطلبات اللي بعد منتصف الليل بتتحسب على اليوم اللي قبله.</div>
+    </div>
+    <div id="anOut"></div>
+  </main>
+  <main id="stMain" class="hide">
+    <div class="panel"><h2>➕ إنشاء حساب موظف</h2>
+      <div class="frm"><input id="stU" dir="ltr" maxlength="20" placeholder="اسم المستخدم (حروف إنجليزي/أرقام)" autocapitalize="none"><input id="stN" maxlength="40" placeholder="الاسم الظاهر (مثلاً: أحمد)"><input id="stP" dir="ltr" maxlength="40" placeholder="كلمة السر (4 على الأقل)"><button class="btn ghost" id="stGen" type="button">🎲 توليد</button><button class="btn main" id="stAdd" type="button">إنشاء</button></div>
+      <div class="hint">الموظف يقدر يشوف الطلبات ويغيّر حالتها ويلغي بسبب، لكن مايشوفش التحليلات ولا المبيعات ولا يقدر يرجّع طلب منتهي.</div></div>
+    <div class="panel"><h2>👥 الموظفين</h2><div id="stList">⏳...</div></div>
   </main>
 </div>
 <div id="cx" class="cx hide" role="dialog" aria-modal="true" aria-label="سبب الإلغاء">
@@ -170,7 +220,7 @@ const SITE = 'https://red-roosters.github.io/Menu/';   // رابط الموقع 
 /* أسباب الإلغاء اللي بتظهر في القايمة (بتظهر للعميل زي ما هي) — عدّل فيها براحتك */
 const CANCEL_REASONS = ['صنف من طلبك غير متوفر دلوقتي', 'عنوانك خارج نطاق التوصيل', 'الطلب جه خارج ساعات العمل', 'المحل مقفول مؤقتًا للصيانة',
   'ماقدرناش نأكد طريقة الدفع', 'ماقدرناش نوصلّك بالتليفون', 'اتلغى بناءً على طلبك'];
-const POLL_MS = 10000, RING_MS = 3500, LATE_MIN = 60;
+const POLL_MS = 10000, RING_MS = 3500, LATE_MIN = 60, DAY_START_HOUR = 6;   // اليوم التشغيلي بيبدأ 6 الصبح
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -182,7 +232,10 @@ const TABS = [['board','🗂️ اللوحة'],['active','النشطة'],['new',
 const inTab = {board:o=>ACTIVE.includes(o.status), active:o=>ACTIVE.includes(o.status), new:o=>o.status==='new', doing:o=>['confirmed','preparing','out'].includes(o.status),
                delivered:o=>o.status==='delivered', cancelled:o=>o.status==='cancelled', all:()=>true};
 
-let pin = sessionStorage.getItem('rr_admin_pin') || localStorage.getItem('rr_admin_pin') || '';
+let user = '', pass = '', role = 'staff', myName = '', view = 'orders', lastA = null, staffNames = {};
+try { const c = JSON.parse(sessionStorage.getItem('rr_admin_cred') || localStorage.getItem('rr_admin_cred') || 'null'); if (c) { user = c.u; pass = c.p; } } catch (e) {}
+const AUTH_ERR = {locked:'اتقفل الدخول مؤقتًا (محاولات كتير غلط). جرّب بعد 10 دقايق.', bad:'اسم المستخدم أو كلمة السر غلط', disabled:'الحساب ده متوقّف. كلّم المدير.'};
+function bizStart(ts){ const d = new Date(ts == null ? Date.now() : ts); const t = d.getTime(); d.setHours(DAY_START_HOUR, 0, 0, 0); if (t < d.getTime()) d.setDate(d.getDate() - 1); return d.getTime(); }
 let orders = [], tab = 'board', query = '', known = null, sound = true, lastBeep = 0, timer = null, ac = null, ringT = null, wl = null, flip = false;
 
 /* ═══ API ═══ */
@@ -219,7 +272,7 @@ function syncAlert(){
   if (n) bar.textContent = '🔔 ' + n + ' طلب جديد مستني تأكيدك — اضغط هنا';
   else { document.title = 'لوحة طلبات ريد روستر'; $('unlock').classList.add('hide'); }
 }
-$('alertBar').onclick = () => { tab = 'board'; render(); const c = document.querySelector('.c-new'); if (c) c.scrollIntoView({behavior:'smooth', inline:'center', block:'nearest'}); };
+$('alertBar').onclick = () => { tab = 'board'; setView('orders'); const c = document.querySelector('.c-new'); if (c) c.scrollIntoView({behavior:'smooth', inline:'center', block:'nearest'}); };
 $('unlock').onclick = () => { audioOk(); $('unlock').classList.add('hide'); beep(); };
 ['pointerdown', 'keydown', 'touchstart'].forEach(ev => document.addEventListener(ev, () => { if (ac && ac.state === 'suspended') ac.resume(); }, {passive:true}));
 async function keepAwake(){ try { if (navigator.wakeLock && document.visibilityState === 'visible') wl = await navigator.wakeLock.request('screen'); } catch (e) {} }
@@ -229,9 +282,9 @@ function toast(t){ const el = $('toast'); el.textContent = t; el.classList.add('
 /* ═══ تحميل الأوردرات ═══ */
 async function load(){
   try {
-    const j = await post({action:'adminList', pin});
-    if (!j.ok) { if (j.error === 'locked') return logout('اتقفل الدخول مؤقتًا (محاولات كتير غلط). جرّب بعد 10 دقايق.'); return logout('الرقم السري غلط'); }
-    setLive(true);
+    const j = await post({action:'adminList', user, pass});
+    if (!j.ok) return logout(AUTH_ERR[j.error] || 'فشل الدخول');
+    setLive(true); role = j.role || 'staff'; myName = j.name || user; applyRole();
     const fresh = j.orders.filter(o => known && !known.has(o.id) && o.status === 'new');
     known = new Set(j.orders.map(o => o.id)); orders = j.orders;
     render();
@@ -242,6 +295,7 @@ async function load(){
 function setLive(on){ $('live').classList.toggle('off', !on); $('liveT').textContent = on ? 'متصل' : 'مفيش اتصال.. بنحاول تاني'; }
 
 /* ═══ مساعدات ═══ */
+function lastBy(o){ const l = String(o.log || '').split(';').filter(Boolean).pop(); if (!l) return ''; const u = l.split('@')[1]; return u ? '<span>👤 ' + esc(staffNames[u] || u) + '</span>' : ''; }
 const ago = t => { const m = Math.max(0, Math.round((Date.now() - t) / 60000)); return m < 1 ? 'دلوقتي' : m < 60 ? 'من ' + m + ' د' : 'من ' + Math.floor(m / 60) + ' س ' + (m % 60) + ' د'; };
 const clock = t => new Date(t).toLocaleTimeString('ar-EG', {hour:'numeric', minute:'2-digit'});
 const lbl = o => o.status === 'out' && o.type === 'pickup' ? 'جاهز للاستلام' : LABEL[o.status];
@@ -258,13 +312,16 @@ function waLink(o){
 
 /* ═══ الرسم ═══ */
 function render(){
-  const q = query.trim().toLowerCase(), day = new Date(); day.setHours(0, 0, 0, 0);
-  const today = orders.filter(o => o.time >= day.getTime() && o.status !== 'cancelled');
+  const q = query.trim().toLowerCase(), day = new Date(bizStart()), dT = day.getTime();
+  const todayAll = orders.filter(o => o.time >= dT), today = todayAll.filter(o => o.status !== 'cancelled');
+  const st = (b, t, c) => '<div class="st' + (c ? ' ' + c : '') + '"><b>' + b + '</b><span>' + t + '</span></div>';
   $('stats').innerHTML =
-    '<div class="st hot"><b>' + orders.filter(o => o.status === 'new').length + '</b><span>طلبات جديدة</span></div>' +
-    '<div class="st"><b>' + orders.filter(o => ['confirmed','preparing','out'].includes(o.status)).length + '</b><span>قيد التنفيذ</span></div>' +
-    '<div class="st"><b>' + today.length + '</b><span>طلبات النهاردة</span></div>' +
-    '<div class="st"><b>' + today.reduce((s, o) => s + o.total, 0).toLocaleString('ar-EG') + ' ج</b><span>إجمالي مبيعات النهاردة</span></div>';
+    st(orders.filter(o => o.status === 'new').length, 'طلبات جديدة', 'hot') +
+    st(orders.filter(o => ['confirmed','preparing','out'].includes(o.status)).length, 'قيد التنفيذ') +
+    st(today.length, 'طلبات النهاردة') +
+    st(orders.filter(o => o.status === 'delivered' && (o.updated || o.time) >= dT).length, 'تم تسليمها النهاردة') +
+    st(orders.filter(o => o.status === 'cancelled' && (o.updated || o.time) >= dT).length, 'ملغية النهاردة') +
+    (role === 'manager' ? st(today.reduce((s, o) => s + o.total, 0).toLocaleString('ar-EG') + ' ج', 'مبيعات النهاردة') : '');
   $('tabs').innerHTML = TABS.map(([k, n]) => '<button class="tab' + (k === tab ? ' on' : '') + '" data-tab="' + k + '">' + n + '<em>' + orders.filter(inTab[k]).length + '</em></button>').join('');
   let list = orders.filter(inTab[tab]);
   if (q) list = list.filter(o => (o.id + ' ' + o.name + ' ' + o.phone + ' ' + o.phone2).toLowerCase().includes(q));
@@ -289,7 +346,7 @@ function cardHtml(o){
   const mins = (Date.now() - o.time) / 60000, late = ACTIVE.includes(o.status) && mins > LATE_MIN, ns = nextStep(o);
   return '<article class="card ' + o.status + (late ? ' late' : '') + '" data-id="' + esc(o.id) + '">' +
     '<div class="top"><span class="oid">#' + esc(o.id) + '</span><span class="chip ' + o.status + '">' + esc(lbl(o)) + '</span></div>' +
-    '<div class="sub"><span>🕒 ' + clock(o.time) + ' · ' + ago(o.time) + '</span><span>' + (o.type === 'pickup' ? '🏪 استلام من الفرع' : '🛵 دليفري') + '</span>' + (late ? '<span class="late">⏰ عدّى ' + LATE_MIN + ' دقيقة</span>' : '') + '</div>' +
+    '<div class="sub"><span>🕒 ' + clock(o.time) + ' · ' + ago(o.time) + '</span><span>' + (o.type === 'pickup' ? '🏪 استلام من الفرع' : '🛵 دليفري') + '</span>' + lastBy(o) + (late ? '<span class="late">⏰ عدّى ' + LATE_MIN + ' دقيقة</span>' : '') + '</div>' +
     '<div class="who">' + esc(o.name) + '</div>' +
     '<div class="ph"><a class="n" href="tel:' + esc(o.phone) + '">📞 ' + esc(o.phone) + '</a>' + (o.phone2 ? '<a class="n" href="tel:' + esc(o.phone2) + '">📱 ' + esc(o.phone2) + '</a>' : '') + '<a class="wa" target="_blank" rel="noopener" href="' + waLink(o) + '">💬 ابعت تحديث للعميل</a></div>' +
     '<div class="addr">📍 ' + esc(o.address) + '</div>' +
@@ -304,7 +361,7 @@ function cardHtml(o){
     '<div class="acts">' + (ns ? '<button class="btn main" data-act="set" data-st="' + ns[0] + '">' + ns[1] + '</button>' : '') +
       '<button class="btn ghost" data-act="print">🖨️ طباعة</button>' +
       (ACTIVE.includes(o.status) ? '<button class="btn danger" data-act="set" data-st="cancelled">إلغاء</button>' : '') +
-      (!ACTIVE.includes(o.status) ? '<button class="btn ghost" data-act="set" data-st="new">↩︎ رجّعه جديد</button>' : '') + '</div></article>';
+      (!ACTIVE.includes(o.status) && role === 'manager' ? '<button class="btn ghost" data-act="set" data-st="new">↩︎ رجّعه جديد</button>' : '') + '</div></article>';
 }
 
 /* ═══ تغيير الحالة ═══ */
@@ -315,8 +372,8 @@ async function setStatus(id, st, reason){
   const mv = document.querySelector('.card[data-id="' + id + '"]');
   if (mv) { mv.classList.add('moved'); const c = mv.closest('.col'); if (c) c.scrollIntoView({behavior:'smooth', inline:'center', block:'nearest'}); }
   try {
-    const j = await post({action:'setStatus', pin, id, status:st, reason: st === 'cancelled' ? reason : ''});
-    if (!j.ok) throw new Error(j.error || 'fail');
+    const j = await post({action:'setStatus', user, pass, id, status:st, reason: st === 'cancelled' ? reason : ''});
+    if (!j.ok) { if (j.error === 'forbidden') { o.status = prev; o.reason = prevR; render(); load(); return toast('⛔ مش مسموح للموظف يعدّل طلب منتهي'); } throw new Error(j.error || 'fail'); }
     o.updated = j.updated || Date.now(); toast('✅ ' + id + ' ← ' + LABEL[st]);
   } catch (e) { o.status = prev; o.reason = prevR; render(); toast('⚠️ معرفناش نحفظ التغيير، جرّب تاني'); }
 }
@@ -343,6 +400,213 @@ $('cx').addEventListener('click', e => { if (e.target === $('cx')) closeCancel()
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && cxId) closeCancel(); });
 $('cxOk').onclick = () => { const r = cxReason(), id = cxId; if (!r) return; closeCancel(); setStatus(id, 'cancelled', r); };
 
+
+/* ═══ الأدوار والتنقل ═══ */
+function applyRole(){
+  const m = role === 'manager';
+  ['vOrders','vAn','vStaff'].forEach(id => $(id).classList.toggle('hide', !m));
+  $('who').textContent = (m ? '👑 ' : '👤 ') + myName;
+  if (!m && view !== 'orders') setView('orders');
+}
+function setView(v){
+  view = v;
+  $('mainEl').classList.toggle('hide', v !== 'orders'); $('anMain').classList.toggle('hide', v !== 'analytics'); $('stMain').classList.toggle('hide', v !== 'staff');
+  [['vOrders','orders'],['vAn','analytics'],['vStaff','staff']].forEach(([id, k]) => $(id).classList.toggle('act', k === v));
+  if (v === 'orders') render(); if (v === 'analytics') anInit(); if (v === 'staff') stLoad();
+}
+$('vOrders').onclick = () => setView('orders'); $('vAn').onclick = () => setView('analytics'); $('vStaff').onclick = () => setView('staff');
+
+/*ANALYZE-START*/
+const pad2 = n => String(n).padStart(2, '0');
+const ymd = ts => { const d = new Date(ts); return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); };
+const addDays = (ts, n) => { const d = new Date(ts); d.setDate(d.getDate() + n); return d.getTime(); };
+const PAYX = {cash:'كاش عند الاستلام', wallet:'محفظة إلكترونية', instapay:'إنستا باي (حساب بنكي)'};
+const WD = ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+function parseHist(h){ const m = {}; String(h || '').split(';').forEach(p => { const a = p.split('@'); if (a[0] && a[1] && !m[a[0]]) m[a[0]] = +a[1]; }); return m; }
+function parseLog(l){ return String(l || '').split(';').map(p => { const a = p.split('@'); return a[0] && a[1] ? {s:a[0], u:a[1], t:+a[2]} : null; }).filter(Boolean); }
+function analyze(list, from, to){
+  const sum = (a, f) => a.reduce((s, o) => s + (+f(o) || 0), 0);
+  const by = (a, f) => { const m = new Map(); a.forEach(o => { const k = f(o); if (!m.has(k)) m.set(k, []); m.get(k).push(o); }); return m; };
+  const avg = a => a.length ? a.reduce((s, x) => s + x, 0) / a.length : null;
+  const ok = list.filter(o => o.status !== 'cancelled'), canc = list.filter(o => o.status === 'cancelled'), del = list.filter(o => o.status === 'delivered');
+  const sales = sum(ok, o => o.total), A = {from, to, list, ok, canc, del};
+  A.kpi = {orders:list.length, valid:ok.length, delivered:del.length, cancelled:canc.length, cancelRate:list.length ? canc.length / list.length : 0,
+    sales, deliveredSales:sum(del, o => o.total), aov:ok.length ? sales / ok.length : 0, discount:sum(ok, o => o.discount), fees:sum(ok, o => o.fee), lost:sum(canc, o => o.total),
+    items:sum(ok, o => sum(o.items, i => i.q)), customers:new Set(ok.map(o => o.phone)).size};
+  const pm = by(ok, o => o.payment || 'cash'); ['cash','wallet','instapay'].forEach(k => { if (!pm.has(k)) pm.set(k, []); });
+  A.pay = [...pm].map(([k, a]) => ({k, n:a.length, amt:sum(a, o => o.total)})).sort((x, y) => y.amt - x.amt);
+  A.reasons = [...by(canc, o => o.reason || 'بدون سبب مسجّل')].map(([k, a]) => ({k, n:a.length, amt:sum(a, o => o.total)})).sort((x, y) => y.n - x.n);
+  const dm = by(list, o => ymd(bizStart(o.time))); A.days = [];
+  for (let t = bizStart(from), n = 0; t < to && n < 400; t = addDays(t, 1), n++) { const a = dm.get(ymd(t)) || [], v = a.filter(o => o.status !== 'cancelled'); A.days.push({k:ymd(t), n:v.length, amt:sum(v, o => o.total), c:a.length - v.length}); }
+  const hm = by(ok, o => new Date(o.time).getHours()); A.hours = [];
+  for (let i = 0; i < 24; i++) { const h = (11 + i) % 24, a = hm.get(h) || [], work = h >= 11 || h <= 5; if (a.length || work) A.hours.push({k:h, n:a.length, amt:sum(a, o => o.total)}); }
+  const wm = by(ok, o => new Date(bizStart(o.time)).getDay()); A.wdays = [6, 0, 1, 2, 3, 4, 5].map(d => { const a = wm.get(d) || []; return {k:WD[d], n:a.length, amt:sum(a, o => o.total)}; });
+  const im = new Map(); ok.forEach(o => o.items.forEach(i => { const e = im.get(i.n) || {k:i.n, q:0, amt:0}; e.q += +i.q || 0; e.amt += (+i.q || 0) * (+i.p || 0); im.set(i.n, e); }));
+  A.items = [...im.values()].sort((x, y) => y.q - x.q);
+  A.areas = [...by(ok.filter(o => o.type !== 'pickup'), o => String(o.address).split(' - ')[0] || '—')].map(([k, a]) => ({k, n:a.length, amt:sum(a, o => o.total)})).sort((x, y) => y.n - x.n);
+  A.types = ['delivery', 'pickup'].map(t => { const a = ok.filter(o => (o.type === 'pickup' ? 'pickup' : 'delivery') === t); return {k:t === 'pickup' ? 'استلام من الفرع' : 'توصيل', n:a.length, amt:sum(a, o => o.total)}; });
+  A.coupons = [...by(ok.filter(o => o.coupon || o.discount > 0), o => /^RR-/.test(o.coupon) ? 'كود نقاط ولاء' : (o.coupon || 'خصم بدون كود'))].map(([k, a]) => ({k, n:a.length, disc:sum(a, o => o.discount), amt:sum(a, o => o.total)})).sort((x, y) => y.n - x.n);
+  const tc = [], tr = [], td = [];
+  list.forEach(o => { const h = parseHist(o.history), c0 = h.new || o.time, ok24 = x => x >= 0 && x < 1440;
+    if (h.confirmed) { const m = (h.confirmed - c0) / 60000; if (ok24(m)) tc.push(m); }
+    if (h.out) { const m = (h.out - c0) / 60000; if (ok24(m)) tr.push(m); }
+    if (h.delivered) { const m = (h.delivered - c0) / 60000; if (ok24(m)) td.push({m, pk:o.type === 'pickup'}); } });
+  const dd = td.filter(x => !x.pk);
+  A.times = {confirm:avg(tc), ready:avg(tr), done:avg(td.map(x => x.m)), within60:dd.length ? dd.filter(x => x.m <= 60).length / dd.length : null, nDone:td.length};
+  const cm = by(ok, o => o.phone);
+  A.cust = [...cm].map(([ph, a]) => ({ph, name:a[a.length - 1].name, n:a.length, amt:sum(a, o => o.total)})).sort((x, y) => y.amt - x.amt);
+  A.repeat = A.cust.filter(c => c.n > 1).length;
+  const sm = new Map(); list.forEach(o => parseLog(o.log).forEach(e => { const r = sm.get(e.u) || {u:e.u, total:0}; r[e.s] = (r[e.s] || 0) + 1; r.total++; sm.set(e.u, r); }));
+  A.staff = [...sm.values()].sort((x, y) => y.total - x.total);
+  return A;
+}
+/*ANALYZE-END*/
+
+/* ═══ عرض التحليلات ═══ */
+const money = n => Math.round(n || 0).toLocaleString('ar-EG') + ' ج', num = n => Number(n || 0).toLocaleString('ar-EG');
+const pct = x => (Math.round((x || 0) * 1000) / 10).toLocaleString('ar-EG') + '٪', mins = m => m == null ? '—' : Math.round(m).toLocaleString('ar-EG') + ' دقيقة';
+const payL = k => PAYX[k] || k;
+const sec = (t, b) => '<section class="panel"><h2>' + t + '</h2>' + b + '</section>';
+const tbl = (head, rows) => '<div class="tw"><table class="t"><thead><tr>' + head.map(h => '<th>' + h + '</th>').join('') + '</tr></thead><tbody>' +
+  (rows.length ? rows.map(r => '<tr>' + r.map(c => '<td>' + c + '</td>').join('') + '</tr>').join('') : '<tr><td colspan="' + head.length + '" class="ce">مفيش بيانات</td></tr>') + '</tbody></table></div>';
+const bars = (items, fmt) => { const mx = Math.max(1, ...items.map(i => i[1])); return '<div class="bars">' + items.map(i => '<div class="br"><span class="bl">' + i[0] + '</span><div class="bt"><i style="width:' + (i[1] / mx * 100) + '%"></i></div><span class="bv">' + fmt(i[1]) + '</span></div>').join('') + '</div>'; };
+function anRender(A){
+  const k = A.kpi, t = A.times; let h = '';
+  if (A.truncated) h += '<div class="note" style="margin-bottom:12px">⚠️ الفترة كبيرة — اتعرض آخر ٥٠٠٠ طلب بس.</div>';
+  h += '<div class="stats kp">' + [[num(k.orders), 'إجمالي الطلبات'], [num(k.valid), 'طلبات سارية (غير ملغية)'], [num(k.delivered), 'تم التسليم'], [num(k.cancelled) + ' · ' + pct(k.cancelRate), 'ملغية'],
+    [money(k.sales), 'إجمالي المبيعات'], [money(k.aov), 'متوسط قيمة الطلب'], [money(k.discount), 'إجمالي الخصومات'], [money(k.fees), 'رسوم التوصيل'], [money(k.lost), 'مبيعات ضايعة بالإلغاء'], [num(k.items), 'عدد الأصناف المبيعة'], [num(k.customers), 'عملاء مختلفين']]
+    .map(c => '<div class="st"><b>' + c[0] + '</b><span>' + c[1] + '</span></div>').join('') + '</div>';
+  h += '<div class="two">';
+  h += sec('💳 طرق الدفع', tbl(['الطريقة', 'الطلبات', 'المبلغ', 'النسبة'], A.pay.map(p => [esc(payL(p.k)), num(p.n), money(p.amt), pct(k.sales ? p.amt / k.sales : 0)])) + bars(A.pay.map(p => [esc(payL(p.k)), p.amt]), money));
+  h += sec('❌ الإلغاءات وأسبابها', '<p class="hint" style="margin:0 0 8px">' + num(k.cancelled) + ' طلب ملغي (' + pct(k.cancelRate) + ') — قيمتهم ' + money(k.lost) + '</p>' +
+    tbl(['السبب', 'العدد', 'النسبة', 'قيمة الطلبات'], A.reasons.map(r => [esc(r.k), num(r.n), pct(k.cancelled ? r.n / k.cancelled : 0), money(r.amt)])));
+  h += '</div>';
+  h += sec('📅 المبيعات حسب اليوم', tbl(['اليوم', 'الطلبات', 'المبيعات', 'ملغية'], A.days.map(d => [d.k, num(d.n), money(d.amt), num(d.c)])) + bars(A.days.map(d => [d.k, d.amt]), money));
+  h += '<div class="two">';
+  h += sec('⏰ أوقات الذروة (عدد الطلبات بالساعة)', bars(A.hours.map(x => [(x.k % 12 || 12) + (x.k < 12 ? ' ص' : ' م'), x.n]), num));
+  h += sec('🗓️ حسب أيام الأسبوع', tbl(['اليوم', 'الطلبات', 'المبيعات'], A.wdays.map(d => [d.k, num(d.n), money(d.amt)])) + bars(A.wdays.map(d => [d.k, d.n]), num));
+  h += sec('🍗 أكتر الأصناف مبيعًا', tbl(['الصنف', 'الكمية', 'الإيراد'], A.items.slice(0, 15).map(i => [esc(i.k), num(i.q), money(i.amt)])));
+  h += sec('📍 المناطق (توصيل)', tbl(['المنطقة', 'الطلبات', 'المبيعات'], A.areas.slice(0, 15).map(a => [esc(a.k), num(a.n), money(a.amt)])));
+  h += sec('🛵 توصيل مقابل استلام', tbl(['النوع', 'الطلبات', 'المبيعات'], A.types.map(a => [a.k, num(a.n), money(a.amt)])));
+  h += sec('🎟️ الكوبونات والخصومات', tbl(['الكود', 'الطلبات', 'إجمالي الخصم', 'إجمالي الطلبات'], A.coupons.map(c => [esc(c.k), num(c.n), money(c.disc), money(c.amt)])));
+  h += sec('⚡ سرعة التنفيذ', tbl(['المؤشر', 'القيمة'], [['متوسط وقت التأكيد', mins(t.confirm)], ['متوسط الوقت لحد "خرج/جاهز"', mins(t.ready)], ['متوسط الوقت لحد التسليم', mins(t.done)],
+    ['توصيل خلال ٦٠ دقيقة', t.within60 == null ? '—' : pct(t.within60)]]));
+  h += sec('👤 العملاء', '<p class="hint" style="margin:0 0 8px">' + num(k.customers) + ' عميل — منهم ' + num(A.repeat) + ' طلب أكتر من مرة (' + pct(k.customers ? A.repeat / k.customers : 0) + ')</p>' +
+    tbl(['العميل', 'الموبايل', 'الطلبات', 'الإجمالي'], A.cust.slice(0, 10).map(c => [esc(c.name), '<span dir="ltr">' + esc(c.ph) + '</span>', num(c.n), money(c.amt)])));
+  h += sec('🧑‍🍳 أداء الموظفين (إجراءات على الطلبات)', tbl(['الموظف', 'تأكيد', 'تحضير', 'خروج/جاهز', 'تسليم', 'إلغاء', 'الإجمالي'], A.staff.map(r => [esc(staffNames[r.u] || r.u), num(r.confirmed), num(r.preparing), num(r.out), num(r.delivered), num(r.cancelled), num(r.total)])));
+  h += '</div>';
+  $('anOut').innerHTML = h; $('anXls').disabled = false;
+}
+const PRESETS = [['today', 'النهاردة'], ['yesterday', 'امبارح'], ['7', 'آخر ٧ أيام'], ['30', 'آخر ٣٠ يوم'], ['month', 'الشهر ده']];
+function presetRange(k){
+  const t = bizStart();
+  if (k === 'today') return [t, addDays(t, 1)]; if (k === 'yesterday') return [addDays(t, -1), t];
+  if (k === '7') return [addDays(t, -6), addDays(t, 1)]; if (k === '30') return [addDays(t, -29), addDays(t, 1)];
+  const d = new Date(t); d.setDate(1); d.setHours(DAY_START_HOUR, 0, 0, 0); return [d.getTime(), addDays(t, 1)];
+}
+function anSetInputs(r){ $('anFrom').value = ymd(r[0]); $('anTo').value = ymd(addDays(r[1], -1)); }
+function anInit(){ $('anPresets').innerHTML = PRESETS.map(p => '<button class="tab" data-p="' + p[0] + '">' + p[1] + '</button>').join(''); if (!$('anFrom').value) { anSetInputs(presetRange('7')); anRun(); } }
+$('anPresets').addEventListener('click', e => { const b = e.target.closest('[data-p]'); if (b) { anSetInputs(presetRange(b.dataset.p)); anRun(); } });
+$('anGo').onclick = () => anRun();
+async function anRun(){
+  const pf = v => { const a = String(v).split('-').map(Number); return a.length === 3 && a[0] ? new Date(a[0], a[1] - 1, a[2], DAY_START_HOUR).getTime() : NaN; };
+  const from = pf($('anFrom').value), to = addDays(pf($('anTo').value), 1);
+  if (!(from < to) || (to - from) / 86400000 > 400) return toast('اختار فترة صحيحة (من قبل إلى، وأقل من ١٣ شهر)');
+  $('anOut').innerHTML = '<div class="empty">⏳ بنحمّل التقرير...</div>'; $('anXls').disabled = true;
+  try {
+    const [j, sl] = await Promise.all([post({action:'adminReport', user, pass, from, to}), post({action:'staffList', user, pass}).catch(() => null)]);
+    if (sl && sl.ok) sl.staff.forEach(x => staffNames[x.username] = x.name);
+    if (!j.ok) { $('anOut').innerHTML = '<div class="empty">' + (j.error === 'forbidden' ? '⛔ التحليلات للمدير بس' : '⚠️ مقدرناش نحمّل التقرير') + '</div>'; return; }
+    lastA = analyze(j.orders, from, to); lastA.truncated = j.truncated; anRender(lastA);
+  } catch (e) { $('anOut').innerHTML = '<div class="empty">⚠️ مفيش اتصال، جرّب تاني</div>'; }
+}
+
+/* ═══ تصدير Excel ═══ */
+let xlsxP = null;
+function loadXlsx(){
+  if (window.ExcelJS) return Promise.resolve();
+  if (xlsxP) return xlsxP;
+  const get = u => new Promise((ok, no) => { const s = document.createElement('script'); s.src = u; s.onload = ok; s.onerror = () => { s.remove(); no(); }; document.head.appendChild(s); });
+  xlsxP = get('https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js').catch(() => get('https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js')).catch(e => { xlsxP = null; throw e; });
+  return xlsxP;
+}
+async function anExport(){
+  if (!lastA) return;
+  const btn = $('anXls'), old = btn.textContent; btn.disabled = true; btn.textContent = '⏳ بنجهّز الملف...';
+  try {
+    await loadXlsx();
+    const A = lastA, k = A.kpi, t = A.times, wb = new ExcelJS.Workbook(); wb.creator = 'Red Roosters';
+    const loc = ts => new Date(ts - new Date(ts).getTimezoneOffset() * 60000);
+    const sheet = (name, cols, rows) => {
+      const ws = wb.addWorksheet(name, {views:[{rightToLeft:true, state:'frozen', ySplit:1}]});
+      ws.columns = cols.map((c, i) => ({header:c[0], key:'c' + i, width:c[1] || 16}));
+      rows.forEach(r => ws.addRow(r));
+      const hr = ws.getRow(1); hr.height = 22;
+      hr.eachCell(c => { c.font = {bold:true, color:{argb:'FFFFFFFF'}}; c.fill = {type:'pattern', pattern:'solid', fgColor:{argb:'FFD92B2B'}}; c.alignment = {horizontal:'center', vertical:'middle'}; });
+      cols.forEach((c, i) => { if (c[2]) ws.getColumn(i + 1).numFmt = c[2]; });
+      return ws;
+    };
+    const N = '#,##0', P = '0.0%', D = 'yyyy-mm-dd hh:mm', R1 = '#,##0.0';
+    const ws0 = sheet('ملخص', [['البند', 34], ['القيمة', 26]], [
+      ['الفترة (من)', ymd(A.from)], ['الفترة (إلى)', ymd(addDays(A.to, -1))], ['إجمالي الطلبات', k.orders], ['طلبات سارية (غير ملغية)', k.valid], ['تم التسليم', k.delivered], ['ملغية', k.cancelled], ['نسبة الإلغاء', k.cancelRate],
+      ['إجمالي المبيعات (ج)', k.sales], ['مبيعات تم تسليمها (ج)', k.deliveredSales], ['متوسط قيمة الطلب (ج)', k.aov], ['إجمالي الخصومات (ج)', k.discount], ['رسوم التوصيل (ج)', k.fees], ['مبيعات ضايعة بالإلغاء (ج)', k.lost],
+      ['عدد الأصناف المبيعة', k.items], ['عملاء مختلفين', k.customers], ['عملاء طلبوا أكتر من مرة', A.repeat], ['متوسط وقت التأكيد (دقيقة)', t.confirm], ['متوسط الوقت لحد خرج/جاهز (دقيقة)', t.ready], ['متوسط الوقت لحد التسليم (دقيقة)', t.done], ['توصيل خلال 60 دقيقة', t.within60]]);
+    ws0.eachRow((r, i) => { if (i > 1) { const v = r.getCell(2).value; if (typeof v === 'number') r.getCell(2).numFmt = (i === 8 ? P : (i >= 17 && i <= 19) ? R1 : i === 20 ? P : N); r.getCell(2).alignment = {horizontal:'right'}; } });
+    sheet('طرق الدفع', [['طريقة الدفع', 28], ['عدد الطلبات', 14, N], ['المبلغ (ج)', 16, N], ['النسبة من المبيعات', 18, P]], A.pay.map(p => [payL(p.k), p.n, p.amt, k.sales ? p.amt / k.sales : 0]));
+    sheet('أسباب الإلغاء', [['السبب', 40], ['عدد الطلبات', 14, N], ['النسبة من الإلغاءات', 20, P], ['قيمة الطلبات (ج)', 18, N]], A.reasons.map(r => [r.k, r.n, k.cancelled ? r.n / k.cancelled : 0, r.amt]));
+    sheet('الطلبات الملغية', [['رقم الطلب', 14], ['الوقت', 20, D], ['الاسم', 22], ['الموبايل', 16], ['الإجمالي (ج)', 14, N], ['طريقة الدفع', 22], ['سبب الإلغاء', 40]], A.canc.map(o => [o.id, loc(o.time), o.name, o.phone, o.total, payL(o.payment), o.reason || '']));
+    sheet('حسب اليوم', [['اليوم', 16], ['الطلبات', 12, N], ['المبيعات (ج)', 16, N], ['ملغية', 12, N]], A.days.map(d => [d.k, d.n, d.amt, d.c]));
+    sheet('حسب الساعة', [['الساعة', 12], ['الطلبات', 12, N], ['المبيعات (ج)', 16, N]], A.hours.map(x => [pad2(x.k) + ':00', x.n, x.amt]));
+    sheet('أيام الأسبوع', [['اليوم', 16], ['الطلبات', 12, N], ['المبيعات (ج)', 16, N]], A.wdays.map(d => [d.k, d.n, d.amt]));
+    sheet('الأصناف', [['الصنف', 40], ['الكمية', 12, N], ['الإيراد (ج)', 16, N]], A.items.map(i => [i.k, i.q, i.amt]));
+    sheet('المناطق', [['المنطقة', 30], ['الطلبات', 12, N], ['المبيعات (ج)', 16, N]], A.areas.map(a => [a.k, a.n, a.amt]));
+    sheet('توصيل واستلام', [['النوع', 22], ['الطلبات', 12, N], ['المبيعات (ج)', 16, N]], A.types.map(a => [a.k, a.n, a.amt]));
+    sheet('الكوبونات', [['الكود', 22], ['عدد الطلبات', 14, N], ['إجمالي الخصم (ج)', 18, N], ['إجمالي الطلبات (ج)', 18, N]], A.coupons.map(c => [c.k, c.n, c.disc, c.amt]));
+    sheet('العملاء', [['الاسم', 26], ['الموبايل', 16], ['عدد الطلبات', 14, N], ['الإجمالي (ج)', 16, N]], A.cust.map(c => [c.name, c.ph, c.n, c.amt]));
+    sheet('أداء الموظفين', [['الموظف', 22], ['تأكيد', 10, N], ['تحضير', 10, N], ['خروج/جاهز', 12, N], ['تسليم', 10, N], ['إلغاء', 10, N], ['الإجمالي', 12, N]], A.staff.map(r => [staffNames[r.u] || r.u, r.confirmed || 0, r.preparing || 0, r.out || 0, r.delivered || 0, r.cancelled || 0, r.total]));
+    const stL = {new:'جديد', confirmed:'مؤكد', preparing:'بيتحضّر', out:'خرج/جاهز', delivered:'تم التسليم', cancelled:'ملغي'};
+    sheet('كل الطلبات', [['رقم الطلب', 14], ['الوقت', 20, D], ['الاسم', 22], ['الموبايل', 16], ['النوع', 12], ['العنوان', 50], ['الأصناف', 60], ['المجموع (ج)', 12, N], ['الخصم (ج)', 11, N], ['الكوبون', 14], ['التوصيل (ج)', 12, N], ['الإجمالي (ج)', 13, N], ['الدفع', 22], ['الحالة', 14], ['سبب الإلغاء', 30], ['ملاحظات', 30]],
+      A.list.slice().sort((a, b) => a.time - b.time).map(o => [o.id, loc(o.time), o.name, o.phone, o.type === 'pickup' ? 'استلام' : 'توصيل', o.address, o.items.map(i => i.q + '× ' + i.n + (i.o && i.o.length ? ' (' + i.o.join('، ') + ')' : '') + (i.t ? ' [' + i.t + ']' : '')).join(' | '),
+        o.subtotal, o.discount, o.coupon, o.fee, o.total, payL(o.payment), stL[o.status] || o.status, o.reason || '', o.notes || '']));
+    const buf = await wb.xlsx.writeBuffer(), a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([buf], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));
+    a.download = 'RedRoosters_' + ymd(A.from) + '_to_' + ymd(addDays(A.to, -1)) + '.xlsx'; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
+    toast('✅ تم تحميل ملف Excel');
+  } catch (e) { toast('⚠️ معرفناش نجهّز الملف (اتأكد من النت وجرّب تاني)'); }
+  btn.disabled = false; btn.textContent = old;
+}
+$('anXls').onclick = anExport;
+
+/* ═══ إدارة الموظفين (للمدير) ═══ */
+async function stLoad(){
+  try {
+    const j = await post({action:'staffList', user, pass});
+    if (!j.ok) { $('stList').innerHTML = '<div class="empty">' + (j.error === 'forbidden' ? '⛔ للمدير بس' : '⚠️ حصل خطأ') + '</div>'; return; }
+    j.staff.forEach(x => staffNames[x.username] = x.name);
+    $('stList').innerHTML = tbl(['اسم المستخدم', 'الاسم', 'الحالة', 'تاريخ الإنشاء', ''], j.staff.map(x => ['<span dir="ltr">' + esc(x.username) + '</span>', esc(x.name), '<span class="bdg ' + (x.active ? 'on' : 'off') + '">' + (x.active ? 'شغّال' : 'متوقّف') + '</span>',
+      x.created ? new Date(x.created).toLocaleDateString('ar-EG') : '—',
+      '<button class="btn ghost tiny" data-sa="pw" data-u="' + esc(x.username) + '">🔑 كلمة سر جديدة</button> <button class="btn ghost tiny" data-sa="tg" data-a="' + (x.active ? 1 : 0) + '" data-u="' + esc(x.username) + '">' + (x.active ? '⏸️ إيقاف' : '▶️ تفعيل') + '</button>']));
+  } catch (e) { $('stList').innerHTML = '<div class="empty">⚠️ مفيش اتصال</div>'; }
+}
+async function stSave(body, okMsg){
+  try { const j = await post(Object.assign({action:'staffSave', user, pass}, body));
+    if (!j.ok) return toast(({bad_username:'اسم المستخدم لازم حروف إنجليزي/أرقام/_ من ٣ لـ ٢٠ حرف (ومايكونش اسم المدير)', bad_password:'كلمة السر 4 أحرف على الأقل', forbidden:'⛔ للمدير بس'})[j.error] || '⚠️ حصل خطأ'), false;
+    toast(okMsg); stLoad(); return true;
+  } catch (e) { toast('⚠️ مفيش اتصال'); return false; }
+}
+$('stGen').onclick = () => { const a = new Uint32Array(1); crypto.getRandomValues(a); $('stP').value = String(100000 + a[0] % 900000); };
+$('stAdd').onclick = async () => {
+  const u = $('stU').value.trim().toLowerCase(), n = $('stN').value.trim(), p = $('stP').value.trim();
+  if (!/^[a-z0-9_]{3,20}$/.test(u)) return toast('اسم المستخدم: حروف إنجليزي/أرقام/_ من ٣ لـ ٢٠ حرف');
+  if (p.length < 4) return toast('كلمة السر 4 أحرف على الأقل');
+  if (await stSave({username:u, name:n || u, password:p, active:true}, '✅ اتعمل الحساب — المستخدم: ' + u + ' / السر: ' + p)) { $('stU').value = $('stN').value = $('stP').value = ''; }
+};
+$('stList').addEventListener('click', e => {
+  const b = e.target.closest('[data-sa]'); if (!b) return; const u = b.dataset.u;
+  if (b.dataset.sa === 'pw') { const p = (prompt('كلمة سر جديدة للموظف ' + u + ' (4 أحرف على الأقل):') || '').trim(); if (p) stSave({username:u, password:p}, '✅ اتغيّرت كلمة السر: ' + p); }
+  else if (confirm((b.dataset.a === '1' ? 'إيقاف' : 'تفعيل') + ' حساب ' + u + '؟')) stSave({username:u, active:b.dataset.a !== '1'}, b.dataset.a === '1' ? '⏸️ اتوقّف الحساب' : '▶️ اتفعّل الحساب');
+});
+
 /* ═══ أحداث ═══ */
 $('grid').addEventListener('click', e => {
   const b = e.target.closest('[data-act]'); if (!b) return;
@@ -361,8 +625,8 @@ setInterval(render, 60000);   // يحدّث "من كام دقيقة" والتأ�
 /* ═══ دخول / خروج ═══ */
 function showApp(on){ $('login').classList.toggle('hide', on); $('app').classList.toggle('hide', !on); }
 function logout(msg){
-  clearInterval(timer); clearInterval(ringT); document.title = 'لوحة طلبات ريد روستر'; pin = ''; known = null; orders = []; sessionStorage.removeItem('rr_admin_pin'); localStorage.removeItem('rr_admin_pin');
-  showApp(false); $('lgErr').textContent = msg || ''; $('pin').value = ''; $('pin').focus();
+  clearInterval(timer); clearInterval(ringT); document.title = 'لوحة طلبات ريد روستر'; user = pass = ''; role = 'staff'; view = 'orders'; lastA = null; known = null; orders = []; sessionStorage.removeItem('rr_admin_cred'); localStorage.removeItem('rr_admin_cred');
+  showApp(false); $('lgErr').textContent = msg || ''; $('pin').value = ''; $('usr').focus();
 }
 async function start(){
   showApp(true); beepUnlock(); keepAwake();
@@ -371,17 +635,17 @@ async function start(){
 }
 function beepUnlock(){ try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); if (ac.state === 'suspended') ac.resume(); } catch (e) {} }
 $('lgForm').addEventListener('submit', async e => {
-  e.preventDefault(); const v = $('pin').value.trim(); if (!v) return;
-  pin = v; $('lgErr').textContent = '⏳...';
+  e.preventDefault(); const u = $('usr').value.trim().toLowerCase(), v = $('pin').value.trim(); if (!u || !v) return;
+  user = u; pass = v; $('lgErr').textContent = '⏳...';
   beepUnlock();
   try {
-    const j = await post({action:'adminList', pin});
-    if (!j.ok) { pin = ''; $('lgErr').textContent = j.error === 'locked' ? 'اتقفل الدخول مؤقتًا (محاولات كتير غلط). جرّب بعد 10 دقايق.' : 'الرقم السري غلط'; return; }
-    (($('remember').checked) ? localStorage : sessionStorage).setItem('rr_admin_pin', pin);
+    const j = await post({action:'adminList', user, pass});
+    if (!j.ok) { user = pass = ''; $('lgErr').textContent = AUTH_ERR[j.error] || 'فشل الدخول'; return; }
+    (($('remember').checked) ? localStorage : sessionStorage).setItem('rr_admin_cred', JSON.stringify({u:user, p:pass}));
     $('lgErr').textContent = ''; start();
-  } catch (err) { pin = ''; $('lgErr').textContent = '⚠️ مفيش اتصال، جرّب تاني'; }
+  } catch (err) { user = pass = ''; $('lgErr').textContent = '⚠️ مفيش اتصال، جرّب تاني'; }
 });
-if (pin) start();
+if (user && pass) start();
 </script>
 </body>
 </html>
