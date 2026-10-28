@@ -67,6 +67,8 @@ main{max-width:1280px;margin:0 auto;padding:16px}
 .who{font-weight:900;font-size:1.02rem}
 .ph{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .ph a.n{direction:ltr;font-weight:800;text-decoration:none;background:var(--paper);border-radius:10px;padding:5px 10px;font-size:.92rem}
+.ph a.n{cursor:copy}
+.ph a.cl2{text-decoration:none;font-size:.95rem;padding:3px 6px;border-radius:8px;background:var(--paper)}
 .ph a.wa{background:#25D366;color:#fff;border-radius:10px;padding:5px 10px;font-size:.8rem;font-weight:800;text-decoration:none}
 .addr{font-size:.9rem;line-height:1.7;background:var(--paper);border-radius:12px;padding:8px 12px}
 .items{border-top:1px dashed var(--line);border-bottom:1px dashed var(--line);padding:8px 0;font-size:.92rem}
@@ -348,7 +350,7 @@ function cardHtml(o){
     '<div class="top"><span class="oid">#' + esc(o.id) + '</span><span class="chip ' + o.status + '">' + esc(lbl(o)) + '</span></div>' +
     '<div class="sub"><span>🕒 ' + clock(o.time) + ' · ' + ago(o.time) + '</span><span>' + (o.type === 'pickup' ? '🏪 استلام من الفرع' : '🛵 دليفري') + '</span>' + lastBy(o) + (late ? '<span class="late">⏰ عدّى ' + LATE_MIN + ' دقيقة</span>' : '') + '</div>' +
     '<div class="who">' + esc(o.name) + '</div>' +
-    '<div class="ph"><a class="n" href="tel:' + esc(o.phone) + '">📞 ' + esc(o.phone) + '</a>' + (o.phone2 ? '<a class="n" href="tel:' + esc(o.phone2) + '">📱 ' + esc(o.phone2) + '</a>' : '') + '<a class="wa" target="_blank" rel="noopener" href="' + waLink(o) + '">💬 ابعت تحديث للعميل</a></div>' +
+    '<div class="ph"><a class="n" href="#" data-copy="' + esc(o.phone) + '" title="اضغط للنسخ">📋 ' + esc(o.phone) + '</a><a class="cl2" href="tel:' + esc(o.phone) + '" title="اتصال">📞</a>' + (o.phone2 ? '<a class="n" href="#" data-copy="' + esc(o.phone2) + '" title="اضغط للنسخ">📋 ' + esc(o.phone2) + '</a><a class="cl2" href="tel:' + esc(o.phone2) + '" title="اتصال">📞</a>' : '') + '<a class="wa" target="_blank" rel="noopener" href="' + waLink(o) + '">💬 ابعت تحديث للعميل</a></div>' +
     '<div class="addr">📍 ' + esc(o.address) + '</div>' +
     '<div class="items">' + o.items.map(i => '<div class="it"><span><span class="q">' + i.q + '×</span>' + esc(i.n) +
         ((i.o && i.o.length) ? '<small>' + esc(i.o.join('، ')) + '</small>' : '') + (i.t ? '<small>📝 ' + esc(i.t) + '</small>' : '') + '</span><span>' + (i.p * i.q) + '</span></div>').join('') + '</div>' +
@@ -608,7 +610,13 @@ $('stList').addEventListener('click', e => {
 });
 
 /* ═══ أحداث ═══ */
+function copyText(t){
+  const done = () => toast('📋 تم نسخ الرقم ' + t);
+  const old = () => { const x = document.createElement('textarea'); x.value = t; x.style.cssText = 'position:fixed;opacity:0'; document.body.appendChild(x); x.select(); try { document.execCommand('copy'); } catch (e) {} x.remove(); done(); };
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done, old); else old();
+}
 $('grid').addEventListener('click', e => {
+  const cp = e.target.closest('[data-copy]'); if (cp) { e.preventDefault(); copyText(cp.dataset.copy); return; }
   const b = e.target.closest('[data-act]'); if (!b) return;
   const card = b.closest('.card'), id = card.dataset.id;
   if (b.dataset.act === 'set') setStatus(id, b.dataset.st);
