@@ -4284,6 +4284,7 @@ html[lang="en"] .rr-so-badge::before{content:"Sold out"}
     async function loadServerConfig() {
         const j = await (await fetch(apiUrl('action=config'))).json(); if (!j || !j.ok) return;
         window.RR_CFG = j;
+        try { applyPayCfg(); } catch (e) {}
         if (j.hours) { CONFIG.hours.enabled = !!j.hours.enabled; if (j.hours.open) CONFIG.hours.open = j.hours.open; if (j.hours.close) CONFIG.hours.close = j.hours.close; }
         if (Array.isArray(j.areas) && j.areas.length) {
             const cur = areaVal.value !== '' && CONFIG.areas[+areaVal.value] ? CONFIG.areas[+areaVal.value].name : (window.RR_SAVED_AREA || '');
@@ -4565,6 +4566,16 @@ imChips.previousElementSibling.style.display = noChips ? 'none' : '';
         if (p === 'instapay') return ['💳 *الدفع:* حساب بنكي (إنستا باي)', '📲 التحويل على الرقم: ' + PAY_NUM, '📸 هبعتلكم صورة التحويل هنا على الواتساب لتأكيد الطلب'];
         return ['💵 الدفع: كاش عند الاستلام'];
     }
+    function applyPayCfg() {
+        const p = (window.RR_CFG && RR_CFG.pay) || null; if (!p) return;
+        const msg = p.msg || 'غير متاحة حاليًا';
+        document.querySelectorAll('#paygrid button').forEach(b => {
+            const off = p[b.dataset.v] === false, sm = b.querySelector('small');
+            b.disabled = off; b.style.opacity = off ? '.45' : ''; b.style.cursor = off ? 'not-allowed' : '';
+            if (sm) { if (!b.dataset.t) b.dataset.t = sm.textContent; sm.textContent = off ? msg : b.dataset.t; }
+        });
+        if (p[$('f_pay').value] === false) { const f = ['cash', 'wallet', 'instapay'].find(k => p[k] !== false); if (f) setPay(f); }
+    }
     function setPay(v) {
         $('f_pay').value = v;
         $('payRefBox').style.display = v === 'cash' ? 'none' : '';
@@ -4717,6 +4728,7 @@ imChips.previousElementSibling.style.display = noChips ? 'none' : '';
             dropUsedCoupon(v('f_phone')); return;
         }
         if (res === 'closed') { pendingId = null; toast(closedMsg(), 7000); return; }
+        if (res === 'pay_off') { pendingId = null; loadServerConfig().catch(() => {}); toast('⚠️ طريقة الدفع دي مش متاحة دلوقتي — اختار طريقة تانية', 7000); return; }
         if (/^coupon_(invalid|expired|limit)$/.test(res)) { pendingId = null; const bad = coupon && coupon.code; coupon = null; $('couponInput').value = ''; setCouponMsg(CP_ERR[res] || '', false); render(); renderSummary(); toast((CP_ERR[res] || '') + (bad ? ' (' + bad + ') — اتشال من طلبك، راجع الإجمالي وأكّد تاني' : ''), 7500); return; }
         if (res === 'busy') { toast('⏳ طلبات كتيرة في وقت قصير. جرّب بعد دقيقة.', 6000); return; }
         if (res === 'delivery_paused') { pendingId = null; loadServerConfig().catch(() => {}); toast('⏸️ التوصيل متوقف مؤقتًا — تقدر تختار الاستلام من الفرع', 7000); return; }
@@ -5763,7 +5775,7 @@ new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:tru
   window.rrTrackSave=function(o){
     if(!o.did&&window.rrDid) o.did=window.rrDid();
     function attempt(n){ return post1(o,18000).then(function(j){
-        if(j&&j.ok) return 'ok'; if(j&&j.error==='coupon_used') return 'coupon_used'; if(j&&j.error==='closed') return 'closed'; if(j&&/^coupon_(invalid|expired|limit)$/.test(j.error)) return j.error; if(j&&j.error==='busy') return 'busy'; if(j&&j.error==='bad_total') return 'bad_total'; if(j&&(j.error==='bad_price'||j.error==='bad_item')) return 'bad_price'; if(j&&/^(delivery_paused|area_closed|bad_area)$/.test(j.error)) return j.error; if(j&&j.error==='soldout'){ window.rrSoNames=j.items||[]; return 'soldout'; }
+        if(j&&j.ok) return 'ok'; if(j&&j.error==='coupon_used') return 'coupon_used'; if(j&&j.error==='closed') return 'closed'; if(j&&j.error==='pay_off') return 'pay_off'; if(j&&/^coupon_(invalid|expired|limit)$/.test(j.error)) return j.error; if(j&&j.error==='busy') return 'busy'; if(j&&j.error==='bad_total') return 'bad_total'; if(j&&(j.error==='bad_price'||j.error==='bad_item')) return 'bad_price'; if(j&&/^(delivery_paused|area_closed|bad_area)$/.test(j.error)) return j.error; if(j&&j.error==='soldout'){ window.rrSoNames=j.items||[]; return 'soldout'; }
         return n<2?attempt(n+1):'fail';
       },function(){ return n<2?attempt(n+1):'fail'; }); }
     return attempt(1).then(function(r){

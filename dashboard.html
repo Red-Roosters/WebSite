@@ -289,6 +289,13 @@ main.wide{max-width:none}
         <label class="ck"><input type="checkbox" id="seHours"> مواعيد العمل شغّالة (لو مقفولة الموقع بيقبل طلبات في أي وقت)</label>
         <label class="ck"><input type="checkbox" id="sePause"> ⏸️ وقف التوصيل مؤقتًا (الاستلام من الفرع شغال)</label>
         <button class="btn main" id="seSave" type="button">💾 حفظ</button></div>
+      <h2 style="margin-top:18px">💳 طرق الدفع</h2>
+      <div class="frm" style="margin-top:8px;align-items:center">
+        <label class="ck"><input type="checkbox" id="sePayCash"> 💵 كاش عند الاستلام</label>
+        <label class="ck"><input type="checkbox" id="sePayWallet"> 📱 محفظة إلكترونية (فودافون كاش)</label>
+        <label class="ck"><input type="checkbox" id="sePayInsta"> 🏦 إنستا باي</label></div>
+      <div class="cpf" style="margin-top:8px"><label>رسالة تظهر للعميل على الطريقة المقفولة (اختياري)<input id="sePayMsg" maxlength="60" placeholder="مثلاً: متوقفة مؤقتًا"></label></div>
+      <div class="hint">شيل العلامة من أي طريقة وبعدين اضغط حفظ عشان توقفها، وحطها تاني عشان تشغّلها. لازم طريقة واحدة شغّالة على الأقل. السيرفر بيرفض أي طلب بطريقة مقفولة حتى لو الصفحة عند العميل لسه قديمة.</div>
       <div class="hint">التغيير بيظهر على الموقع خلال دقيقة تقريبًا، والسيرفر هو اللي بيطبّقه. وقت الزحمة: الرقم اللي هنا بيتضاف على الوقت المتوقع اللي العميل بيشوفه. السيرفر بيدّي ٥ دقايق سماح بعد ميعاد القفل.</div></div>
     <div class="panel"><h2>🗺️ مناطق التوصيل والرسوم</h2><div id="seAreas">⏳...</div></div>
     <div class="panel"><h2>💾 النسخ الاحتياطي والتقرير اليومي</h2><div id="seBk">⏳...</div></div>
@@ -1011,14 +1018,15 @@ async function seLoad(){
     if (!j.ok) { $('seAreas').innerHTML = '<div class="empty">' + (j.error === 'forbidden' ? '⛔ للمدير بس' : (AUTH_ERR[j.error] || '⚠️ حصل خطأ (اتأكد إنك حدّثت Code.gs وعملت Deploy ▸ New version)')) + '</div>'; return; }
     const c = j.settings; $('seOpen').value = c.open_at; $('seClose').value = c.close_at; $('seBusy').value = c.busy_extra || 0; $('seBusyMsg').value = c.busy_msg || ''; $('sePauseMsg').value = c.pause_msg || '';
     $('seHours').checked = c.hours_on === 'true'; $('sePause').checked = c.pause_on === 'true';
+    $('sePayCash').checked = c.pay_cash !== 'false'; $('sePayWallet').checked = c.pay_wallet !== 'false'; $('sePayInsta').checked = c.pay_instapay !== 'false'; $('sePayMsg').value = c.pay_msg || '';
     seAreas = j.areas.map(a => Object.assign({}, a)); seBuiltin = !!j.builtin; seAreaRender();
   } catch (e) { $('seAreas').innerHTML = '<div class="empty">⚠️ مفيش اتصال</div>'; }
   bkLoad();
 }
 $('seSave').onclick = async () => {
   try {
-    const j = await post({action:'settingsSave', user, settings:{hours_on:$('seHours').checked, open_at:$('seOpen').value, close_at:$('seClose').value, busy_extra:+$('seBusy').value || 0, busy_msg:$('seBusyMsg').value.trim(), pause_on:$('sePause').checked, pause_msg:$('sePauseMsg').value.trim()}});
-    toast(j.ok ? '✅ اتحفظت الإعدادات' : (j.error === 'bad_time' ? 'المواعيد غير صحيحة' : '⚠️ حصل خطأ'));
+    const j = await post({action:'settingsSave', user, settings:{hours_on:$('seHours').checked, open_at:$('seOpen').value, close_at:$('seClose').value, busy_extra:+$('seBusy').value || 0, busy_msg:$('seBusyMsg').value.trim(), pause_on:$('sePause').checked, pause_msg:$('sePauseMsg').value.trim(), pay_cash:$('sePayCash').checked, pay_wallet:$('sePayWallet').checked, pay_instapay:$('sePayInsta').checked, pay_msg:$('sePayMsg').value.trim()}});
+    toast(j.ok ? '✅ اتحفظت الإعدادات' : (j.error === 'bad_time' ? 'المواعيد غير صحيحة' : j.error === 'no_pay' ? '⚠️ لازم طريقة دفع واحدة شغّالة على الأقل' : '⚠️ حصل خطأ'));
   } catch (e) { toast('⚠️ مفيش اتصال'); }
 };
 function seAreaRender(){
