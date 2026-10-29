@@ -232,6 +232,7 @@ main.wide{max-width:none}
   <div id="alertBar" class="hide"></div>
   <main id="mainEl">
     <div class="stats" id="stats"></div>
+    <div id="drvBar" class="hide"></div>
     <div class="tools"><div class="tabs" id="tabs"></div><input id="q" type="search" placeholder="🔎 ابحث بالاسم / الموبايل / رقم الطلب"></div>
     <div class="grid" id="grid"></div>
   </main>
@@ -299,7 +300,7 @@ main.wide{max-width:none}
       <h2 style="margin-top:18px">🛵 تتبع الطيارين (OwnTracks)</h2>
       <div class="cpf" style="margin-top:8px">
         <label>مفتاح سري (حروف وأرقام بس)<input id="seOtKey" dir="ltr" maxlength="40" autocomplete="off" placeholder="مثلاً: rr2026secret"></label>
-        <label>الطيارين (كود:اسم، مفصولين بفاصلة)<input id="seDrivers" maxlength="300" placeholder="AH:أحمد, MO:محمد"></label></div>
+        <label>الطيارين (كود:اسم:رقم واتساب — الرقم اختياري، مفصولين بفاصلة)<input id="seDrivers" maxlength="300" placeholder="AH:أحمد:01012345678, MO:محمد"></label></div>
       <div class="hint">رابط OwnTracks (Mode: HTTP): <b id="seOtUrl" dir="ltr" style="user-select:all;word-break:break-all"></b><br>الكود (Tracker ID) في تطبيق كل طيار لازم يطابق الكود هنا (حرفين). عند الضغط على «خرج للتوصيل» هتختار الطيار، والعميل يشوف مكانه على الخريطة.</div>
       <div class="hint">التغيير بيظهر على الموقع خلال دقيقة تقريبًا، والسيرفر هو اللي بيطبّقه. وقت الزحمة: الرقم اللي هنا بيتضاف على الوقت المتوقع اللي العميل بيشوفه. السيرفر بيدّي ٥ دقايق سماح بعد ميعاد القفل.</div></div>
     <div class="panel"><h2>🗺️ مناطق التوصيل والرسوم</h2><div id="seAreas">⏳...</div></div>
@@ -425,9 +426,9 @@ async function loadNow(){
     overlay(j.orders);
     setLive(true); role = j.role || 'staff'; myName = j.name || user; applyRole();
     const fresh = j.orders.filter(o => known && !known.has(o.id) && o.status === 'new');
-    known = new Set(j.orders.map(o => o.id)); orders = j.orders; drivers = j.drivers || []; dseen = j.dseen || {};
+    known = new Set(j.orders.map(o => o.id)); orders = j.orders; drivers = j.drivers || []; dseen = j.dseen || {}; dpos = j.dpos || {}; dasg = j.dasg || {};
     if (Array.isArray(j.soldout) && !soBusy && Date.now() - soLast > 4000) { soList = j.soldout; mnRender(); }
-    render();
+    render(); drvBarRender();
     if (fresh.length) { toast('🔔 طلب جديد: ' + fresh.map(o => o.name).join('، ')); pushNotify('🔔 طلب جديد — ريد روستر', fresh.map(o => o.name + ' · ' + o.total + ' ج').join('\n')); ringTick(); }
     return true;
   } catch (e) { setLive(false); }
@@ -499,8 +500,11 @@ function cardHtml(o){
     (o.payment !== 'cash' ? '<div class="payst ' + (o.paid ? 'ok' : 'wait') + '">' + (o.paid ? '✅ تم استلام التحويل' : '⏳ مستني التحويل') + (o.payref ? ' · مرجع: <b dir="ltr">' + esc(o.payref) + '</b>' : '') + '</div>' : '') +
     (o.notes ? '<div class="note">📝 ' + esc(o.notes) + '</div>' : '') +
     (o.status === 'cancelled' && o.reason ? '<div class="rsn">❌ سبب الإلغاء: ' + esc(o.reason) + '</div>' : '') +
+    (o.type !== 'pickup' && o.lat != null && ACTIVE.includes(o.status) ? '<div class="note">📍 <a href="https://www.google.com/maps/dir/?api=1&destination=' + o.lat + ',' + o.lon + '" target="_blank" rel="noopener">لوكيشن العميل على الخريطة</a></div>' : '') +
+    (o.status === 'out' && o.type !== 'pickup' && drivers.length ? (() => { const dv = drivers.find(x => x.id === dasg[o.id]); return '<div class="note">🛵 الطيار: <b>' + (dv ? esc(dv.name) + ' ' + dDot(dv.id) : 'مش محدد (العميل مش شايف خريطة)') + '</b></div>'; })() : '') +
     '<div class="acts">' + (ns ? '<button class="btn main" data-act="set" data-st="' + ns[0] + '">' + ns[1] + '</button>' : '') +
       (o.payment !== 'cash' ? '<button class="btn ghost" data-act="paid" data-p="' + (o.paid ? 0 : 1) + '">' + (o.paid ? '↩︎ التحويل لسه ماوصلش' : '💰 تم استلام التحويل') + '</button>' : '') +
+      (o.status === 'out' && o.type !== 'pickup' && drivers.length ? '<button class="btn ghost" data-act="drv">🛵 غيّر الطيار</button>' + (dasg[o.id] ? '<button class="btn ghost" data-act="drvwa">📲 ابعت للطيار</button>' : '') : '') +
       '<button class="btn ghost" data-act="print">🖨️ طباعة</button>' +
       (ACTIVE.includes(o.status) ? '<button class="btn danger" data-act="set" data-st="cancelled">إلغاء</button>' : '') +
       (!ACTIVE.includes(o.status) && role === 'manager' ? '<button class="btn ghost" data-act="set" data-st="new">↩︎ رجّعه جديد</button>' : '') + '</div></article>';
@@ -508,7 +512,28 @@ function cardHtml(o){
 
 /* ═══ تغيير الحالة (فوري على الشاشة، والحفظ في الخلفية بالترتيب) ═══ */
 const chain = {};
-let drivers = [], dseen = {};
+let drivers = [], dseen = {}, dpos = {}, dasg = {};
+const dAge = s => s < 60 ? 'دلوقتي' : s < 3600 ? 'من ' + Math.round(s / 60) + ' د' : 'من ' + Math.round(s / 3600) + ' س';
+const dDot = id => dseen[id] == null ? '⚪' : dseen[id] < 120 ? '🟢' : '🟠';
+function drvWa(o, dv){
+  const loc = o.lat != null ? 'https://www.google.com/maps/dir/?api=1&destination=' + o.lat + ',' + o.lon + '&travelmode=driving' : 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent((o.address || '') + ' ' + (o.area || ''));
+  const items = (o.items || []).map(i => i.q + '× ' + i.n).join('، ');
+  const pay = o.payment === 'cash' ? '💵 كاش — حصّل ' + o.total + ' ج.م' : (o.paid ? '✅ مدفوع (تحويل)' : '⏳ التحويل لسه متأكدش — كلّم الفرع قبل التسليم');
+  const txt = '🛵 طلب #' + o.id + '\n👤 ' + o.name + ' · ' + o.phone + '\n📍 ' + (o.address || '') + (o.area ? ' (' + o.area + ')' : '') + '\n🗺️ ' + loc + '\n🧾 ' + items + '\n' + pay + (o.notes ? '\n📝 ' + o.notes : '');
+  return 'https://wa.me/20' + String(dv.phone).replace(/^0/, '') + '?text=' + encodeURIComponent(txt);
+}
+function drvBarRender(){
+  const bar = $('drvBar'); if (!bar) return;
+  if (!drivers.length) { bar.classList.add('hide'); return; }
+  const live = drivers.filter(x => dseen[x.id] != null && dseen[x.id] < 120).length;
+  bar.classList.remove('hide');
+  bar.innerHTML = '<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 10px"><b>🛵 الطيارين (' + live + ' لايف):</b>' + drivers.map(x => {
+    const n = orders.filter(o => o.status === 'out' && dasg[o.id] === x.id).length, p = dpos[x.id];
+    const t = dDot(x.id) + ' ' + esc(x.name) + (n ? ' · ' + n + ' طلب' : '') + (dseen[x.id] != null ? ' · ' + dAge(dseen[x.id]) : '');
+    const st = 'padding:6px 12px;border-radius:999px;background:#fff;border:1px solid #ddd;font-weight:700;font-size:.85rem;color:inherit;text-decoration:none';
+    return p ? '<a href="https://www.google.com/maps?q=' + p[0] + ',' + p[1] + '" target="_blank" rel="noopener" style="' + st + '">' + t + ' 📍</a>' : '<span style="' + st + '">' + t + '</span>';
+  }).join('') + '</div><div style="font-size:.75rem;opacity:.65;margin-bottom:8px">🟢 لايف (آخر ٢ دقيقة) · 🟠 قديم · ⚪ مفيش إشارة — دوس على الطيار تشوف مكانه على الخريطة</div>';
+}
 function pickDriver(){
   return new Promise(res => {
     if (!drivers.length) { toast('ℹ️ مفيش طيارين متسجلين للتتبع — ضيفهم من الإعدادات (وتأكد إنك عملت Deploy ▸ New version)'); return res(undefined); }
@@ -1115,6 +1140,8 @@ $('grid').addEventListener('click', e => {
   const b = e.target.closest('[data-act]'); if (!b) return;
   const card = b.closest('.card'), id = card.dataset.id;
   if (b.dataset.act === 'set') { (async () => { const oo = orders.find(x => x.id === id); let dv; if (b.dataset.st === 'out' && oo && oo.type !== 'pickup') { dv = await pickDriver(); if (dv === null) return; } setStatus(id, b.dataset.st, undefined, dv); })(); }
+  if (b.dataset.act === 'drv') { (async () => { const dv = await pickDriver(); if (dv == null) return; try { const j = await post({action:'setStatus', user, id, status:'out', deferPush:true, driver:dv}); if (j.ok) { if (dv) dasg[id] = dv; else delete dasg[id]; render(); drvBarRender(); toast(dv ? '✅ اتغيّر الطيار' : '✅ اتشال الطيار (من غير تتبع)'); } else toast('⚠️ حصل خطأ'); } catch (e) { toast('⚠️ مفيش اتصال'); } })(); }
+  if (b.dataset.act === 'drvwa') { const o = orders.find(x => x.id === id), dv = o && drivers.find(x => x.id === dasg[id]); if (!dv) toast('⚠️ اختار الطيار الأول'); else if (!dv.phone) toast('⚠️ ضيف رقم واتساب الطيار في الإعدادات: كود:اسم:رقم'); else window.open(drvWa(o, dv), '_blank'); }
   if (b.dataset.act === 'paid') setPaid(id, b.dataset.p === '1');
   if (b.dataset.act === 'print') { const o = orders.find(x => x.id === id); if (o) kotPrint(o); }
 });
