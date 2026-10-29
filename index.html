@@ -4657,6 +4657,7 @@ imChips.previousElementSibling.style.display = noChips ? 'none' : '';
         if (res === 'closed') { pendingId = null; toast(closedMsg(), 7000); return; }
         if (/^coupon_(invalid|expired|limit)$/.test(res)) { pendingId = null; const bad = coupon && coupon.code; coupon = null; $('couponInput').value = ''; setCouponMsg(CP_ERR[res] || '', false); render(); renderSummary(); toast((CP_ERR[res] || '') + (bad ? ' (' + bad + ') — اتشال من طلبك، راجع الإجمالي وأكّد تاني' : ''), 7500); return; }
         if (res === 'busy') { toast('⏳ طلبات كتيرة في وقت قصير. جرّب بعد دقيقة.', 6000); return; }
+        if (res === 'bad_price') { pendingId = null; toast('⚠️ أسعار بعض الأصناف اتحدّثت. حدّث الصفحة، فضّي السلة وضيف أصنافك تاني، أو كلمنا على 0237721525', 9000); return; }
         if (res === 'bad_total') { pendingId = null; toast('⚠️ في اختلاف في حسابات الطلب. حدّث الصفحة وجرّب تاني، أو كلمنا على 0237721525', 8000); return; }
         if (res === 'soldout') { pendingId = null; refreshSoldout(); showFail('so', window.rrSoNames && window.rrSoNames.length ? window.rrSoNames : soInCart()); return; }
         if (res !== 'ok') { showFail('net'); return; }
@@ -5696,8 +5697,9 @@ new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:tru
       .then(function(r){return r.json()}).then(function(j){clearTimeout(to);return j},function(e){clearTimeout(to);throw e}); }
   /* بيرجّع 'ok' | 'coupon_used' | 'fail' — محاولتين (السيرفر بيتجاهل التكرار بنفس رقم الطلب) */
   window.rrTrackSave=function(o){
+    if(!o.did&&window.rrDid) o.did=window.rrDid();
     function attempt(n){ return post1(o,18000).then(function(j){
-        if(j&&j.ok) return 'ok'; if(j&&j.error==='coupon_used') return 'coupon_used'; if(j&&j.error==='closed') return 'closed'; if(j&&/^coupon_(invalid|expired|limit)$/.test(j.error)) return j.error; if(j&&j.error==='busy') return 'busy'; if(j&&j.error==='bad_total') return 'bad_total'; if(j&&j.error==='soldout'){ window.rrSoNames=j.items||[]; return 'soldout'; }
+        if(j&&j.ok) return 'ok'; if(j&&j.error==='coupon_used') return 'coupon_used'; if(j&&j.error==='closed') return 'closed'; if(j&&/^coupon_(invalid|expired|limit)$/.test(j.error)) return j.error; if(j&&j.error==='busy') return 'busy'; if(j&&j.error==='bad_total') return 'bad_total'; if(j&&(j.error==='bad_price'||j.error==='bad_item')) return 'bad_price'; if(j&&j.error==='soldout'){ window.rrSoNames=j.items||[]; return 'soldout'; }
         return n<2?attempt(n+1):'fail';
       },function(){ return n<2?attempt(n+1):'fail'; }); }
     return attempt(1).then(function(r){
@@ -6006,6 +6008,8 @@ html[lang="en"] body{font-family:"Cairo","Tajawal",sans-serif}
    1) اعمل حساب مجاني على onesignal.com ▸ New App ▸ Web ▸ Custom Code، وحط رابط موقعك.
    2) انسخ الـ App ID وحطه هنا بين العلامتين. (فاضي = الإشعارات مقفولة). */
 window.RR_ONESIGNAL='24f07a03-ba83-4261-9f12-689fded386be';
+/* معرّف عشوائي للجهاز (بدل رقم الموبايل): بيتبعت مع الطلب، والإشعارات بتتبعت عليه — محدش يقدر يستقبل إشعارات طلبات غيره بمجرد معرفة رقمه */
+window.rrDid=function(){try{var d=localStorage.getItem('rr_did');if(!/^[a-f0-9]{32}$/.test(d||'')){var a=new Uint8Array(16);(window.crypto||window.msCrypto).getRandomValues(a);d=Array.prototype.map.call(a,function(x){return('0'+x.toString(16)).slice(-2)}).join('');localStorage.setItem('rr_did',d);}return d;}catch(e){return '';}};
 (function(){
   var APP=window.RR_ONESIGNAL, OS=null, lastP='', $=function(i){return document.getElementById(i)};
   var norm=function(p){return String(p||'').replace(/[٠-٩]/g,function(d){return '٠١٢٣٤٥٦٧٨٩'.indexOf(d)}).replace(/\D/g,'').replace(/^(0020|20)/,'0').slice(-11)};
@@ -6024,7 +6028,7 @@ window.RR_ONESIGNAL='24f07a03-ba83-4261-9f12-689fded386be';
   }
   function sync(){
     if(!OS) return;
-    var p=phone(); try{ if(p&&p!==lastP&&OS.User.externalId!==p){ lastP=p; OS.login(p); } }catch(e){}
+    var p=window.rrDid?window.rrDid():''; try{ if(p&&p!==lastP&&OS.User.externalId!==p){ lastP=p; OS.login(p); } }catch(e){}
     try{ window.rrPushOn=!!(OS.User.PushSubscription.optedIn&&window.Notification&&Notification.permission==='granted'); }catch(e){ window.rrPushOn=false; }
     ui();
   }

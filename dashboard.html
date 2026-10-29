@@ -251,7 +251,7 @@ main.wide{max-width:none}
   </main>
   <main id="stMain" class="hide">
     <div class="panel"><h2>➕ إنشاء حساب موظف</h2>
-      <div class="frm"><input id="stU" dir="ltr" maxlength="20" placeholder="اسم المستخدم (حروف إنجليزي/أرقام)" autocapitalize="none"><input id="stN" maxlength="40" placeholder="الاسم الظاهر (مثلاً: أحمد)"><input id="stP" dir="ltr" maxlength="40" placeholder="كلمة السر (4 على الأقل)"><button class="btn ghost" id="stGen" type="button">🎲 توليد</button><button class="btn main" id="stAdd" type="button">إنشاء</button></div>
+      <div class="frm"><input id="stU" dir="ltr" maxlength="20" placeholder="اسم المستخدم (حروف إنجليزي/أرقام)" autocapitalize="none"><input id="stN" maxlength="40" placeholder="الاسم الظاهر (مثلاً: أحمد)"><input id="stP" dir="ltr" maxlength="40" placeholder="كلمة السر (6 على الأقل)"><button class="btn ghost" id="stGen" type="button">🎲 توليد</button><button class="btn main" id="stAdd" type="button">إنشاء</button></div>
       <div class="hint">الموظف يقدر يشوف الطلبات ويغيّر حالتها ويلغي بسبب، لكن مايشوفش التحليلات ولا المبيعات ولا يقدر يرجّع طلب منتهي.</div></div>
     <div class="panel"><h2>👥 الموظفين</h2><div id="stList">⏳...</div></div>
   </main>
@@ -783,7 +783,7 @@ async function stLoad(){
 }
 async function stSave(body, okMsg){
   try { const j = await post(Object.assign({action:'staffSave', user}, body));
-    if (!j.ok) return toast(({bad_username:'اسم المستخدم لازم حروف إنجليزي/أرقام/_ من ٣ لـ ٢٠ حرف (ومايكونش اسم المدير)', bad_password:'كلمة السر 4 أحرف على الأقل', forbidden:'⛔ للمدير بس'})[j.error] || '⚠️ حصل خطأ'), false;
+    if (!j.ok) return toast(({bad_username:'اسم المستخدم لازم حروف إنجليزي/أرقام/_ من ٣ لـ ٢٠ حرف (ومايكونش اسم المدير)', bad_password:'كلمة السر 6 أحرف على الأقل', forbidden:'⛔ للمدير بس'})[j.error] || '⚠️ حصل خطأ'), false;
     toast(okMsg); stLoad(); return true;
   } catch (e) { toast('⚠️ مفيش اتصال'); return false; }
 }
@@ -791,18 +791,18 @@ $('stGen').onclick = () => { const a = new Uint32Array(1); crypto.getRandomValue
 $('stAdd').onclick = async () => {
   const u = $('stU').value.trim().toLowerCase(), n = $('stN').value.trim(), p = $('stP').value.trim();
   if (!/^[a-z0-9_]{3,20}$/.test(u)) return toast('اسم المستخدم: حروف إنجليزي/أرقام/_ من ٣ لـ ٢٠ حرف');
-  if (p.length < 4) return toast('كلمة السر 4 أحرف على الأقل');
+  if (p.length < 6) return toast('كلمة السر 6 أحرف على الأقل');
   if (await stSave({username:u, name:n || u, password:p, active:true}, '✅ اتعمل الحساب — المستخدم: ' + u + ' / السر: ' + p)) { $('stU').value = $('stN').value = $('stP').value = ''; }
 };
 $('stList').addEventListener('click', e => {
   const b = e.target.closest('[data-sa]'); if (!b) return; const u = b.dataset.u;
-  if (b.dataset.sa === 'pw') { const p = (prompt('كلمة سر جديدة للموظف ' + u + ' (4 أحرف على الأقل):') || '').trim(); if (p) stSave({username:u, password:p}, '✅ اتغيّرت كلمة السر: ' + p); }
+  if (b.dataset.sa === 'pw') { const p = (prompt('كلمة سر جديدة للموظف ' + u + ' (6 أحرف على الأقل):') || '').trim(); if (p) stSave({username:u, password:p}, '✅ اتغيّرت كلمة السر: ' + p); }
   else if (confirm((b.dataset.a === '1' ? 'إيقاف' : 'تفعيل') + ' حساب ' + u + '؟')) stSave({username:u, active:b.dataset.a !== '1'}, b.dataset.a === '1' ? '⏸️ اتوقّف الحساب' : '▶️ اتفعّل الحساب');
 });
 
 /* ═══ إيقاف الأصناف اللي نفدت ═══ */
 const nz = s => String(s == null ? '' : s).replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).toLowerCase().replace(/[\u064B-\u065F\u0670\u0640]/g, '').replace(/[أإآ]/g, 'ا').replace(/ى/g, 'ي').replace(/ة/g, 'ه').replace(/\s+/g, ' ').trim();
-let soList = [], menu = null, menuErr = '', mnQ = '', mnRows = [], soBusy = 0, soLast = 0;
+let mnSyncMsg = '', soList = [], menu = null, menuErr = '', mnQ = '', mnRows = [], soBusy = 0, soLast = 0;
 const soHas = n => soList.some(x => nz(x.name) === nz(n));
 const MN_TYPES = [['.card', '.card-name', '.price-badge'], ['.siniya-card', '.siniya-card-name', '.siniya-price'], ['.siniya-featured', '.siniya-featured-name', '.siniya-price'],
                   ['.school-featured', '.school-featured-name', '.price-badge'], ['.zsb-banner', 'h2', '.zsb-price'], ['.power-deal-banner', 'h2', '.power-deal-price']];
@@ -827,6 +827,18 @@ function mnParse(html){
   grab('EXTRAS', '➕ الإضافات'); grab('SAUCES', '🥣 الصوصات');
   return out;
 }
+/* بيبعت أقل سعر معلن لكل صنف للسيرفر (ورقة MenuPrices) — السيرفر بيرفض أي طلب فيه صنف بسعر أقل منه. اتعمل تلقائي لما المدير يفتح تبويب الأصناف أو يدوس تحديث. */
+async function mnSyncPrices(list, force){
+  const items = list.map(m => { const n = (String(m.price).match(/\d+(?:\.\d+)?/g) || []).map(Number).filter(x => x > 0); return n.length ? {name:m.name, price:Math.min(...n)} : null; }).filter(Boolean);
+  try {
+    const j = await post({action:'menuSync', user, items, force:!!force});
+    mnSyncMsg = j.ok ? '✅ أسعار المنيو متزامنة مع السيرفر (' + j.n + ' صنف). لو غيّرت أسعار في الموقع، دوس "تحديث القايمة" عشان تتزامن.'
+      : j.error === 'sync_small' ? '⚠️ القايمة اللي اتقرت (' + j.n + ' صنف) أقل بكتير من المتسجّل (' + j.old + ') — ماتزامنتش. لو ده مقصود دوس "تحديث القايمة" مرة تانية.'
+      : '⚠️ تعذّرت مزامنة الأسعار' + (j.error === 'bad_action' ? ' — حدّث Code.gs واعمل Deploy ▸ New version' : '');
+    if (j.ok === false && j.error === 'sync_small' && force) { const j2 = await post({action:'menuSync', user, items, force:true}); if (j2.ok) mnSyncMsg = '✅ اتزامنت الأسعار (' + j2.n + ' صنف)'; }
+  } catch (e) { mnSyncMsg = '⚠️ تعذّرت مزامنة الأسعار (مفيش اتصال)'; }
+  mnRender();
+}
 async function mnLoad(force){
   if (menu && !force) return mnRender();
   $('mnList').innerHTML = '<div class="empty">⏳ بنحمّل قايمة الأصناف...</div>';
@@ -835,6 +847,7 @@ async function mnLoad(force){
     try { const r = await fetch(u, {cache:'no-store'}); if (!r.ok) continue; const m = mnParse(await r.text()); if (m.length) { menu = m; break; } } catch (e) {}
   }
   if (!menu) menuErr = '⚠️ معرفناش نحمّل قايمة الأصناف من الموقع. تقدر توقّف أي صنف بكتابة اسمه تحت.';
+  else if (role === 'manager') mnSyncPrices(menu, force === true);   // مزامنة الأسعار المعلنة للسيرفر (بيرفض أي طلب بسعر أقل)
   mnRender();
 }
 function mnRender(){
@@ -847,7 +860,7 @@ function mnRender(){
     return '<div class="mnrow' + (isOff ? ' off' : '') + '"><div class="mnn"><b>' + esc(name) + '</b><small>' + esc(sub) + '</small></div>' +
       '<button type="button" class="btn tiny ' + (isOff ? 'main' : 'danger') + '" data-mn="' + i + '" data-off="' + (isOff ? 0 : 1) + '">' + (isOff ? '✅ رجّعه' : '⛔ وقّفه') + '</button></div>'; };
   $('mnOff').innerHTML = off.map(x => row(x.name, (x.by ? '👤 ' + (staffNames[x.by] || x.by) : '') + (x.time ? ' · ' + ago(x.time) : ''), true)).join('');
-  let h = menuErr ? '<div class="note" style="margin-bottom:12px">' + esc(menuErr) + '</div>' : '';
+  let h = (menuErr ? '<div class="note" style="margin-bottom:12px">' + esc(menuErr) + '</div>' : '') + (role === 'manager' && mnSyncMsg ? '<div class="hint" style="margin:0 0 10px">' + esc(mnSyncMsg) + '</div>' : '');
   if (menu) {
     const groups = new Map();
     menu.forEach(m => { if (q && !nz(m.name + ' ' + m.en + ' ' + m.sec).includes(q)) return; if (!groups.has(m.sec)) groups.set(m.sec, []); groups.get(m.sec).push(m); });
