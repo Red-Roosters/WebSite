@@ -510,11 +510,18 @@ function cardHtml(o){
 const chain = {};
 let drivers = [], dseen = {};
 function pickDriver(){
-  if (!drivers.length) return undefined;
-  const m = drivers.map((x, i) => (i + 1) + ') ' + x.name + (dseen[x.id] == null ? ' ⚪' : dseen[x.id] < 120 ? ' 🟢' : ' 🟠')).join('\n');
-  const r = prompt('مين الطيار اللي خرج بالطلب؟ اكتب رقمه (أو سيبها فاضية من غير تتبع):\n' + m + '\n\n🟢 الموقع شغال · 🟠 قديم · ⚪ مفيش إشارة');
-  const n = parseInt(String(r || '').replace(/[٠-٩]/g, x => '٠١٢٣٤٥٦٧٨٩'.indexOf(x)), 10);
-  return n >= 1 && n <= drivers.length ? drivers[n - 1].id : '';
+  return new Promise(res => {
+    if (!drivers.length) { toast('ℹ️ مفيش طيارين متسجلين للتتبع — ضيفهم من الإعدادات (وتأكد إنك عملت Deploy ▸ New version)'); return res(undefined); }
+    const ov = document.createElement('div'); ov.className = 'cx';
+    const dot = x => dseen[x.id] == null ? '⚪' : dseen[x.id] < 120 ? '🟢' : '🟠';
+    ov.innerHTML = '<div style="background:#fff;color:#222;border-radius:16px;padding:18px;width:min(380px,100%);max-height:85vh;overflow:auto;direction:rtl;font-family:inherit">'
+      + '<h3 style="margin:0 0 4px">🛵 مين الطيار اللي خرج بالطلب؟</h3><div style="font-size:.8rem;opacity:.7;margin-bottom:10px">🟢 الموقع شغال · 🟠 قديم · ⚪ مفيش إشارة</div>'
+      + drivers.map(x => '<button type="button" data-d="' + String(x.id).replace(/[^a-z0-9]/g, '') + '" style="display:block;width:100%;margin:6px 0;padding:12px;border:1px solid #ddd;border-radius:12px;background:#fff;font:700 1rem inherit;cursor:pointer">' + dot(x) + ' ' + String(x.name).replace(/[<>&"]/g, '') + '</button>').join('')
+      + '<button type="button" data-d="" style="display:block;width:100%;margin:10px 0 4px;padding:11px;border:0;border-radius:12px;background:#f1eeee;font:700 .95rem inherit;cursor:pointer">من غير تتبع</button>'
+      + '<button type="button" data-x="1" style="display:block;width:100%;padding:9px;border:0;background:none;color:#9E1B1B;font:700 .9rem inherit;cursor:pointer">إلغاء</button></div>';
+    ov.onclick = e => { const bt = e.target.closest('button'); if (!bt && e.target !== ov) return; ov.remove(); res(bt && bt.dataset.d !== undefined ? bt.dataset.d : null); };
+    document.body.appendChild(ov);
+  });
 }
 async function setStatus(id, st, reason, driver){
   const o = orders.find(x => x.id === id); if (!o) return;
@@ -1107,7 +1114,7 @@ $('grid').addEventListener('click', e => {
   const cp = e.target.closest('[data-copy]'); if (cp) { e.preventDefault(); copyText(cp.dataset.copy); return; }
   const b = e.target.closest('[data-act]'); if (!b) return;
   const card = b.closest('.card'), id = card.dataset.id;
-  if (b.dataset.act === 'set') { const oo = orders.find(x => x.id === id); setStatus(id, b.dataset.st, undefined, b.dataset.st === 'out' && oo && oo.type !== 'pickup' ? pickDriver() : undefined); }
+  if (b.dataset.act === 'set') { (async () => { const oo = orders.find(x => x.id === id); let dv; if (b.dataset.st === 'out' && oo && oo.type !== 'pickup') { dv = await pickDriver(); if (dv === null) return; } setStatus(id, b.dataset.st, undefined, dv); })(); }
   if (b.dataset.act === 'paid') setPaid(id, b.dataset.p === '1');
   if (b.dataset.act === 'print') { const o = orders.find(x => x.id === id); if (o) kotPrint(o); }
 });
