@@ -151,6 +151,21 @@ main.wide{max-width:none}
 @keyframes fl{50%{background:#a81d1d}}
 #unlock{position:fixed;inset:0;z-index:80;background:rgba(20,12,10,.85);color:#fff;display:grid;place-items:center;text-align:center;padding:24px;font:900 1.4rem "Tajawal",sans-serif;cursor:pointer}
 #unlock small{display:block;margin-top:8px;font:600 .95rem "Cairo",sans-serif;color:#e6dcd6}
+#kot{display:none}
+.seg{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}.seg button{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:6px 14px;font:800 .84rem "Cairo",sans-serif;color:var(--ink)}.seg button.on{background:var(--red);border-color:var(--red);color:#fff}
+.arow{display:grid;grid-template-columns:1fr 90px 70px 40px;gap:8px;align-items:center;padding:5px 0;border-top:1px solid var(--line)}.arow input[type=text],.arow input[type=number]{padding:8px 10px;border:1.5px solid var(--line);border-radius:10px;font:600 .9rem "Cairo",sans-serif;width:100%}.arow.off input[type=text]{color:#999;text-decoration:line-through}
+.okb{background:#E3F6EC;color:var(--green);border-radius:12px;padding:10px 12px;font-weight:700;font-size:.9rem}.badb{background:#FDECEC;color:#9E1B1B;border-radius:12px;padding:10px 12px;font-weight:700;font-size:.9rem}.warnb{background:#FFF3CD;color:#7A5800;border-radius:12px;padding:10px 12px;font-weight:700;font-size:.9rem}
+.dim{opacity:.45}
+@media print{
+  body.pk>*:not(#kot){display:none!important}
+  body.pk{background:#fff}
+  body.pk #kot{display:block;width:72mm;margin:0 auto;font:700 13px/1.4 Tahoma,Arial,sans-serif;color:#000;direction:rtl}
+  #kot h1{font-size:18px;text-align:center;margin:0 0 2px}#kot .big{font-size:26px;font-weight:900;text-align:center;border:2px solid #000;margin:4px 0;padding:2px}
+  #kot .row{display:flex;justify-content:space-between;gap:6px}#kot hr{border:0;border-top:1px dashed #000;margin:6px 0}
+  #kot .it{font-size:16px;font-weight:900;margin:4px 0}#kot .it small{display:block;font-size:12px;font-weight:700}#kot .tot{font-size:16px;font-weight:900}
+  #kot .nt{border:1px solid #000;padding:3px 5px;margin:4px 0}
+  @page{size:80mm auto;margin:3mm}
+}
 @media print{
   body.p1 .bar,body.p1 .stats,body.p1 .tools,body.p1 .card:not(.pme),body.p1 .acts{display:none!important}
   body.p1 .pme{border:0;box-shadow:none}
@@ -206,6 +221,8 @@ main.wide{max-width:none}
     <button class="ib hide" id="vMenu">🚫 الأصناف</button>
     <button class="ib hide" id="vAn">📊 التحليلات</button>
     <button class="ib hide" id="vCp">🎟️ الكوبونات</button>
+    <button class="ib hide" id="vCust">📇 العملاء</button>
+    <button class="ib hide" id="vSet">⚙️ الإعدادات</button>
     <button class="ib hide" id="vStaff">👥 الموظفين</button>
     <div class="live" id="live"><i></i><span id="liveT">متصل</span></div>
     <button class="ib" id="snd">🔔 الصوت: شغال</button>
@@ -248,6 +265,33 @@ main.wide{max-width:none}
       <div class="hint">التعديل بيظهر على الموقع خلال دقيقة تقريبًا. السيرفر هو اللي بيتحقق من الكود وقت الطلب (الصلاحية والتاريخ والعدد والخصم)، فمحدش يقدر يتحايل بتعديل الصفحة.</div></div>
     <div class="panel"><h2>🎟️ الكوبونات</h2><div id="cpList">⏳...</div></div>
     <div class="panel"><h2>📈 أداء الكوبونات</h2><div id="cpStats">⏳...</div></div>
+  </main>
+  <main id="cuMain" class="hide">
+    <div class="panel"><h2>📇 العملاء</h2>
+      <div class="rng"><label>الفترة<select id="cuDays"><option value="90">آخر ٣ شهور</option><option value="180">آخر ٦ شهور</option><option value="365">آخر سنة</option></select></label>
+        <label>بحث<input id="cuQ" type="search" placeholder="🔎 اسم أو رقم"></label>
+        <label>كود الخصم في الرسالة (اختياري)<input id="cuCode" dir="ltr" maxlength="20" placeholder="مثلاً COMEBACK" autocapitalize="characters"></label>
+        <button class="btn ghost" id="cuGo" type="button">🔄 تحديث</button></div>
+      <div class="seg" id="cuSeg"></div>
+      <div class="hint">زرار واتساب بيفتح رسالة جاهزة تبعتها بنفسك لكل عميل (مش إرسال جماعي). العملاء اللي كلّمتهم في آخر ١٤ يوم بيتعتّموا. اعمل الكود من تبويب الكوبونات الأول (مثلاً «لأول طلب بس» مقفول عشان يشتغل مع العميل القديم).</div></div>
+    <div class="panel"><div id="cuOut">⏳...</div></div>
+  </main>
+  <main id="seMain" class="hide">
+    <div class="panel"><h2>⏰ المواعيد ووضع التشغيل</h2>
+      <div class="cpf">
+        <label>بيفتح الساعة<input type="time" id="seOpen"></label>
+        <label>بيقفل الساعة<input type="time" id="seClose"></label>
+        <label>زيادة وقت التوصيل وقت الزحمة (دقيقة)<input type="number" id="seBusy" min="0" max="180" placeholder="0"></label>
+        <label>رسالة الزحمة (بتظهر للعميل)<input id="seBusyMsg" maxlength="120" placeholder="مثلاً: ضغط كبير دلوقتي، شكرًا لصبرك"></label>
+        <label>رسالة وقف التوصيل<input id="sePauseMsg" maxlength="120" placeholder="مثلاً: التوصيل واقف نص ساعة"></label>
+      </div>
+      <div class="frm" style="margin-top:12px;align-items:center">
+        <label class="ck"><input type="checkbox" id="seHours"> مواعيد العمل شغّالة (لو مقفولة الموقع بيقبل طلبات في أي وقت)</label>
+        <label class="ck"><input type="checkbox" id="sePause"> ⏸️ وقف التوصيل مؤقتًا (الاستلام من الفرع شغال)</label>
+        <button class="btn main" id="seSave" type="button">💾 حفظ</button></div>
+      <div class="hint">التغيير بيظهر على الموقع خلال دقيقة تقريبًا، والسيرفر هو اللي بيطبّقه. وقت الزحمة: الرقم اللي هنا بيتضاف على الوقت المتوقع اللي العميل بيشوفه. السيرفر بيدّي ٥ دقايق سماح بعد ميعاد القفل.</div></div>
+    <div class="panel"><h2>🗺️ مناطق التوصيل والرسوم</h2><div id="seAreas">⏳...</div></div>
+    <div class="panel"><h2>💾 النسخ الاحتياطي والتقرير اليومي</h2><div id="seBk">⏳...</div></div>
   </main>
   <main id="stMain" class="hide">
     <div class="panel"><h2>➕ إنشاء حساب موظف</h2>
@@ -513,17 +557,18 @@ $('cxOk').onclick = () => { const r = cxReason(), id = cxId; if (!r) return; clo
 function applyRole(){
   const m = role === 'manager';
   ['vOrders','vMenu'].forEach(id => $(id).classList.remove('hide'));   // الموظف والمدير الاتنين يقدروا يوقّفوا الأصناف
-  ['vAn','vStaff','vCp'].forEach(id => $(id).classList.toggle('hide', !m));
+  ['vAn','vStaff','vCp','vCust','vSet'].forEach(id => $(id).classList.toggle('hide', !m));
+  if (m && !applyRole.bk) { applyRole.bk = 1; setTimeout(bkCheck, 1500); }   // تنبيه لو النسخة الاحتياطية متأخرة/فاشلة
   $('who').textContent = (m ? '👑 ' : '👤 ') + myName;
   if (!m && view !== 'orders' && view !== 'menu') setView('orders');
 }
 function setView(v){
   view = v;
-  $('mainEl').classList.toggle('hide', v !== 'orders'); $('anMain').classList.toggle('hide', v !== 'analytics'); $('stMain').classList.toggle('hide', v !== 'staff'); $('mnMain').classList.toggle('hide', v !== 'menu'); $('cpMain').classList.toggle('hide', v !== 'coupons');
-  [['vOrders','orders'],['vMenu','menu'],['vAn','analytics'],['vCp','coupons'],['vStaff','staff']].forEach(([id, k]) => $(id).classList.toggle('act', k === v));
-  if (v === 'orders') render(); if (v === 'analytics') anInit(); if (v === 'staff') stLoad(); if (v === 'menu') mnLoad(); if (v === 'coupons') cpLoad();
+  $('mainEl').classList.toggle('hide', v !== 'orders'); $('anMain').classList.toggle('hide', v !== 'analytics'); $('stMain').classList.toggle('hide', v !== 'staff'); $('mnMain').classList.toggle('hide', v !== 'menu'); $('cpMain').classList.toggle('hide', v !== 'coupons'); $('cuMain').classList.toggle('hide', v !== 'customers'); $('seMain').classList.toggle('hide', v !== 'settings');
+  [['vOrders','orders'],['vMenu','menu'],['vAn','analytics'],['vCp','coupons'],['vCust','customers'],['vSet','settings'],['vStaff','staff']].forEach(([id, k]) => $(id).classList.toggle('act', k === v));
+  if (v === 'orders') render(); if (v === 'analytics') anInit(); if (v === 'staff') stLoad(); if (v === 'menu') mnLoad(); if (v === 'coupons') cpLoad(); if (v === 'customers') cuLoad(); if (v === 'settings') seLoad();
 }
-$('vOrders').onclick = () => setView('orders'); $('vAn').onclick = () => setView('analytics'); $('vStaff').onclick = () => setView('staff'); $('vCp').onclick = () => setView('coupons'); $('vMenu').onclick = () => setView('menu');
+$('vOrders').onclick = () => setView('orders'); $('vAn').onclick = () => setView('analytics'); $('vStaff').onclick = () => setView('staff'); $('vCp').onclick = () => setView('coupons'); $('vMenu').onclick = () => setView('menu'); $('vCust').onclick = () => setView('customers'); $('vSet').onclick = () => setView('settings');
 
 /*ANALYZE-START*/
 const pad2 = n => String(n).padStart(2, '0');
@@ -898,15 +943,152 @@ function copyText(t){
   const old = () => { const x = document.createElement('textarea'); x.value = t; x.style.cssText = 'position:fixed;opacity:0'; document.body.appendChild(x); x.select(); try { document.execCommand('copy'); } catch (e) {} x.remove(); done(); };
   if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(done, old); else old();
 }
+
+/* ═══ طباعة تذكرة مطبخ ٨٠مم ═══ */
+function kotPrint(o){
+  const old = $('kot'); if (old) old.remove();
+  const d = document.createElement('div'); d.id = 'kot';
+  const row = (a, b) => '<div class="row"><span>' + a + '</span><span>' + b + '</span></div>';
+  d.innerHTML = '<h1>🐓 ريد روستر</h1><div class="big">#' + esc(o.id) + '</div>' +
+    row(o.type === 'pickup' ? '🏪 استلام من الفرع' : '🛵 دليفري', clock(o.time)) + '<hr>' +
+    '<div>' + esc(o.name) + '</div><div dir="ltr" style="text-align:right">' + esc(o.phone) + (o.phone2 ? ' / ' + esc(o.phone2) : '') + '</div>' +
+    (o.type === 'pickup' ? '' : '<div>📍 ' + esc(o.address) + '</div>') + '<hr>' +
+    o.items.map(i => '<div class="it">' + i.q + '× ' + esc(i.n) + ((i.o && i.o.length) ? '<small>' + esc(i.o.join('، ')) + '</small>' : '') + (i.t ? '<small>📝 ' + esc(i.t) + '</small>' : '') + '</div>').join('') +
+    (o.notes ? '<div class="nt">📝 ' + esc(o.notes) + '</div>' : '') + '<hr>' +
+    row('المجموع', o.subtotal) + (o.discount ? row('خصم' + (o.coupon ? ' (' + esc(o.coupon) + ')' : ''), '− ' + o.discount) : '') +
+    (o.type === 'pickup' ? '' : row('التوصيل', o.fee || 0)) + '<div class="row tot"><span>الإجمالي</span><span>' + o.total + ' ج</span></div>' +
+    row('الدفع', (PAY[o.payment] || esc(o.payment)) + (o.payment !== 'cash' ? (o.paid ? ' ✅ مدفوع' : ' ⏳ لسه') : '')) + '<hr>' +
+    '<div style="text-align:center;font-size:11px">طُبعت ' + clock(Date.now()) + '</div>';
+  document.body.appendChild(d); document.body.classList.add('pk');
+  setTimeout(() => window.print(), 50);
+}
+
+/* ═══ العملاء ═══ */
+let cuAll = [], cuSeg = 'all', cuTrunc = false;
+const cuWB = () => { try { return JSON.parse(localStorage.getItem('rr_wb') || '{}'); } catch (e) { return {}; } };
+async function cuLoad(){
+  $('cuOut').innerHTML = '⏳ بنحمّل...';
+  const days = +$('cuDays').value || 90, to = Date.now(), from = to - days * 864e5;
+  try {
+    const j = await post({action:'adminReport', user, from, to});
+    if (!j.ok) { $('cuOut').innerHTML = '<div class="empty">' + (j.error === 'forbidden' ? '⛔ للمدير بس' : '⚠️ مقدرناش نحمّل البيانات') + '</div>'; return; }
+    cuTrunc = !!j.truncated; const m = {};
+    j.orders.filter(o => o.status !== 'cancelled').sort((a, b) => a.time - b.time).forEach(o => {
+      const c = m[o.phone] || (m[o.phone] = {phone:o.phone, name:o.name, n:0, total:0, first:o.time, last:0, items:{}});
+      c.n++; c.total += +o.total || 0; c.last = o.time; c.name = o.name || c.name;
+      (o.items || []).forEach(i => { const k = String(i.n || '').replace(/\s*\(.*\)\s*$/, '').trim(); if (k) c.items[k] = (c.items[k] || 0) + (+i.q || 1); });
+    });
+    cuAll = Object.values(m).map(c => { const top = Object.keys(c.items).sort((a, b) => c.items[b] - c.items[a])[0] || ''; return Object.assign(c, {fav:top, since:Math.floor((to - c.last) / 864e5)}); });
+    cuRender();
+  } catch (e) { $('cuOut').innerHTML = '<div class="empty">⚠️ مفيش اتصال</div>'; }
+}
+function cuSegs(){ return [['all','الكل',() => true],['lost','وحشتنا (٣٠+ يوم)',c => c.since >= 30],['vip','مميزين (٤+ طلبات)',c => c.n >= 4],['new','جدد (طلب واحد)',c => c.n === 1],['active','نشطين (آخر ٣٠ يوم)',c => c.since < 30]]; }
+function cuMsg(c){
+  const code = $('cuCode').value.trim().toUpperCase();
+  return 'أهلاً ' + (c.name || '') + ' 👋\nوحشتنا في ريد روستر 🐓' + (c.fav ? '\nلسه بتحب ' + c.fav + '؟ 😋' : '') + (code ? '\nاستخدم كود ' + code + ' في طلبك الجاي واستمتع بخصم 🎁' : '') + '\nاطلب من هنا: ' + SITE;
+}
+function cuRender(){
+  const segs = cuSegs(), f = segs.find(x => x[0] === cuSeg) || segs[0], q = $('cuQ').value.trim().toLowerCase(), wb = cuWB();
+  $('cuSeg').innerHTML = segs.map(x => '<button type="button" data-s="' + x[0] + '" class="' + (x[0] === cuSeg ? 'on' : '') + '">' + x[1] + ' (' + num(cuAll.filter(x[2]).length) + ')</button>').join('');
+  let l = cuAll.filter(f[2]); if (q) l = l.filter(c => (c.name + ' ' + c.phone).toLowerCase().includes(q));
+  l.sort((a, b) => cuSeg === 'lost' ? b.total - a.total : b.last - a.last);
+  const rows = l.slice(0, 200).map(c => { const rec = wb[c.phone] && Date.now() - wb[c.phone] < 14 * 864e5;
+    return ['<span class="' + (rec ? 'dim' : '') + '"><b>' + esc(c.name) + '</b><br><small dir="ltr" style="color:#6B6B6B">' + esc(c.phone) + '</small></span>', num(c.n), money(c.total), 'من ' + num(c.since) + ' يوم', esc(c.fav) || '—',
+      '<a class="btn ghost tiny" target="_blank" rel="noopener" data-wb="' + esc(c.phone) + '" href="https://wa.me/20' + c.phone.replace(/^0/, '') + '?text=' + encodeURIComponent(cuMsg(c)) + '">💬 واتساب' + (rec ? ' ✓' : '') + '</a>']; });
+  $('cuOut').innerHTML = (cuTrunc ? '<div class="warnb" style="margin-bottom:10px">⚠️ البيانات اتقصّت (عدد الطلبات كبير) — اختار فترة أقصر.</div>' : '') +
+    '<p class="hint" style="margin:0 0 8px">' + num(l.length) + ' عميل' + (l.length > 200 ? ' (أول ٢٠٠)' : '') + '</p>' +
+    tbl(['العميل', 'طلبات', 'إجمالي', 'آخر طلب', 'الأكلة المفضلة', ''], rows.length ? rows : [['—', '', '', '', '', '']]);
+}
+$('cuSeg').addEventListener('click', e => { const b = e.target.closest('[data-s]'); if (b) { cuSeg = b.dataset.s; cuRender(); } });
+$('cuQ').addEventListener('input', () => cuRender()); $('cuCode').addEventListener('input', () => cuRender()); $('cuDays').onchange = cuLoad; $('cuGo').onclick = cuLoad;
+$('cuOut').addEventListener('click', e => { const a = e.target.closest('[data-wb]'); if (a) { const m = cuWB(); m[a.dataset.wb] = Date.now(); try { localStorage.setItem('rr_wb', JSON.stringify(m)); } catch (x) {} setTimeout(cuRender, 400); } });
+
+/* ═══ الإعدادات والمناطق ═══ */
+let seAreas = [], seBuiltin = false, seFilter = '';
+async function seLoad(){
+  try {
+    const j = await post({action:'settingsGet', user});
+    if (!j.ok) { $('seAreas').innerHTML = '<div class="empty">' + (j.error === 'forbidden' ? '⛔ للمدير بس' : (AUTH_ERR[j.error] || '⚠️ حصل خطأ (اتأكد إنك حدّثت Code.gs وعملت Deploy ▸ New version)')) + '</div>'; return; }
+    const c = j.settings; $('seOpen').value = c.open_at; $('seClose').value = c.close_at; $('seBusy').value = c.busy_extra || 0; $('seBusyMsg').value = c.busy_msg || ''; $('sePauseMsg').value = c.pause_msg || '';
+    $('seHours').checked = c.hours_on === 'true'; $('sePause').checked = c.pause_on === 'true';
+    seAreas = j.areas.map(a => Object.assign({}, a)); seBuiltin = !!j.builtin; seAreaRender();
+  } catch (e) { $('seAreas').innerHTML = '<div class="empty">⚠️ مفيش اتصال</div>'; }
+  bkLoad();
+}
+$('seSave').onclick = async () => {
+  try {
+    const j = await post({action:'settingsSave', user, settings:{hours_on:$('seHours').checked, open_at:$('seOpen').value, close_at:$('seClose').value, busy_extra:+$('seBusy').value || 0, busy_msg:$('seBusyMsg').value.trim(), pause_on:$('sePause').checked, pause_msg:$('sePauseMsg').value.trim()}});
+    toast(j.ok ? '✅ اتحفظت الإعدادات' : (j.error === 'bad_time' ? 'المواعيد غير صحيحة' : '⚠️ حصل خطأ'));
+  } catch (e) { toast('⚠️ مفيش اتصال'); }
+};
+function seAreaRender(){
+  const q = seFilter.trim().toLowerCase();
+  let h = seBuiltin ? '<div class="warnb" style="margin-bottom:10px">المناطق دلوقتي جاية من ملف الموقع (مش متدارة من الشيت). استورد القايمة مرة واحدة عشان تقدر تغيّر الرسوم وتقفل أي منطقة من هنا.</div><button class="btn main" id="seImport" type="button">📥 استيراد مناطق الموقع</button>' : '';
+  if (!seBuiltin || seAreas.length) {
+    h += '<div class="rng" style="margin:8px 0"><input id="seQ" type="search" placeholder="🔎 ابحث عن منطقة" value="' + esc(seFilter) + '"><button class="btn ghost" id="seAdd" type="button">➕ منطقة جديدة</button><button class="btn main" id="seAsave" type="button">💾 حفظ المناطق</button></div>' +
+      '<div class="arow" style="font-weight:800;border-top:0"><span>المنطقة</span><span>الرسوم (ج)</span><span>شغّالة</span><span></span></div>' +
+      seAreas.map((a, i) => (!q || a.name.toLowerCase().includes(q)) ? '<div class="arow' + (a.active === false ? ' off' : '') + '"><input type="text" data-k="name" data-i="' + i + '" value="' + esc(a.name) + '"><input type="number" min="0" max="150" data-k="fee" data-i="' + i + '" value="' + (+a.fee || 0) + '"><label class="ck"><input type="checkbox" data-k="active" data-i="' + i + '"' + (a.active === false ? '' : ' checked') + '></label><button class="btn danger tiny" data-del="' + i + '" type="button">🗑️</button></div>' : '').join('') +
+      '<div class="hint">منطقة مقفولة = العميل ما يقدرش يختارها ولو بعت طلب السيرفر بيرفضه. رسوم التوصيل بيتحقق منها السيرفر كمان. أي منطقة تتضاف أو تتغيّر بتظهر للعملاء خلال دقيقة تقريبًا.</div>';
+  }
+  $('seAreas').innerHTML = h;
+}
+$('seAreas').addEventListener('input', e => { const t = e.target, i = t.dataset.i; if (t.id === 'seQ') { seFilter = t.value; const pos = t.selectionStart; seAreaRender(); const n = $('seQ'); n.focus(); n.setSelectionRange(pos, pos); return; }
+  if (i == null) return; const a = seAreas[+i], k = t.dataset.k; if (k === 'name') a.name = t.value; if (k === 'fee') a.fee = +t.value || 0; });
+$('seAreas').addEventListener('change', e => { const t = e.target; if (t.dataset.k === 'active') { seAreas[+t.dataset.i].active = t.checked; seAreaRender(); } });
+$('seAreas').addEventListener('click', async e => {
+  const t = e.target.closest('button'); if (!t) return;
+  if (t.dataset.del != null) { if (confirm('حذف المنطقة «' + seAreas[+t.dataset.del].name + '»؟')) { seAreas.splice(+t.dataset.del, 1); seAreaRender(); } return; }
+  if (t.id === 'seAdd') { seAreas.unshift({name:'', fee:0, active:true}); seFilter = ''; seAreaRender(); const f = document.querySelector('.arow input[type=text]'); if (f) f.focus(); return; }
+  if (t.id === 'seImport') {
+    try { const r = await fetch(new URL('index.html', location.href).href, {cache:'no-store'}), txt = await r.text(), m = /areas\s*:\s*\[([\s\S]*?)\n\s*\]/.exec(txt); if (!m) return toast('⚠️ مقدرناش نقرا المناطق من الموقع');
+      const l = []; m[1].replace(/\{\s*name\s*:\s*'([^']+)'\s*,\s*fee\s*:\s*(\d+)\s*\}/g, (x, n, f) => { l.push({name:n, fee:+f, active:true}); });
+      if (l.length < 5) return toast('⚠️ القايمة اللي اتقرت قليلة — راجع index.html'); seAreas = l; seBuiltin = false; seAreaRender(); toast('📥 اتجابت ' + l.length + ' منطقة — دوس «حفظ المناطق» عشان تتثبّت');
+    } catch (x) { toast('⚠️ مقدرناش نفتح index.html'); } return; }
+  if (t.id === 'seAsave') {
+    const l = seAreas.map(a => ({name:String(a.name).trim(), fee:+a.fee || 0, active:a.active !== false})).filter(a => a.name);
+    if (!l.length) return toast('القايمة فاضية'); if (new Set(l.map(a => a.name)).size !== l.length) return toast('⚠️ فيه منطقتين بنفس الاسم');
+    try { const j = await post({action:'areasSave', user, areas:l}); toast(j.ok ? '✅ اتحفظت ' + j.n + ' منطقة' : '⚠️ حصل خطأ'); if (j.ok) seLoad(); } catch (x) { toast('⚠️ مفيش اتصال'); }
+  }
+});
+
+/* ═══ النسخ الاحتياطي والتقرير ═══ */
+const ago2 = t => { const h = (Date.now() - t) / 36e5; return h < 1 ? 'من أقل من ساعة' : h < 48 ? 'من ' + num(Math.round(h)) + ' ساعة' : 'من ' + num(Math.round(h / 24)) + ' يوم'; };
+async function bkStatus(){ try { const j = await post({action:'backupStatus', user}); return j.ok ? j : null; } catch (e) { return null; } }
+function bkProblems(j){
+  const p = [], b = j.backup;
+  if (!b) p.push('لسه مفيش ولا نسخة احتياطية اتعملت'); else if (!b.ok) p.push('آخر نسخة احتياطية فشلت'); else if (Date.now() - b.t > 36 * 36e5) p.push('آخر نسخة احتياطية قديمة (' + ago2(b.t) + ')');
+  if (j.backupTrigger === false) p.push('الجدولة اليومية مش متركّبة');
+  return p;
+}
+async function bkCheck(){ const j = await bkStatus(); if (!j) return; const p = bkProblems(j); if (p.length) { $('vSet').textContent = '⚙️ الإعدادات ⚠️'; toast('⚠️ ' + p[0] + ' — شوف تبويب الإعدادات'); } else $('vSet').textContent = '⚙️ الإعدادات'; }
+async function bkLoad(){
+  const j = await bkStatus(); if (!j) { $('seBk').innerHTML = '<div class="badb">⚠️ مقدرناش نجيب حالة النسخ الاحتياطي (اتأكد إنك لصقت Code.gs الجديد وعملت Deploy ▸ New version)</div>'; return; }
+  const b = j.backup, r = j.report, p = bkProblems(j); $('vSet').textContent = p.length ? '⚙️ الإعدادات ⚠️' : '⚙️ الإعدادات';
+  let h = !b ? '<div class="badb">❌ مفيش نسخة احتياطية لسه</div>' : b.ok ? '<div class="' + (Date.now() - b.t > 36 * 36e5 ? 'warnb' : 'okb') + '">' + (Date.now() - b.t > 36 * 36e5 ? '⚠️' : '✅') + ' آخر نسخة ' + ago2(b.t) + (b.name ? ' — ' + esc(b.name) : '') + (b.url ? ' · <a href="' + esc(b.url) + '" target="_blank" rel="noopener">فتح</a>' : '') + '<br><small>بنحتفظ بآخر ' + num(j.keep) + ' نسخة في Drive ▸ RedRoosters Backups</small></div>' : '<div class="badb">❌ آخر محاولة فشلت: ' + esc(b.err || '') + '</div>';
+  if (j.backupTrigger === false) h += '<div class="warnb" style="margin-top:8px">⚠️ مفيش جدولة يومية. افتح محرر Apps Script وشغّل الدالة <b dir="ltr">setupBackup</b> مرة واحدة ووافق على الصلاحيات.</div>';
+  else if (j.backupTrigger === null) h += '<div class="warnb" style="margin-top:8px">مقدرناش نتأكد من الجدولة (محتاج صلاحيات). شغّل <b dir="ltr">setupBackup</b> من المحرر.</div>';
+  if (j.reportTrigger === false) h += '<div class="warnb" style="margin-top:8px">⚠️ تقرير الإقفال اليومي مش متجدول — شغّل <b dir="ltr">setupBackup</b> (بيركّب الاتنين).</div>';
+  h += '<p class="hint">تقرير الإقفال: ' + (r ? (r.ok ? '✅ آخر إرسال ' + ago2(r.t) : '❌ فشل: ' + esc(r.err || '')) : 'لسه ماتبعتش') + ' — بيوصل كل يوم ٧ الصبح على إيميل صاحب الحساب (أو Script property اسمها REPORT_EMAIL).</p>' +
+    '<div class="frm"><button class="btn main" id="bkNow" type="button">💾 نسخة احتياطية دلوقتي</button><button class="btn ghost" id="rpPrev" type="button">📧 ابعت تقرير امبارح</button><button class="btn ghost" id="rpToday" type="button">📧 تقرير النهاردة لحد دلوقتي</button></div>' +
+    '<details style="margin-top:12px"><summary style="font-weight:800;cursor:pointer">🛟 إزاي أسترجع من نسخة؟</summary><ol class="hint" style="line-height:1.9"><li>افتح Drive ▸ مجلد <b>RedRoosters Backups</b> وافتح النسخة اللي عايزها (تاريخها في الاسم).</li><li>للطلبات: انسخ ورقة <b>Tickets</b> من النسخة (كليك يمين ▸ Copy to ▸ الملف الأصلي)، وامسح الورقة الحالية أو غيّر اسمها واسم الجديدة <b>Tickets</b>.</li><li>كرر ده لأي ورقة تانية محتاجها (Orders, Redeem, Coupons, CouponDefs, Staff, Settings, Areas...).</li><li>لو الملف الأصلي اتمسح خالص: افتح النسخة ▸ File ▸ Make a copy، وحدّث <b>RR_API</b> لو اتغيّر رابط الـ Deploy.</li></ol></details>';
+  $('seBk').innerHTML = h;
+}
+$('seBk').addEventListener('click', async e => {
+  const t = e.target.closest('button'); if (!t) return;
+  const run = async (body, msg) => { t.disabled = true; const x = t.textContent; t.textContent = '⏳...'; try { const j = await post(body); toast(j.ok ? msg(j) : '⚠️ ' + (j.error === 'mail_failed' ? 'الإيميل فشل: ' + (j.msg || '') : j.error === 'backup_failed' ? 'النسخة فشلت — شوف الرسالة تحت' : j.error === 'busy' ? 'استنى شوية وجرّب تاني' : 'حصل خطأ')); } catch (er) { toast('⚠️ مفيش اتصال'); } t.disabled = false; t.textContent = x; bkLoad(); };
+  if (t.id === 'bkNow') run({action:'backupNow', user}, () => '✅ اتعملت نسخة احتياطية');
+  if (t.id === 'rpPrev') run({action:'reportNow', user}, j => '📧 اتبعت التقرير على ' + j.sent);
+  if (t.id === 'rpToday') run({action:'reportNow', user, today:true}, j => '📧 اتبعت التقرير على ' + j.sent);
+});
 $('grid').addEventListener('click', e => {
   const cp = e.target.closest('[data-copy]'); if (cp) { e.preventDefault(); copyText(cp.dataset.copy); return; }
   const b = e.target.closest('[data-act]'); if (!b) return;
   const card = b.closest('.card'), id = card.dataset.id;
   if (b.dataset.act === 'set') setStatus(id, b.dataset.st);
   if (b.dataset.act === 'paid') setPaid(id, b.dataset.p === '1');
-  if (b.dataset.act === 'print') { document.body.classList.add('p1'); card.classList.add('pme'); window.print(); }
+  if (b.dataset.act === 'print') { const o = orders.find(x => x.id === id); if (o) kotPrint(o); }
 });
-window.addEventListener('afterprint', () => { document.body.classList.remove('p1'); document.querySelectorAll('.pme').forEach(c => c.classList.remove('pme')); });
+window.addEventListener('afterprint', () => { document.body.classList.remove('pk'); const k = $('kot'); if (k) k.remove(); document.body.classList.remove('p1'); document.querySelectorAll('.pme').forEach(c => c.classList.remove('pme')); });
 $('tabs').addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (b) { tab = b.dataset.tab; render(); } });
 $('q').addEventListener('input', e => { query = e.target.value; render(); });
 $('rf').onclick = () => { load(); toast('🔄 اتحدّث'); };

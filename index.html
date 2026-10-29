@@ -4007,6 +4007,16 @@ html[lang="en"] .rr-so-badge::before{content:"Sold out"}
         const sync = () => { const c = !isOpenNow(); bar.style.display = c ? 'block' : 'none'; if (c) bar.textContent = closedMsg(); };
         sync(); setInterval(sync, 30000);
     })();
+    /* شريط إشعار: وقف التوصيل / وقت الزحمة (بيتحكم فيه المدير من الداشبورد) */
+    const rrNotice = document.createElement('div');
+    rrNotice.style.cssText = 'display:none;color:#fff;text-align:center;font:800 .9rem Cairo,sans-serif;padding:8px 12px;position:relative;z-index:49';
+    document.body.insertBefore(rrNotice, document.body.firstChild);
+    function paintNotice() {
+        const c = window.RR_CFG || {}, p = c.pause || {}, b = c.busy || {};
+        if (p.on) { rrNotice.style.background = '#9E1B1B'; rrNotice.textContent = '⏸️ ' + (p.msg || 'التوصيل متوقف مؤقتًا') + ' — الاستلام من الفرع شغال'; rrNotice.style.display = 'block'; }
+        else if ((+b.extra || 0) > 0 || b.msg) { rrNotice.style.background = '#C98200'; rrNotice.textContent = '⏳ ' + (b.msg || 'ضغط كبير دلوقتي') + ((+b.extra || 0) > 0 ? ' — وقت التوصيل زاد حوالي ' + (+b.extra) + ' دقيقة' : ''); rrNotice.style.display = 'block'; }
+        else rrNotice.style.display = 'none';
+    }
 
     /* ═══ الحسابات ═══ */
     const subtotal = () => cart.reduce((s, i) => s + i.price * i.qty, 0);
@@ -4040,14 +4050,34 @@ html[lang="en"] .rr-so-badge::before{content:"Sold out"}
         }));
         return UP_POOL;
     }
+    /* كل الأصناف اللي ليها سعر واحد (تتضاف بضغطة من غير اختيارات) — عشان اقتراحات «ناس كتير بتطلب معاه» */
+    let ALL_POOL = null;
+    function allPool() {
+        if (ALL_POOL) return ALL_POOL; ALL_POOL = {};
+        document.querySelectorAll('[data-cart="1"]').forEach(box => {
+            if (box.querySelectorAll('.add-cart-btn').length !== 1) return;
+            const pe = box.querySelector('.price-badge, .siniya-price'), price = pe ? parseInt((pe.textContent.match(/\d+/) || [0])[0], 10) : 0, name = box.dataset.nm;
+            if (name && price) ALL_POOL[norm(baseName(name))] = { name, price };
+        });
+        return ALL_POOL;
+    }
     let upShown = [];
     function upsellHtml() {
-        const pool = upPool(); upShown = []; if (!pool.length || !cart.length) return '';
+        const pool = upPool(); upShown = []; if (!cart.length) return '';
+        const inCart = n => cart.some(i => baseName(i.name) === n);
+        /* 1) من الطلبات الفعلية: الأصناف اللي بتتطلب مع اللي في السلة (السيرفر بيحسبها) */
+        const hot = [], sg = window.RR_SG && window.RR_SG.pairs;
+        if (sg) {
+            const ap = allPool(), score = {};
+            cart.forEach(i => (sg[baseName(i.name)] || []).forEach((n, r) => { const p = ap[norm(baseName(n))]; if (p && !isSO(p.name) && !inCart(p.name)) score[p.name] = (score[p.name] || 0) + (4 - r); }));
+            Object.keys(score).sort((a, b) => score[b] - score[a]).slice(0, 3).forEach(n => { const p = Object.values(ap).find(x => x.name === n); if (p) hot.push(p); });
+        }
+        /* 2) احتياطي: مشروب / مقبلات لو مش موجودين (الأرخص) */
         const has = sec => cart.some(i => pool.some(p => p.sec === sec && p.name === baseName(i.name)));
-        const pick = sec => has(sec) ? [] : pool.filter(p => p.sec === sec && !isSO(p.name) && !cart.some(i => baseName(i.name) === p.name)).sort((a, b) => a.price - b.price).slice(0, 2);
-        upShown = pick('drinks').concat(pick('appetizers')).slice(0, 4);
+        const pick = sec => has(sec) ? [] : pool.filter(p => p.sec === sec && !isSO(p.name) && !inCart(p.name)).sort((a, b) => a.price - b.price).slice(0, 2);
+        upShown = hot.concat(pick('drinks').concat(pick('appetizers')).filter(p => !hot.some(h => h.name === p.name))).slice(0, 4);
         if (!upShown.length) return '';
-        return '<div class="cart-up"><b>😋 تحب تضيف على طلبك؟</b><div class="row">' + upShown.map((p, i) => '<button type="button" data-up="' + i + '">+ ' + esc(p.name) + ' · ' + fmt(p.price) + '</button>').join('') + '</div></div>';
+        return '<div class="cart-up"><b>' + (hot.length ? '🔥 ناس كتير بتطلب معاه' : '😋 تحب تضيف على طلبك؟') + '</b><div class="row">' + upShown.map((p, i) => '<button type="button" data-up="' + i + '">+ ' + esc(p.name) + ' · ' + fmt(p.price) + '</button>').join('') + '</div></div>';
     }
     $('cartBody').addEventListener('click', e => { const b = e.target.closest('[data-up]'); if (!b) return; const p = upShown[+b.dataset.up]; if (p) addItem({ name: p.name, price: p.price, qty: 1 }); });
 
@@ -4211,9 +4241,10 @@ html[lang="en"] .rr-so-badge::before{content:"Sold out"}
             const j = await r.json(); return j && j.ok ? !!j.used : null;
         } catch (e) { return null; }
     }
+    const phoneQ = () => { try { const p = normPhone($('f_phone').value || ''); return p.length === 11 ? '&phone=' + p : ''; } catch (e) { return ''; } };
     async function serverCouponDef(code) {
         if (!CONFIG.couponApi) return null;
-        try { const r = await fetch(apiUrl('action=couponDef&code=' + encodeURIComponent(code))), j = await r.json(); return j && j.ok ? j : null; } catch (e) { return null; }
+        try { const r = await fetch(apiUrl('action=couponDef&code=' + encodeURIComponent(code) + phoneQ())), j = await r.json(); return j && j.ok ? j : null; } catch (e) { return null; }
     }
     async function claimCoupon(code, phone) {
         if (!CONFIG.couponApi) return 'local';
@@ -4246,11 +4277,27 @@ html[lang="en"] .rr-so-badge::before{content:"Sold out"}
             }
         } catch (e) {}
         try { const j = await (await fetch(apiUrl('action=eta'))).json(); if (j && j.ok && j.eta) { window.RR_ETA_LIVE = j.eta; renderSummary(); } } catch (e) {}
+        try { await loadServerConfig(); } catch (e) {}
+        try { const j = await (await fetch(apiUrl('action=suggest'))).json(); if (j && j.ok) { window.RR_SG = j; render(); } } catch (e) {}
     })();
+    /* إعدادات من الشيت: مواعيد · مناطق ورسوم · زحمة · وقف التوصيل (لو الشيت فاضي بنكمّل بالقيم المكتوبة في الموقع) */
+    async function loadServerConfig() {
+        const j = await (await fetch(apiUrl('action=config'))).json(); if (!j || !j.ok) return;
+        window.RR_CFG = j;
+        if (j.hours) { CONFIG.hours.enabled = !!j.hours.enabled; if (j.hours.open) CONFIG.hours.open = j.hours.open; if (j.hours.close) CONFIG.hours.close = j.hours.close; }
+        if (Array.isArray(j.areas) && j.areas.length) {
+            const cur = areaVal.value !== '' && CONFIG.areas[+areaVal.value] ? CONFIG.areas[+areaVal.value].name : (window.RR_SAVED_AREA || '');
+            CONFIG.areas.length = 0; j.areas.forEach(a => CONFIG.areas.push({ name: a.name, fee: +a.fee || 0 }));
+            const ni = cur ? CONFIG.areas.findIndex(a => a.name === cur) : -1;
+            if (ni >= 0) { areaVal.value = ni; areaQ.value = CONFIG.areas[ni].name; }
+            else if (areaVal.value !== '') { areaVal.value = ''; areaQ.value = ''; toast('⚠️ المنطقة اللي اخترتها مش متاحة للتوصيل دلوقتي — اختار منطقة تانية', 6000); }
+        }
+        paintNotice(); renderSummary(); window.rrSync && window.rrSync();
+    }
     async function applyLoyalty(code) {
         setCouponMsg('⏳ بنتحقق من الكود...', true);
         try {
-            const r = await fetch(apiUrl('action=validate&code=' + encodeURIComponent(code))), j = await r.json();
+            const r = await fetch(apiUrl('action=validate&code=' + encodeURIComponent(code) + phoneQ())), j = await r.json();
             if (j && j.ok && j.valid) { coupon = { code, def: { type: 'fixed', value: +j.value, loyalty: true } }; render(); renderSummary(); return; }
             coupon = null; setCouponMsg(j && j.ok && j.used ? '❌ كود النقاط ده اتستخدم قبل كده' : '❌ كود النقاط غير صحيح', false); render(); renderSummary();
         } catch (e) { coupon = null; setCouponMsg('⚠️ تعذّر التحقق من الكود، جرّب تاني', false); render(); renderSummary(); }
@@ -4506,7 +4553,9 @@ imChips.previousElementSibling.style.display = noChips ? 'none' : '';
     const fields = ['name', 'phone', 'phone2', 'street', 'station', 'building', 'floor', 'apt', 'landmark'];
     const saved = LS.get('rr_customer', {});
     fields.forEach(f => { if (saved[f]) $('f_' + f).value = saved[f]; });
-    if (saved.area !== undefined && CONFIG.areas[saved.area]) { areaVal.value = saved.area; areaQ.value = CONFIG.areas[saved.area].name; }
+    { let sn = null; try { sn = localStorage.getItem('rr_area_n'); } catch (e) {} window.RR_SAVED_AREA = sn;
+      const si = sn ? CONFIG.areas.findIndex(a => a.name === sn) : (saved.area !== undefined ? +saved.area : -1);
+      if (si >= 0 && CONFIG.areas[si]) { areaVal.value = si; areaQ.value = CONFIG.areas[si].name; } }
 
     const pk = () => $('f_type').value === 'pickup';
     const PAY_NUM = '01062516200';
@@ -4541,6 +4590,18 @@ imChips.previousElementSibling.style.display = noChips ? 'none' : '';
     document.querySelectorAll('#otype button').forEach(b => b.addEventListener('click', () => setType(b.dataset.v)));
     window.rrArea = { areas: CONFIG.areas, set: setArea, setType: setType, fee: curFee, pk: pk, idx: () => areaVal.value, net: () => subtotal() - discount() };
 
+    /* وقت التوصيل المتوقع: متوسط فعلي للمنطقة المختارة (لو متاح) + زيادة وقت الزحمة */
+    function etaMin() {
+        const L = window.RR_ETA_LIVE || {}, ar = areaVal.value !== '' && CONFIG.areas[+areaVal.value] ? CONFIG.areas[+areaVal.value].name : '';
+        const base = (L.areas && ar && L.areas[ar]) || L.delivery || (CONFIG.eta && CONFIG.eta.delivery) || 45, c = window.RR_CFG || {};
+        return { m: base + ((c.busy && +c.busy.extra) || 0), busy: !!(c.busy && +c.busy.extra > 0), area: !!(L.areas && ar && L.areas[ar]) };
+    }
+    function deliveryNote() {
+        const c = window.RR_CFG || {};
+        if (c.pause && c.pause.on) return `<div class="delivery-time-note" style="border-color:#9E1B1B;color:#9E1B1B">⏸️ ${esc(c.pause.msg || 'التوصيل متوقف مؤقتًا')} — اختار «استلام من الفرع» لو حابب.</div>`;
+        const e = etaMin();
+        return `<div class="delivery-time-note">⏱️ وقت التوصيل المتوقع${e.area ? ' لمنطقتك' : ' حاليًا'} حوالي ${e.m} دقيقة${e.busy || e.m > 55 ? '' : ' — والحد الأقصى 60 دقيقة من تأكيد الأوردر'}${c.busy && c.busy.msg ? '<br><small>' + esc(c.busy.msg) + '</small>' : ''}</div>`;
+    }
     function renderSummary() {
         window.rrSync && window.rrSync();
         const fee = curFee(), sub = subtotal(), d = discount();
@@ -4550,7 +4611,7 @@ imChips.previousElementSibling.style.display = noChips ? 'none' : '';
             (d ? `<div class="sum-row disc"><span>🎟️ خصم (${esc(coupon.code)})</span><span>− ${fmt(d)}</span></div>` : '') +
             `<div class="sum-row"><span>${pk() ? 'استلام من الفرع' : 'التوصيل'}</span><span>${pk() ? 'بدون رسوم' : (fee === null ? 'اختار المنطقة' : fmt(fee))}</span></div>` +
             `<div class="sum-row total"><span>الإجمالي</span><span>${fmt(sub - d + (fee || 0))}</span></div>` +
-            (pk() ? '' : `<div class="delivery-time-note">⏱️ وقت التوصيل المتوقع حاليًا حوالي ${(window.RR_ETA_LIVE && RR_ETA_LIVE.delivery) || (CONFIG.eta && CONFIG.eta.delivery) || 45} دقيقة — والحد الأقصى 60 دقيقة من تأكيد الأوردر</div>`);
+            (pk() ? '' : deliveryNote());
     }
 
     $('goCheckout').addEventListener('click', () => {
@@ -4622,6 +4683,7 @@ imChips.previousElementSibling.style.display = noChips ? 'none' : '';
 
         const v = id => $(id).value.trim();
         const pickup = pk();
+        if (!pickup && window.RR_CFG && RR_CFG.pause && RR_CFG.pause.on) { toast('⏸️ ' + (RR_CFG.pause.msg || 'التوصيل متوقف مؤقتًا') + ' — تقدر تختار الاستلام من الفرع', 7000); return; }
         const area = pickup ? { name: 'استلام من الفرع', fee: 0 } : CONFIG.areas[+areaVal.value];
         const fmtT = s => { const [h, m] = s.split(':').map(Number); return ((h % 12) || 12) + ':' + String(m).padStart(2, '0') + ' ' + (h >= 12 ? 'م' : 'ص'); };
         const sub = subtotal(), d = discount(), total = sub - d + area.fee;
@@ -4644,7 +4706,7 @@ imChips.previousElementSibling.style.display = noChips ? 'none' : '';
         sending = true; if (sbtn) { sbtn.disabled = true; sbtn.textContent = '⏳ بنبعت طلبك...'; }
         let res = 'fail';
         try {
-            res = await window.rrTrackSave({ id: orderId, name: v('f_name'), phone: num('f_phone'), phone2: pickup ? '' : num('f_phone2'), type: pickup ? 'pickup' : 'delivery', address: addr,
+            res = await window.rrTrackSave({ id: orderId, name: v('f_name'), phone: num('f_phone'), phone2: pickup ? '' : num('f_phone2'), type: pickup ? 'pickup' : 'delivery', address: addr, area: pickup ? '' : area.name,
                 items: cart.map(i => ({ n: i.name, q: i.qty, p: i.price, o: i.opts || [], t: i.note || '' })), subtotal: sub, discount: d, coupon: d ? coupon.code : '', claim: claim, fee: area.fee, total: total, payment: $('f_pay').value, payref: $('f_pay').value === 'cash' ? '' : v('f_payref'), notes: v('f_notes') });
         } catch (err) {}
         sending = false; if (sbtn) { sbtn.disabled = false; sbtn.textContent = lbl; }
@@ -4657,6 +4719,8 @@ imChips.previousElementSibling.style.display = noChips ? 'none' : '';
         if (res === 'closed') { pendingId = null; toast(closedMsg(), 7000); return; }
         if (/^coupon_(invalid|expired|limit)$/.test(res)) { pendingId = null; const bad = coupon && coupon.code; coupon = null; $('couponInput').value = ''; setCouponMsg(CP_ERR[res] || '', false); render(); renderSummary(); toast((CP_ERR[res] || '') + (bad ? ' (' + bad + ') — اتشال من طلبك، راجع الإجمالي وأكّد تاني' : ''), 7500); return; }
         if (res === 'busy') { toast('⏳ طلبات كتيرة في وقت قصير. جرّب بعد دقيقة.', 6000); return; }
+        if (res === 'delivery_paused') { pendingId = null; loadServerConfig().catch(() => {}); toast('⏸️ التوصيل متوقف مؤقتًا — تقدر تختار الاستلام من الفرع', 7000); return; }
+        if (res === 'area_closed' || res === 'bad_area') { pendingId = null; loadServerConfig().catch(() => {}); toast('⚠️ التوصيل لمنطقتك مش متاح دلوقتي — اختار منطقة تانية أو الاستلام من الفرع', 7000); return; }
         if (res === 'bad_price') { pendingId = null; toast('⚠️ أسعار بعض الأصناف اتحدّثت. حدّث الصفحة، فضّي السلة وضيف أصنافك تاني، أو كلمنا على 0237721525', 9000); return; }
         if (res === 'bad_total') { pendingId = null; toast('⚠️ في اختلاف في حسابات الطلب. حدّث الصفحة وجرّب تاني، أو كلمنا على 0237721525', 8000); return; }
         if (res === 'soldout') { pendingId = null; refreshSoldout(); showFail('so', window.rrSoNames && window.rrSoNames.length ? window.rrSoNames : soInCart()); return; }
@@ -5595,14 +5659,14 @@ new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:tru
     document.querySelector('#rrDeliv small').textContent=pk?'الاستلام من':'التوصيل إلى';
     document.getElementById('rrDelivName').textContent=pk?'فرع فيصل المريوطية':(has?a.areas[+i].name:'اختار منطقتك');
     document.getElementById('rrDelivFee').textContent=pk?'بدون رسوم':(has?'رسوم '+fmt(fee):'');
-    if(has) LSs('rr_area',String(i));
+    if(has){ LSs('rr_area',String(i)); LSs('rr_area_n',a.areas[+i].name); window.RR_SAVED_AREA=a.areas[+i].name; }
     var r=cartRows(); if(!r) return;
     r.f.firstChild.textContent=pk?'🏪 استلام من الفرع':'🛵 التوصيل'+(has?' ('+a.areas[+i].name+')':'');
     if(fee===null){ r.f.lastChild.innerHTML='<b class="rr-link">اختار منطقتك</b>'; r.t.style.display='none'; }
     else{ r.f.lastChild.textContent=pk?'بدون رسوم':fmt(fee); r.t.style.display=''; r.t.lastChild.textContent=fmt(a.net()+fee); }
   };
   /* استرجاع آخر منطقة اختارها العميل */
-  var a0=A(); if(a0){ var sv=LSg('rr_area'); if(a0.idx()===''&&sv!==null&&a0.areas[+sv]) a0.set(+sv); }
+  var a0=A(); if(a0){ var sn0=LSg('rr_area_n'), sv=LSg('rr_area'), si0=sn0?a0.areas.findIndex(function(x){return x.name===sn0}):(sv!==null?+sv:-1); if(a0.idx()===''&&si0>=0&&a0.areas[si0]) a0.set(si0); }
   window.rrSync();
 })();
 </script>
@@ -5699,7 +5763,7 @@ new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:tru
   window.rrTrackSave=function(o){
     if(!o.did&&window.rrDid) o.did=window.rrDid();
     function attempt(n){ return post1(o,18000).then(function(j){
-        if(j&&j.ok) return 'ok'; if(j&&j.error==='coupon_used') return 'coupon_used'; if(j&&j.error==='closed') return 'closed'; if(j&&/^coupon_(invalid|expired|limit)$/.test(j.error)) return j.error; if(j&&j.error==='busy') return 'busy'; if(j&&j.error==='bad_total') return 'bad_total'; if(j&&(j.error==='bad_price'||j.error==='bad_item')) return 'bad_price'; if(j&&j.error==='soldout'){ window.rrSoNames=j.items||[]; return 'soldout'; }
+        if(j&&j.ok) return 'ok'; if(j&&j.error==='coupon_used') return 'coupon_used'; if(j&&j.error==='closed') return 'closed'; if(j&&/^coupon_(invalid|expired|limit)$/.test(j.error)) return j.error; if(j&&j.error==='busy') return 'busy'; if(j&&j.error==='bad_total') return 'bad_total'; if(j&&(j.error==='bad_price'||j.error==='bad_item')) return 'bad_price'; if(j&&/^(delivery_paused|area_closed|bad_area)$/.test(j.error)) return j.error; if(j&&j.error==='soldout'){ window.rrSoNames=j.items||[]; return 'soldout'; }
         return n<2?attempt(n+1):'fail';
       },function(){ return n<2?attempt(n+1):'fail'; }); }
     return attempt(1).then(function(r){
