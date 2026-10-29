@@ -161,6 +161,24 @@ main.wide{max-width:none}
 .mnrow.off .mnn b{text-decoration:line-through;color:#9E1B1B}
 .mnsec{font:900 1rem "Tajawal",sans-serif;margin:16px 4px 6px;color:var(--red)}
 #mnQ{min-width:220px}
+.cmp{grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+.cmp .st small{display:block;font-size:.76rem;font-weight:800;margin-top:3px}
+.up{color:var(--green)}.dn{color:#c01048}.fl{color:var(--mute)}
+.chart{width:100%;height:auto;display:block;direction:ltr}
+.chart text{font:600 10px Cairo,sans-serif;fill:#6B6B6B}
+.chart .gl{stroke:#eadfd8;stroke-width:1}
+.heat{display:grid;gap:3px;font-size:.7rem;color:var(--mute);overflow-x:auto;min-width:0}
+.heat .hr{display:grid;grid-template-columns:64px repeat(19,minmax(20px,1fr));gap:3px;align-items:center;min-width:560px}
+.heat .hc{height:24px;border-radius:5px;background:rgba(217,43,43,.06);display:block}
+.payst{font-size:.84rem;font-weight:800;border-radius:12px;padding:7px 12px}
+.payst.wait{background:#FFF3CD;color:#7A5800;border:1px solid #F5A623}
+.payst.ok{background:#E3F6EC;color:var(--green);border:1px solid #b6e2cb}
+.cpf{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;align-items:end}
+.cpf label{font-size:.82rem;color:var(--mute);display:grid;gap:3px;font-weight:700}
+.cpf input,.cpf select{padding:9px 12px;border:1.5px solid var(--line);border-radius:12px;font:600 .92rem "Cairo",sans-serif;background:#fff;width:100%}
+.frm label.ck{display:flex;gap:6px;align-items:center;font-size:.86rem;font-weight:700}
+.frm input[type=checkbox]{flex:0 0 auto;min-width:0;width:auto}
+.vd{font-size:.78rem;font-weight:800}
 </style>
 </head>
 <body>
@@ -185,6 +203,7 @@ main.wide{max-width:none}
     <button class="ib act hide" id="vOrders">🗂️ الطلبات</button>
     <button class="ib hide" id="vMenu">🚫 الأصناف</button>
     <button class="ib hide" id="vAn">📊 التحليلات</button>
+    <button class="ib hide" id="vCp">🎟️ الكوبونات</button>
     <button class="ib hide" id="vStaff">👥 الموظفين</button>
     <div class="live" id="live"><i></i><span id="liveT">متصل</span></div>
     <button class="ib" id="snd">🔔 الصوت: شغال</button>
@@ -206,6 +225,27 @@ main.wide{max-width:none}
     </div>
     <div class="panel"><h2>⭐ تقييمات العملاء</h2><button class="btn ghost" id="rtGo" type="button">عرض التقييمات</button><div id="rtOut" style="margin-top:12px"></div></div>
     <div id="anOut"></div>
+  </main>
+  <main id="cpMain" class="hide">
+    <div class="panel"><h2 id="cpFt">➕ كوبون جديد</h2>
+      <div class="cpf">
+        <label>الكود<input id="cpC" dir="ltr" maxlength="20" placeholder="مثلاً SUMMER10" autocapitalize="characters" autocomplete="off"></label>
+        <label>نوع الخصم<select id="cpT"><option value="percent">نسبة %</option><option value="fixed">مبلغ ثابت (ج)</option></select></label>
+        <label>قيمة الخصم<input id="cpV" type="number" min="1" step="1" inputmode="numeric"></label>
+        <label>أقل قيمة طلب (ج) — اختياري<input id="cpM" type="number" min="0" step="1" inputmode="numeric" placeholder="0"></label>
+        <label>أقصى عدد استخدامات<input id="cpX" type="number" min="0" step="1" inputmode="numeric" placeholder="0 = بلا حد"></label>
+        <label>ينتهي يوم (اختياري)<input id="cpE" type="date"></label>
+        <label>وصف قصير بيظهر للعميل<input id="cpL" maxlength="80" placeholder="مثلاً: خصم الصيف"></label>
+      </div>
+      <div class="frm" style="margin-top:12px;align-items:center">
+        <label class="ck"><input type="checkbox" id="cpF" checked> لأول طلب بس لكل عميل</label>
+        <label class="ck"><input type="checkbox" id="cpA" checked> شغّال</label>
+        <label class="ck"><input type="checkbox" id="cpH"> مخفي (مايظهرش في قايمة الأكواد، بس بيشتغل لو العميل كتبه)</label>
+        <button class="btn main" id="cpSave" type="button">💾 حفظ</button><button class="btn ghost hide" id="cpCancel" type="button">إلغاء التعديل</button>
+      </div>
+      <div class="hint">التعديل بيظهر على الموقع خلال دقيقة تقريبًا. السيرفر هو اللي بيتحقق من الكود وقت الطلب (الصلاحية والتاريخ والعدد والخصم)، فمحدش يقدر يتحايل بتعديل الصفحة.</div></div>
+    <div class="panel"><h2>🎟️ الكوبونات</h2><div id="cpList">⏳...</div></div>
+    <div class="panel"><h2>📈 أداء الكوبونات</h2><div id="cpStats">⏳...</div></div>
   </main>
   <main id="stMain" class="hide">
     <div class="panel"><h2>➕ إنشاء حساب موظف</h2>
@@ -254,14 +294,17 @@ const TABS = [['board','🗂️ اللوحة'],['active','النشطة'],['new',
 const inTab = {board:o=>ACTIVE.includes(o.status), active:o=>ACTIVE.includes(o.status), new:o=>o.status==='new', doing:o=>['confirmed','preparing','out'].includes(o.status),
                delivered:o=>o.status==='delivered', cancelled:o=>o.status==='cancelled', all:()=>true};
 
-let user = '', pass = '', role = 'staff', myName = '', view = 'orders', lastA = null, staffNames = {};
-try { const c = JSON.parse(sessionStorage.getItem('rr_admin_cred') || localStorage.getItem('rr_admin_cred') || 'null'); if (c) { user = c.u; pass = c.p; } } catch (e) {}
-const AUTH_ERR = {locked:'اتقفل الدخول مؤقتًا (محاولات كتير غلط). جرّب بعد 10 دقايق.', bad:'اسم المستخدم أو كلمة السر غلط', disabled:'الحساب ده متوقّف. كلّم المدير.'};
+let user = '', pass = '', token = '', role = 'staff', myName = '', view = 'orders', lastA = null, staffNames = {};
+try { const c = JSON.parse(sessionStorage.getItem('rr_admin_cred') || localStorage.getItem('rr_admin_cred') || 'null'); if (c) { user = c.u || ''; pass = c.p || ''; token = c.t || ''; } } catch (e) {}
+const AUTH_ERR = {locked:'اتقفل الدخول مؤقتًا (محاولات كتير غلط). جرّب بعد 10 دقايق.', bad:'اسم المستخدم أو كلمة السر غلط', disabled:'الحساب ده متوقّف. كلّم المدير.', bad_token:'انتهت الجلسة، سجّل دخولك تاني.', bad_action:'لازم تحدّث ملف Code.gs وتعمل Deploy ▸ New version الأول.', busy:'محاولات كتير، جرّب بعد شوية.'};
 function bizStart(ts){ const d = new Date(ts == null ? Date.now() : ts); const t = d.getTime(); d.setHours(DAY_START_HOUR, 0, 0, 0); if (t < d.getTime()) d.setDate(d.getDate() - 1); return d.getTime(); }
 let orders = [], tab = 'board', query = '', known = null, sound = true, lastBeep = 0, timer = null, ac = null, ringT = null, wl = null, flip = false;
 
 /* ═══ API ═══ */
-const post = b => fetch(API, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(b)}).then(r => r.json());
+const post = b => { if (token && b.action !== 'login') { b = Object.assign({}, b, {token}); delete b.pass; }   // التوكن بس بيتبعت — كلمة السر مابتتخزنش ولا بتتبعت تاني
+  return fetch(API, {method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(b)}).then(r => r.json()); };
+function askNotify(){ try { if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission(); } catch (e) {} }
+function pushNotify(t, body){ try { if ('Notification' in window && Notification.permission === 'granted' && document.hidden) new Notification(t, {body, tag:'rr-new', renotify:true}); } catch (e) {} }
 
 /* ═══ تنبيه صوتي (بيرن كل RING_MS لحد ما مفيش طلب "جديد") ═══ */
 function audioOk(){
@@ -304,14 +347,14 @@ function toast(t){ const el = $('toast'); el.textContent = t; el.classList.add('
 /* ═══ تحميل الأوردرات ═══ */
 async function load(){
   try {
-    const j = await post({action:'adminList', user, pass});
+    const j = await post({action:'adminList', user});
     if (!j.ok) return logout(AUTH_ERR[j.error] || 'فشل الدخول');
     setLive(true); role = j.role || 'staff'; myName = j.name || user; applyRole();
     const fresh = j.orders.filter(o => known && !known.has(o.id) && o.status === 'new');
     known = new Set(j.orders.map(o => o.id)); orders = j.orders;
     if (Array.isArray(j.soldout) && !soBusy && Date.now() - soLast > 4000) { soList = j.soldout; mnRender(); }
     render();
-    if (fresh.length) { toast('🔔 طلب جديد: ' + fresh.map(o => o.name).join('، ')); ringTick(); }
+    if (fresh.length) { toast('🔔 طلب جديد: ' + fresh.map(o => o.name).join('، ')); pushNotify('🔔 طلب جديد — ريد روستر', fresh.map(o => o.name + ' · ' + o.total + ' ج').join('\n')); ringTick(); }
     return true;
   } catch (e) { setLive(false); }
 }
@@ -379,9 +422,11 @@ function cardHtml(o){
       (o.discount ? '<div><span>🎟️ خصم' + (o.coupon ? ' (' + esc(o.coupon) + ')' : '') + '</span><span>− ' + o.discount + '</span></div>' : '') +
       '<div><span>' + (o.type === 'pickup' ? 'استلام' : 'التوصيل') + '</span><span>' + (o.fee || 'بدون رسوم') + '</span></div>' +
       '<div class="tot"><span>الإجمالي</span><span>' + o.total + ' ج.م</span></div><div><span>الدفع</span><span>' + (PAY[o.payment] || esc(o.payment)) + '</span></div></div>' +
+    (o.payment !== 'cash' ? '<div class="payst ' + (o.paid ? 'ok' : 'wait') + '">' + (o.paid ? '✅ تم استلام التحويل' : '⏳ مستني التحويل') + (o.payref ? ' · مرجع: <b dir="ltr">' + esc(o.payref) + '</b>' : '') + '</div>' : '') +
     (o.notes ? '<div class="note">📝 ' + esc(o.notes) + '</div>' : '') +
     (o.status === 'cancelled' && o.reason ? '<div class="rsn">❌ سبب الإلغاء: ' + esc(o.reason) + '</div>' : '') +
     '<div class="acts">' + (ns ? '<button class="btn main" data-act="set" data-st="' + ns[0] + '">' + ns[1] + '</button>' : '') +
+      (o.payment !== 'cash' ? '<button class="btn ghost" data-act="paid" data-p="' + (o.paid ? 0 : 1) + '">' + (o.paid ? '↩︎ التحويل لسه ماوصلش' : '💰 تم استلام التحويل') + '</button>' : '') +
       '<button class="btn ghost" data-act="print">🖨️ طباعة</button>' +
       (ACTIVE.includes(o.status) ? '<button class="btn danger" data-act="set" data-st="cancelled">إلغاء</button>' : '') +
       (!ACTIVE.includes(o.status) && role === 'manager' ? '<button class="btn ghost" data-act="set" data-st="new">↩︎ رجّعه جديد</button>' : '') + '</div></article>';
@@ -395,10 +440,16 @@ async function setStatus(id, st, reason){
   const mv = document.querySelector('.card[data-id="' + id + '"]');
   if (mv) { mv.classList.add('moved'); const c = mv.closest('.col'); if (c) c.scrollIntoView({behavior:'smooth', inline:'center', block:'nearest'}); }
   try {
-    const j = await post({action:'setStatus', user, pass, id, status:st, reason: st === 'cancelled' ? reason : ''});
+    const j = await post({action:'setStatus', user, id, status:st, reason: st === 'cancelled' ? reason : ''});
     if (!j.ok) { if (j.error === 'forbidden') { o.status = prev; o.reason = prevR; render(); load(); return toast('⛔ مش مسموح للموظف يعدّل طلب منتهي'); } throw new Error(j.error || 'fail'); }
     o.updated = j.updated || Date.now(); toast('✅ ' + id + ' ← ' + LABEL[st]);
   } catch (e) { o.status = prev; o.reason = prevR; render(); toast('⚠️ معرفناش نحفظ التغيير، جرّب تاني'); }
+}
+
+async function setPaid(id, paid){
+  const o = orders.find(x => x.id === id); if (!o) return; const prev = o.paid; o.paid = paid; render();
+  try { const j = await post({action:'setPaid', user, id, paid}); if (!j.ok) throw 0; toast(paid ? '💰 اتسجّل استلام التحويل: ' + id : '↩︎ اتشال تأكيد التحويل: ' + id); }
+  catch (e) { o.paid = prev; render(); toast('⚠️ معرفناش نحفظ التغيير، جرّب تاني'); }
 }
 
 /* ═══ نافذة سبب الإلغاء ═══ */
@@ -428,17 +479,17 @@ $('cxOk').onclick = () => { const r = cxReason(), id = cxId; if (!r) return; clo
 function applyRole(){
   const m = role === 'manager';
   ['vOrders','vMenu'].forEach(id => $(id).classList.remove('hide'));   // الموظف والمدير الاتنين يقدروا يوقّفوا الأصناف
-  ['vAn','vStaff'].forEach(id => $(id).classList.toggle('hide', !m));
+  ['vAn','vStaff','vCp'].forEach(id => $(id).classList.toggle('hide', !m));
   $('who').textContent = (m ? '👑 ' : '👤 ') + myName;
   if (!m && view !== 'orders' && view !== 'menu') setView('orders');
 }
 function setView(v){
   view = v;
-  $('mainEl').classList.toggle('hide', v !== 'orders'); $('anMain').classList.toggle('hide', v !== 'analytics'); $('stMain').classList.toggle('hide', v !== 'staff'); $('mnMain').classList.toggle('hide', v !== 'menu');
-  [['vOrders','orders'],['vMenu','menu'],['vAn','analytics'],['vStaff','staff']].forEach(([id, k]) => $(id).classList.toggle('act', k === v));
-  if (v === 'orders') render(); if (v === 'analytics') anInit(); if (v === 'staff') stLoad(); if (v === 'menu') mnLoad();
+  $('mainEl').classList.toggle('hide', v !== 'orders'); $('anMain').classList.toggle('hide', v !== 'analytics'); $('stMain').classList.toggle('hide', v !== 'staff'); $('mnMain').classList.toggle('hide', v !== 'menu'); $('cpMain').classList.toggle('hide', v !== 'coupons');
+  [['vOrders','orders'],['vMenu','menu'],['vAn','analytics'],['vCp','coupons'],['vStaff','staff']].forEach(([id, k]) => $(id).classList.toggle('act', k === v));
+  if (v === 'orders') render(); if (v === 'analytics') anInit(); if (v === 'staff') stLoad(); if (v === 'menu') mnLoad(); if (v === 'coupons') cpLoad();
 }
-$('vOrders').onclick = () => setView('orders'); $('vAn').onclick = () => setView('analytics'); $('vStaff').onclick = () => setView('staff'); $('vMenu').onclick = () => setView('menu');
+$('vOrders').onclick = () => setView('orders'); $('vAn').onclick = () => setView('analytics'); $('vStaff').onclick = () => setView('staff'); $('vCp').onclick = () => setView('coupons'); $('vMenu').onclick = () => setView('menu');
 
 /*ANALYZE-START*/
 const pad2 = n => String(n).padStart(2, '0');
@@ -447,7 +498,7 @@ const addDays = (ts, n) => { const d = new Date(ts); d.setDate(d.getDate() + n);
 const PAYX = {cash:'كاش عند الاستلام', wallet:'محفظة إلكترونية', instapay:'إنستا باي (حساب بنكي)'};
 const WD = ['الأحد','الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
 function parseHist(h){ const m = {}; String(h || '').split(';').forEach(p => { const a = p.split('@'); if (a[0] && a[1] && !m[a[0]]) m[a[0]] = +a[1]; }); return m; }
-function parseLog(l){ return String(l || '').split(';').map(p => { const a = p.split('@'); return a[0] && a[1] ? {s:a[0], u:a[1], t:+a[2]} : null; }).filter(Boolean); }
+function parseLog(l){ return String(l || '').split(';').map(p => { const a = p.split('@'); return a[0] && a[1] && LABEL[a[0]] ? {s:a[0], u:a[1], t:+a[2]} : null; }).filter(Boolean); }   // أحداث الدفع (paid/unpaid) مش بتتحسب كحالات
 function analyze(list, from, to){
   const sum = (a, f) => a.reduce((s, o) => s + (+f(o) || 0), 0);
   const by = (a, f) => { const m = new Map(); a.forEach(o => { const k = f(o); if (!m.has(k)) m.set(k, []); m.get(k).push(o); }); return m; };
@@ -494,12 +545,46 @@ const sec = (t, b) => '<section class="panel"><h2>' + t + '</h2>' + b + '</secti
 const tbl = (head, rows) => '<div class="tw"><table class="t"><thead><tr>' + head.map(h => '<th>' + h + '</th>').join('') + '</tr></thead><tbody>' +
   (rows.length ? rows.map(r => '<tr>' + r.map(c => '<td>' + c + '</td>').join('') + '</tr>').join('') : '<tr><td colspan="' + head.length + '" class="ce">مفيش بيانات</td></tr>') + '</tbody></table></div>';
 const bars = (items, fmt) => { const mx = Math.max(1, ...items.map(i => i[1])); return '<div class="bars">' + items.map(i => '<div class="br"><span class="bl">' + i[0] + '</span><div class="bt"><i style="width:' + (i[1] / mx * 100) + '%"></i></div><span class="bv">' + fmt(i[1]) + '</span></div>').join('') + '</div>'; };
+const dlt = (cur, prev, inv) => {
+  if (!prev) return '<small class="fl">' + (cur ? 'مفيش بيانات للفترة اللي قبلها' : '—') + '</small>';
+  const p = (cur - prev) / prev, up = p > 0.0005, dn = p < -0.0005, good = inv ? dn : up, bad = inv ? up : dn;
+  return '<small class="' + (good ? 'up' : bad ? 'dn' : 'fl') + '">' + (up ? '▲ ' : dn ? '▼ ' : '■ ') + pct(Math.abs(p)) + ' عن الفترة اللي قبلها</small>';
+};
+const axN = v => v >= 1000 ? (v / 1000).toFixed(v >= 10000 ? 0 : 1) + 'k' : String(Math.round(v));
+function chartDaily(days){
+  const n = days.length; if (!n) return '';
+  const W = 660, H = 240, L = 44, R = 10, T = 14, B = 28, w = W - L - R, h = H - T - B;
+  const mx = Math.max(1, ...days.map(d => d.amt)), mo = Math.max(1, ...days.map(d => d.n));
+  const x = i => n === 1 ? L + w / 2 : L + i * w / (n - 1), y = v => T + h - v / mx * h, bw = Math.max(3, Math.min(26, w / n * .55));
+  let g = '';
+  for (let k = 0; k <= 4; k++) { const yy = y(mx * k / 4); g += '<line class="gl" x1="' + L + '" x2="' + (W - R) + '" y1="' + yy + '" y2="' + yy + '"/><text x="' + (L - 6) + '" y="' + (yy + 3) + '" text-anchor="end">' + axN(mx * k / 4) + '</text>'; }
+  const bars = days.map((d, i) => { const bh = d.n / mo * h * .5; return '<rect x="' + (x(i) - bw / 2) + '" y="' + (T + h - bh) + '" width="' + bw + '" height="' + bh + '" rx="3" fill="rgba(37,99,235,.2)"><title>' + d.k + ' — ' + d.n + ' طلب</title></rect>'; }).join('');
+  const pts = days.map((d, i) => x(i) + ',' + y(d.amt)).join(' ');
+  const area = n > 1 ? '<polygon points="' + x(0) + ',' + (T + h) + ' ' + pts + ' ' + x(n - 1) + ',' + (T + h) + '" fill="rgba(217,43,43,.12)"/>' : '';
+  const dots = days.map((d, i) => '<circle cx="' + x(i) + '" cy="' + y(d.amt) + '" r="3.5" fill="#D92B2B"><title>' + d.k + ' — ' + Math.round(d.amt).toLocaleString('en') + ' ج</title></circle>').join('');
+  const step = Math.ceil(n / 9), lb = days.map((d, i) => i % step === 0 || i === n - 1 ? '<text x="' + x(i) + '" y="' + (H - 8) + '" text-anchor="middle">' + d.k.slice(5).replace('-', '/') + '</text>' : '').join('');
+  return '<svg class="chart" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="مبيعات وطلبات يوم بيوم">' + g + bars + area + (n > 1 ? '<polyline points="' + pts + '" fill="none" stroke="#D92B2B" stroke-width="2.5" stroke-linejoin="round"/>' : '') + dots + lb + '</svg>';
+}
+function heatmap(ok){
+  const hrs = [11,12,13,14,15,16,17,18,19,20,21,22,23,0,1,2,3,4,5], m = {}; let mx = 0;
+  ok.forEach(o => { const k = new Date(bizStart(o.time)).getDay() + '_' + new Date(o.time).getHours(); m[k] = (m[k] || 0) + 1; mx = Math.max(mx, m[k]); });
+  let h = '<div class="tw"><div class="heat"><div class="hr"><span></span>' + hrs.map(x => '<span style="text-align:center">' + (x % 12 || 12) + '</span>').join('') + '</div>';
+  [6, 0, 1, 2, 3, 4, 5].forEach(d => { h += '<div class="hr"><span>' + WD[d] + '</span>' + hrs.map(x => { const c = m[d + '_' + x] || 0;
+    return '<i class="hc" title="' + WD[d] + ' · ' + (x % 12 || 12) + (x < 12 ? ' ص' : ' م') + ' — ' + c + ' طلب" style="' + (c ? 'background:rgba(217,43,43,' + (.14 + .86 * c / mx).toFixed(2) + ')' : '') + '"></i>'; }).join('') + '</div>'; });
+  return h + '</div></div><div class="hint">كل مربع = عدد الطلبات في الساعة دي (الأرقام فوق = الساعة). الأغمق = أكتر ازدحامًا.</div>';
+}
 function anRender(A){
   const k = A.kpi, t = A.times; let h = '';
   if (A.truncated) h += '<div class="note" style="margin-bottom:12px">⚠️ الفترة كبيرة — اتعرض آخر ٥٠٠٠ طلب بس.</div>';
   h += '<div class="stats kp">' + [[num(k.orders), 'إجمالي الطلبات'], [num(k.valid), 'طلبات سارية (غير ملغية)'], [num(k.delivered), 'تم التسليم'], [num(k.cancelled) + ' · ' + pct(k.cancelRate), 'ملغية'],
     [money(k.sales), 'إجمالي المبيعات'], [money(k.aov), 'متوسط قيمة الطلب'], [money(k.discount), 'إجمالي الخصومات'], [money(k.fees), 'رسوم التوصيل'], [money(k.lost), 'مبيعات ضايعة بالإلغاء'], [num(k.items), 'عدد الأصناف المبيعة'], [num(k.customers), 'عملاء مختلفين']]
     .map(c => '<div class="st"><b>' + c[0] + '</b><span>' + c[1] + '</span></div>').join('') + '</div>';
+  if (A.prev) { const p = A.prev.kpi;
+    h += '<div class="stats cmp">' + [[money(k.sales), 'المبيعات', dlt(k.sales, p.sales)], [num(k.valid), 'الطلبات السارية', dlt(k.valid, p.valid)], [money(k.aov), 'متوسط الطلب', dlt(k.aov, p.aov)],
+      [num(k.customers), 'عملاء مختلفين', dlt(k.customers, p.customers)], [num(k.cancelled), 'ملغية', dlt(k.cancelled, p.cancelled, true)]]
+      .map(c => '<div class="st"><b>' + c[0] + '</b><span>' + c[1] + '</span>' + c[2] + '</div>').join('') + '</div>'; }
+  h += sec('📈 المبيعات والطلبات يوم بيوم', '<div class="hint" style="margin:0 0 6px">الخط الأحمر = المبيعات (ج) · الأعمدة الزرقا = عدد الطلبات' + (A.prev ? ' · المقارنة فوق بالفترة اللي قبلها بنفس الطول' : '') + '</div>' + chartDaily(A.days));
+  h += sec('🔥 خريطة الازدحام (يوم × ساعة)', heatmap(A.ok));
   h += '<div class="two">';
   h += sec('💳 طرق الدفع', tbl(['الطريقة', 'الطلبات', 'المبلغ', 'النسبة'], A.pay.map(p => [esc(payL(p.k)), num(p.n), money(p.amt), pct(k.sales ? p.amt / k.sales : 0)])) + bars(A.pay.map(p => [esc(payL(p.k)), p.amt]), money));
   h += sec('❌ الإلغاءات وأسبابها', '<p class="hint" style="margin:0 0 8px">' + num(k.cancelled) + ' طلب ملغي (' + pct(k.cancelRate) + ') — قيمتهم ' + money(k.lost) + '</p>' +
@@ -538,10 +623,11 @@ async function anRun(){
   if (!(from < to) || (to - from) / 86400000 > 400) return toast('اختار فترة صحيحة (من قبل إلى، وأقل من ١٣ شهر)');
   $('anOut').innerHTML = '<div class="empty">⏳ بنحمّل التقرير...</div>'; $('anXls').disabled = true;
   try {
-    const [j, sl] = await Promise.all([post({action:'adminReport', user, pass, from, to}), post({action:'staffList', user, pass}).catch(() => null)]);
+    const span = to - from, pFrom = from - span;
+    const [j, jp, sl] = await Promise.all([post({action:'adminReport', user, from, to}), post({action:'adminReport', user, from:pFrom, to:from}).catch(() => null), post({action:'staffList', user}).catch(() => null)]);
     if (sl && sl.ok) sl.staff.forEach(x => staffNames[x.username] = x.name);
     if (!j.ok) { $('anOut').innerHTML = '<div class="empty">' + (j.error === 'forbidden' ? '⛔ التحليلات للمدير بس' : '⚠️ مقدرناش نحمّل التقرير') + '</div>'; return; }
-    lastA = analyze(j.orders, from, to); lastA.truncated = j.truncated; anRender(lastA);
+    lastA = analyze(j.orders, from, to); lastA.truncated = j.truncated; lastA.prev = jp && jp.ok ? analyze(jp.orders, pFrom, from) : null; anRender(lastA);
   } catch (e) { $('anOut').innerHTML = '<div class="empty">⚠️ مفيش اتصال، جرّب تاني</div>'; }
 }
 
@@ -589,9 +675,9 @@ async function anExport(){
     sheet('العملاء', [['الاسم', 26], ['الموبايل', 16], ['عدد الطلبات', 14, N], ['الإجمالي (ج)', 16, N]], A.cust.map(c => [c.name, c.ph, c.n, c.amt]));
     sheet('أداء الموظفين', [['الموظف', 22], ['تأكيد', 10, N], ['تحضير', 10, N], ['خروج/جاهز', 12, N], ['تسليم', 10, N], ['إلغاء', 10, N], ['الإجمالي', 12, N]], A.staff.map(r => [staffNames[r.u] || r.u, r.confirmed || 0, r.preparing || 0, r.out || 0, r.delivered || 0, r.cancelled || 0, r.total]));
     const stL = {new:'جديد', confirmed:'مؤكد', preparing:'بيتحضّر', out:'خرج/جاهز', delivered:'تم التسليم', cancelled:'ملغي'};
-    sheet('كل الطلبات', [['رقم الطلب', 14], ['الوقت', 20, D], ['الاسم', 22], ['الموبايل', 16], ['النوع', 12], ['العنوان', 50], ['الأصناف', 60], ['المجموع (ج)', 12, N], ['الخصم (ج)', 11, N], ['الكوبون', 14], ['التوصيل (ج)', 12, N], ['الإجمالي (ج)', 13, N], ['الدفع', 22], ['الحالة', 14], ['سبب الإلغاء', 30], ['ملاحظات', 30]],
+    sheet('كل الطلبات', [['رقم الطلب', 14], ['الوقت', 20, D], ['الاسم', 22], ['الموبايل', 16], ['النوع', 12], ['العنوان', 50], ['الأصناف', 60], ['المجموع (ج)', 12, N], ['الخصم (ج)', 11, N], ['الكوبون', 14], ['التوصيل (ج)', 12, N], ['الإجمالي (ج)', 13, N], ['الدفع', 22], ['تحويل مستلم', 12], ['مرجع التحويل', 18], ['الحالة', 14], ['سبب الإلغاء', 30], ['ملاحظات', 30]],
       A.list.slice().sort((a, b) => a.time - b.time).map(o => [o.id, loc(o.time), o.name, o.phone, o.type === 'pickup' ? 'استلام' : 'توصيل', o.address, o.items.map(i => i.q + '× ' + i.n + (i.o && i.o.length ? ' (' + i.o.join('، ') + ')' : '') + (i.t ? ' [' + i.t + ']' : '')).join(' | '),
-        o.subtotal, o.discount, o.coupon, o.fee, o.total, payL(o.payment), stL[o.status] || o.status, o.reason || '', o.notes || '']));
+        o.subtotal, o.discount, o.coupon, o.fee, o.total, payL(o.payment), o.payment === 'cash' ? '' : (o.paid ? 'تم' : 'لم يصل'), o.payref || '', stL[o.status] || o.status, o.reason || '', o.notes || '']));
     const buf = await wb.xlsx.writeBuffer(), a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([buf], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));
     a.download = 'RedRoosters_' + ymd(A.from) + '_to_' + ymd(addDays(A.to, -1)) + '.xlsx'; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
@@ -601,10 +687,59 @@ async function anExport(){
 }
 $('anXls').onclick = anExport;
 
+/* ═══ الكوبونات (للمدير) ═══ */
+let cpDefs = [];
+const cpState = d => !d.active ? ['off', 'متوقّف'] : (d.expires && d.expires < ymd(Date.now())) ? ['off', 'منتهي'] : (d.maxUses && d.uses >= d.maxUses) ? ['off', 'العدد خلص'] : ['on', 'شغّال'];
+function cpReset(){ $('cpC').value = $('cpV').value = $('cpM').value = $('cpX').value = $('cpE').value = $('cpL').value = ''; $('cpT').value = 'percent'; $('cpF').checked = $('cpA').checked = true; $('cpH').checked = false; $('cpC').disabled = false; $('cpFt').textContent = '➕ كوبون جديد'; $('cpCancel').classList.add('hide'); }
+async function cpLoad(){
+  try {
+    const j = await post({action:'couponList', user});
+    if (!j.ok) { $('cpList').innerHTML = $('cpStats').innerHTML = '<div class="empty">' + (j.error === 'forbidden' ? '⛔ للمدير بس' : (AUTH_ERR[j.error] || '⚠️ حصل خطأ (اتأكد إنك حدّثت Code.gs)')) + '</div>'; return; }
+    cpDefs = j.defs;
+    $('cpList').innerHTML = tbl(['الكود', 'الخصم', 'الشروط', 'الصلاحية', 'الاستخدام', 'الحالة', ''], j.defs.map(d => { const st = cpState(d); return [
+      '<b dir="ltr">' + esc(d.code) + '</b>' + (d.hidden ? ' <span class="bdg off">مخفي</span>' : '') + (d.label ? '<br><small style="color:#6B6B6B">' + esc(d.label) + '</small>' : ''),
+      d.type === 'percent' ? num(d.value) + '٪' : num(d.value) + ' ج',
+      [d.min ? 'أقل طلب ' + num(d.min) + ' ج' : '', d.firstOrderOnly ? 'لأول طلب' : 'متكرر'].filter(Boolean).join(' · '),
+      d.expires ? 'لحد ' + d.expires : 'بلا تاريخ',
+      num(d.uses) + (d.maxUses ? ' / ' + num(d.maxUses) : ''),
+      '<span class="bdg ' + st[0] + '">' + st[1] + '</span>',
+      '<button class="btn ghost tiny" data-cp="ed" data-c="' + esc(d.code) + '">✏️ تعديل</button> <button class="btn ghost tiny" data-cp="tg" data-c="' + esc(d.code) + '">' + (d.active ? '⏸️ إيقاف' : '▶️ تفعيل') + '</button> <button class="btn danger tiny" data-cp="del" data-c="' + esc(d.code) + '">🗑️</button>']; }));
+    const aov = j.aovPlain, rows = j.stats.sort((a, b) => b.uses - a.uses).map(s => { const per = s.customers ? s.discount / s.customers : 0;
+      const vd = s.customers < 5 ? '<span class="vd fl">لسه بدري</span>' : s.returnRate >= .25 ? '<span class="vd up">👍 بيرجّع عملاء</span>' : s.returnRate < .1 ? '<span class="vd dn">⚠️ خصم من غير رجوع</span>' : '<span class="vd fl">متوسط</span>';
+      return ['<b dir="ltr">' + esc(s.code) + '</b>', num(s.uses), num(s.customers), money(s.discount), money(s.revenue), money(s.aov) + (aov ? ' <small class="' + (s.aov >= aov ? 'up' : 'dn') + '">(' + (s.aov >= aov ? '▲' : '▼') + ')</small>' : ''), num(s.returned) + ' (' + pct(s.returnRate) + ')', money(per), vd]; });
+    $('cpStats').innerHTML = '<p class="hint" style="margin:0 0 8px">متوسط الطلب بدون أي كوبون: <b>' + money(aov) + '</b> — السهم جنب متوسط الكوبون بيقارن بيه.</p>' +
+      tbl(['الكود', 'استخدامات', 'عملاء', 'تكلفة الخصم', 'إجمالي الطلبات', 'متوسط الطلب', 'عادوا بدون الكود', 'تكلفة الخصم / عميل', 'التقييم'], rows) +
+      '<p class="hint">«عادوا» = عملاء استخدموا الكود وبعدها طلبوا تاني بدون الكود ده. ده المؤشر الحقيقي إن الخصم جاب عميل بيرجع، مش مجرد خصم. التقييم بيظهر بعد ٥ عملاء على الأقل. أكواد النقاط (RR-) مش داخلة هنا.</p>';
+  } catch (e) { $('cpList').innerHTML = $('cpStats').innerHTML = '<div class="empty">⚠️ مفيش اتصال</div>'; }
+}
+async function cpSend(body, okMsg){
+  try { const j = await post(Object.assign({action:'couponSave', user}, body));
+    if (!j.ok) { toast(({bad_code:'الكود: حروف إنجليزي/أرقام/_/- من ٣ لـ ٢٠ حرف (ومايبدأش بـ RR-)', bad_value:'قيمة الخصم غير صحيحة (النسبة لحد ١٠٠)', bad_date:'التاريخ غير صحيح', forbidden:'⛔ للمدير بس'})[j.error] || '⚠️ حصل خطأ'); return false; }
+    toast(okMsg); cpLoad(); return true;
+  } catch (e) { toast('⚠️ مفيش اتصال'); return false; }
+}
+$('cpSave').onclick = async () => {
+  const code = $('cpC').value.trim().toUpperCase(), v = +$('cpV').value;
+  if (!/^[A-Z0-9_-]{3,20}$/.test(code) || /^RR-/.test(code)) return toast('الكود: حروف إنجليزي/أرقام من ٣ لـ ٢٠ (ومايبدأش بـ RR-)');
+  if (!(v > 0) || ($('cpT').value === 'percent' && v > 100)) return toast('قيمة الخصم غير صحيحة');
+  if (await cpSend({code, type:$('cpT').value, value:v, min:+$('cpM').value || 0, maxUses:+$('cpX').value || 0, expires:$('cpE').value, label:$('cpL').value.trim(), firstOrderOnly:$('cpF').checked, active:$('cpA').checked, hidden:$('cpH').checked}, '✅ اتحفظ الكوبون ' + code)) cpReset();
+};
+$('cpCancel').onclick = cpReset;
+$('cpList').addEventListener('click', async e => {
+  const b = e.target.closest('[data-cp]'); if (!b) return; const d = cpDefs.find(x => x.code === b.dataset.c); if (!d) return;
+  if (b.dataset.cp === 'ed') {
+    $('cpC').value = d.code; $('cpC').disabled = true; $('cpT').value = d.type; $('cpV').value = d.value; $('cpM').value = d.min || ''; $('cpX').value = d.maxUses || ''; $('cpE').value = d.expires || ''; $('cpL').value = d.label || '';
+    $('cpF').checked = !!d.firstOrderOnly; $('cpA').checked = !!d.active; $('cpH').checked = !!d.hidden; $('cpFt').textContent = '✏️ تعديل الكوبون ' + d.code; $('cpCancel').classList.remove('hide'); window.scrollTo({top:0, behavior:'smooth'});
+  } else if (b.dataset.cp === 'tg') cpSend({code:d.code, type:d.type, value:d.value, min:d.min, maxUses:d.maxUses, expires:d.expires, label:d.label, firstOrderOnly:d.firstOrderOnly, active:!d.active, hidden:d.hidden}, d.active ? '⏸️ اتوقّف ' + d.code : '▶️ اتفعّل ' + d.code);
+  else if (b.dataset.cp === 'del' && confirm('مسح الكوبون ' + d.code + ' نهائيًا؟ (لو عايز توقفه بس استخدم زرار الإيقاف)')) {
+    try { const j = await post({action:'couponDelete', user, code:d.code}); if (!j.ok) throw 0; toast('🗑️ اتمسح ' + d.code); cpLoad(); } catch (err) { toast('⚠️ معرفناش نمسح'); }
+  }
+});
+
 /* ═══ إدارة الموظفين (للمدير) ═══ */
 async function stLoad(){
   try {
-    const j = await post({action:'staffList', user, pass});
+    const j = await post({action:'staffList', user});
     if (!j.ok) { $('stList').innerHTML = '<div class="empty">' + (j.error === 'forbidden' ? '⛔ للمدير بس' : '⚠️ حصل خطأ') + '</div>'; return; }
     j.staff.forEach(x => staffNames[x.username] = x.name);
     $('stList').innerHTML = tbl(['اسم المستخدم', 'الاسم', 'الحالة', 'تاريخ الإنشاء', ''], j.staff.map(x => ['<span dir="ltr">' + esc(x.username) + '</span>', esc(x.name), '<span class="bdg ' + (x.active ? 'on' : 'off') + '">' + (x.active ? 'شغّال' : 'متوقّف') + '</span>',
@@ -613,7 +748,7 @@ async function stLoad(){
   } catch (e) { $('stList').innerHTML = '<div class="empty">⚠️ مفيش اتصال</div>'; }
 }
 async function stSave(body, okMsg){
-  try { const j = await post(Object.assign({action:'staffSave', user, pass}, body));
+  try { const j = await post(Object.assign({action:'staffSave', user}, body));
     if (!j.ok) return toast(({bad_username:'اسم المستخدم لازم حروف إنجليزي/أرقام/_ من ٣ لـ ٢٠ حرف (ومايكونش اسم المدير)', bad_password:'كلمة السر 4 أحرف على الأقل', forbidden:'⛔ للمدير بس'})[j.error] || '⚠️ حصل خطأ'), false;
     toast(okMsg); stLoad(); return true;
   } catch (e) { toast('⚠️ مفيش اتصال'); return false; }
@@ -690,7 +825,7 @@ function mnRender(){
 async function mnSend(body, okMsg){
   const prev = soList.slice(); soBusy++; soLast = Date.now();
   try {
-    const j = await post(Object.assign({user, pass}, body));
+    const j = await post(Object.assign({user}, body));
     if (!j.ok) throw new Error(j.error || 'fail');
     soList = j.soldout || []; soLast = Date.now(); mnRender(); toast(okMsg); return true;
   } catch (e) { soList = prev; mnRender(); toast('⚠️ معرفناش نحفظ التغيير، جرّب تاني'); return false; }
@@ -721,20 +856,22 @@ $('grid').addEventListener('click', e => {
   const b = e.target.closest('[data-act]'); if (!b) return;
   const card = b.closest('.card'), id = card.dataset.id;
   if (b.dataset.act === 'set') setStatus(id, b.dataset.st);
+  if (b.dataset.act === 'paid') setPaid(id, b.dataset.p === '1');
   if (b.dataset.act === 'print') { document.body.classList.add('p1'); card.classList.add('pme'); window.print(); }
 });
 window.addEventListener('afterprint', () => { document.body.classList.remove('p1'); document.querySelectorAll('.pme').forEach(c => c.classList.remove('pme')); });
 $('tabs').addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (b) { tab = b.dataset.tab; render(); } });
 $('q').addEventListener('input', e => { query = e.target.value; render(); });
 $('rf').onclick = () => { load(); toast('🔄 اتحدّث'); };
-$('snd').onclick = () => { sound = !sound; $('snd').textContent = '🔔 الصوت: ' + (sound ? 'شغال' : 'مقفول'); if (sound) beep(); };
+$('snd').onclick = () => { askNotify(); sound = !sound; $('snd').textContent = '🔔 الصوت: ' + (sound ? 'شغال' : 'مقفول'); if (sound) beep(); };
 $('out').onclick = () => logout('');
 setInterval(render, 60000);   // يحدّث "من كام دقيقة" والتأخير
 
 /* ═══ دخول / خروج ═══ */
 function showApp(on){ $('login').classList.toggle('hide', on); $('app').classList.toggle('hide', !on); }
 function logout(msg){
-  clearInterval(timer); clearInterval(ringT); document.title = 'لوحة طلبات ريد روستر'; user = pass = ''; role = 'staff'; view = 'orders'; lastA = null; known = null; orders = []; soList = []; sessionStorage.removeItem('rr_admin_cred'); localStorage.removeItem('rr_admin_cred');
+  if (token) post({action:'logout', user}).catch(() => {});   // بنلغي التوكن على السيرفر
+  clearInterval(timer); clearInterval(ringT); document.title = 'لوحة طلبات ريد روستر'; user = pass = token = ''; role = 'staff'; view = 'orders'; lastA = null; known = null; orders = []; soList = []; sessionStorage.removeItem('rr_admin_cred'); localStorage.removeItem('rr_admin_cred');
   showApp(false); $('lgErr').textContent = msg || ''; $('pin').value = ''; $('usr').focus();
 }
 async function start(){
@@ -745,27 +882,36 @@ async function start(){
 function beepUnlock(){ try { ac = ac || new (window.AudioContext || window.webkitAudioContext)(); if (ac.state === 'suspended') ac.resume(); } catch (e) {} }
 $('lgForm').addEventListener('submit', async e => {
   e.preventDefault(); const u = $('usr').value.trim().toLowerCase(), v = $('pin').value.trim(); if (!u || !v) return;
-  user = u; pass = v; $('lgErr').textContent = '⏳...';
-  beepUnlock();
+  $('lgErr').textContent = '⏳...';
+  beepUnlock(); askNotify();
   try {
-    const j = await post({action:'adminList', user, pass});
-    if (!j.ok) { user = pass = ''; $('lgErr').textContent = AUTH_ERR[j.error] || 'فشل الدخول'; return; }
-    (($('remember').checked) ? localStorage : sessionStorage).setItem('rr_admin_cred', JSON.stringify({u:user, p:pass}));
-    $('lgErr').textContent = ''; start();
-  } catch (err) { user = pass = ''; $('lgErr').textContent = '⚠️ مفيش اتصال، جرّب تاني'; }
+    const j = await post({action:'login', user:u, pass:v, remember:$('remember').checked});
+    if (!j.ok) { $('lgErr').textContent = AUTH_ERR[j.error] || 'فشل الدخول'; return; }
+    user = j.user; token = j.token; pass = '';
+    (($('remember').checked) ? localStorage : sessionStorage).setItem('rr_admin_cred', JSON.stringify({u:user, t:token}));   // توكن بس (بينتهي ويتلغي بالخروج)
+    $('lgErr').textContent = ''; $('pin').value = ''; start();
+  } catch (err) { $('lgErr').textContent = '⚠️ مفيش اتصال، جرّب تاني'; }
 });
-if (user && pass) start();
+/* لو كان فيه كلمة سر متخزنة من النسخة القديمة: بنحوّلها لتوكن ونمسحها من الجهاز */
+(async function init(){
+  if (user && token) return start();
+  if (user && pass) {
+    try { const j = await post({action:'login', user, pass, remember:true}); if (j.ok) { token = j.token; user = j.user; pass = ''; localStorage.setItem('rr_admin_cred', JSON.stringify({u:user, t:token})); sessionStorage.removeItem('rr_admin_cred'); return start(); } } catch (e) {}
+    localStorage.removeItem('rr_admin_cred'); sessionStorage.removeItem('rr_admin_cred'); user = pass = '';
+  }
+})();
+
 $('rtGo').addEventListener('click', async () => {
   const o = $('rtOut'); o.textContent = '⏳ بنحمّل...';
   try {
-    const j = await post({action:'adminRatings', user, pass});
+    const j = await post({action:'adminRatings', user});
     if (!j.ok) { o.textContent = j.error === 'forbidden' ? 'التقييمات للمدير بس' : 'تعذّر التحميل'; return; }
     const r = j.ratings; if (!r.length) { o.textContent = 'مفيش تقييمات لسه'; return; }
     const avg = (r.reduce((s, x) => s + x.stars, 0) / r.length).toFixed(1), cnt = [0, 0, 0, 0, 0, 0];
     r.forEach(x => cnt[x.stars]++);
     o.innerHTML = '<div style="font-weight:900;font-size:1.2rem">⭐ ' + avg + ' / 5 <small style="color:#6B6B6B">(' + r.length + ' تقييم)</small></div>'
       + '<div style="margin:8px 0">' + [5, 4, 3, 2, 1].map(n => '<div>' + n + '★ — ' + cnt[n] + '</div>').join('') + '</div>'
-      + r.slice(0, 50).map(x => '<div style="padding:6px 0;border-top:1px dashed #ddd"><b dir="ltr">#' + esc(x.id) + '</b> ' + '<span style="color:#F5A623;letter-spacing:1px">' + '★'.repeat(x.stars) + '<span style="color:#d8cfc8">' + '★'.repeat(5 - x.stars) + '</span></span>' + ' <small style="color:#6B6B6B">' + new Date(x.time).toLocaleString('ar-EG', {day:'numeric', month:'short', hour:'numeric', minute:'2-digit'}) + '</small>' + (x.comment ? '<div style="margin-top:6px;padding:8px 10px;background:#FFF8EA;border-radius:10px;line-height:1.6">💬 ' + esc(x.comment) + '</div>' : '') + '</div>').join('');
+      + r.slice(0, 50).map(x => '<div style="padding:6px 0;border-top:1px dashed #ddd"><b dir="ltr">#' + esc(x.id) + '</b> ' + '★'.repeat(x.stars) + '☆'.repeat(5 - x.stars) + ' <small style="color:#6B6B6B">' + new Date(x.time).toLocaleString('ar-EG', {day:'numeric', month:'short', hour:'numeric', minute:'2-digit'}) + '</small>' + (x.comment ? '<div>' + esc(x.comment) + '</div>' : '') + '</div>').join('');
   } catch (e) { o.textContent = 'تعذّر الاتصال'; }
 });
 

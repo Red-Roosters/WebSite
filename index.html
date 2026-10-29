@@ -3684,6 +3684,7 @@ html[lang="en"] .rr-so-badge::before{content:"Sold out"}
         </div>
         <input type="hidden" id="f_pay" value="cash">
         <div class="pay-note" id="payNote">💵 الدفع كاش عند الاستلام. الطلب بيوصلنا مباشرة من الموقع وهنكلمك نأكده.</div>
+        <div class="field full" id="payRefBox" style="display:none;margin-top:12px"><label>رقم العملية أو آخر ٤ أرقام من رقم اللي حوّلت منه <small>(اختياري — بيسرّع تأكيد طلبك)</small></label><input id="f_payref" maxlength="40" autocomplete="off" placeholder="مثال: 4821"></div>
         <div id="rrFail" role="alert" aria-live="assertive"></div>
         <button type="submit" class="rr-btn">تأكيد الطلب 🚀</button>
     </form>
@@ -3692,6 +3693,7 @@ html[lang="en"] .rr-so-badge::before{content:"Sold out"}
 <div class="checkout-modal item-modal" id="itemModal" role="dialog" aria-label="اختيار الصنف">
     <div class="drawer-head">
         <h3 id="im_title">الصنف</h3>
+        <button class="x-btn" id="imShare" type="button" aria-label="مشاركة" title="مشاركة الصنف" style="margin-inline-start:auto;margin-inline-end:8px">📤</button>
         <button class="x-btn" data-close aria-label="إغلاق">✕</button>
     </div>
     <div class="checkout-body">
@@ -3742,6 +3744,7 @@ html[lang="en"] .rr-so-badge::before{content:"Sold out"}
 <div class="rr-toast" id="rrToast"></div>
 <footer>
     <p>&copy; 2026 <strong>Red Roosters</strong> — جميع الحقوق محفوظة</p>
+    <p style="margin-top:10px"><button type="button" class="rr-share-btn" id="rrShareSite">📤 شارك الموقع مع صحابك</button></p>
 </footer>
 
 <button class="scroll-top" id="scrollTop" onclick="window.scrollTo({top:0,behavior:'smooth'})" title="للأعلى">↑</button>
@@ -3789,6 +3792,9 @@ html[lang="en"] .rr-so-badge::before{content:"Sold out"}
             'RED20':   { type: 'percent', value: 20, firstOrderOnly: true },
             'WELCOME': { type: 'fixed',   value: 20, min: 150, firstOrderOnly: true, hidden: true }
         },
+
+        // ⏱️ تقدير وقت التوصيل (بالدقايق) — احتياطي لحد ما السيرفر يحسب المتوسط الفعلي من الطلبات اللي اتسلّمت
+        eta: { delivery: 45, pickup: 20 },
 
         areas: [
             { name: 'الطالبية التأمين الصحي', fee: 55 },
@@ -4023,6 +4029,28 @@ html[lang="en"] .rr-so-badge::before{content:"Sold out"}
         LS.set('rr_cart', cart); render(); toast('✅ تمت إضافة ' + full);
     }
 
+    /* ═══ اقتراحات في السلة: مشروب / مقبلات لو مش موجودين (من أصناف الموقع نفسها وبأسعارها) ═══ */
+    let UP_POOL = [];
+    function upPool() {
+        if (UP_POOL.length) return UP_POOL;
+        ['drinks', 'appetizers'].forEach(sec => document.querySelectorAll('#' + sec + ' [data-cart="1"]').forEach(box => {
+            if (box.querySelectorAll('.add-cart-btn').length !== 1) return;
+            const pe = box.querySelector('.price-badge, .siniya-price'), price = pe ? parseInt((pe.textContent.match(/\d+/) || [0])[0], 10) : 0, name = box.dataset.nm;
+            if (name && price) UP_POOL.push({ name, price, sec });
+        }));
+        return UP_POOL;
+    }
+    let upShown = [];
+    function upsellHtml() {
+        const pool = upPool(); upShown = []; if (!pool.length || !cart.length) return '';
+        const has = sec => cart.some(i => pool.some(p => p.sec === sec && p.name === baseName(i.name)));
+        const pick = sec => has(sec) ? [] : pool.filter(p => p.sec === sec && !isSO(p.name) && !cart.some(i => baseName(i.name) === p.name)).sort((a, b) => a.price - b.price).slice(0, 2);
+        upShown = pick('drinks').concat(pick('appetizers')).slice(0, 4);
+        if (!upShown.length) return '';
+        return '<div class="cart-up"><b>😋 تحب تضيف على طلبك؟</b><div class="row">' + upShown.map((p, i) => '<button type="button" data-up="' + i + '">+ ' + esc(p.name) + ' · ' + fmt(p.price) + '</button>').join('') + '</div></div>';
+    }
+    $('cartBody').addEventListener('click', e => { const b = e.target.closest('[data-up]'); if (!b) return; const p = upShown[+b.dataset.up]; if (p) addItem({ name: p.name, price: p.price, qty: 1 }); });
+
     window.rrReorder = function (items) {
         const cur = {}; document.querySelectorAll('.card').forEach(c => { const n = c.querySelector('.card-name'), p = c.querySelectorAll('.price-badge'); if (!n || p.length !== 1) return;
             const nm = (n.__nm !== undefined ? n.__nm : n.textContent).replace(/\s+/g, ' ').trim(), v = parseInt((p[0].textContent.match(/\d+/) || [0])[0], 10); if (nm && v) cur[nm] = v; });
@@ -4083,6 +4111,7 @@ html[lang="en"] .rr-so-badge::before{content:"Sold out"}
         }).join('');
         body.innerHTML = `<div class="ct-head"><span>الصورة</span><span>المنتج</span><span>السعر</span><span>الكمية</span><span>الإجمالي</span><span>مسح</span></div>${rows}
             <button type="button" class="ct-clear" data-act="clear">🗑️ تفريغ السلة</button>`;
+        body.insertAdjacentHTML('beforeend', upsellHtml());
         body.scrollTop = _st;
         const d = discount();
         $('cartDiscRow').style.display = d ? '' : 'none';
@@ -4129,7 +4158,7 @@ html[lang="en"] .rr-so-badge::before{content:"Sold out"}
     cBox.insertBefore(cpList, cBox.querySelector('.coupon-row'));
     function buildCpList() {
         const items = Object.keys(CONFIG.coupons).filter(c => !CONFIG.coupons[c].hidden).map(c => { const d = CONFIG.coupons[c];
-            return { code: c, txt: (d.type === 'percent' ? 'خصم ' + d.value + '%' : 'خصم ' + d.value + ' ج.م') + (d.min ? ' على طلب ' + d.min + ' ج.م+' : '') + (d.firstOrderOnly ? ' · لأول طلب' : '') }; });
+            return { code: c, txt: (d.type === 'percent' ? 'خصم ' + d.value + '%' : 'خصم ' + d.value + ' ج.م') + (d.min ? ' على طلب ' + d.min + ' ج.م+' : '') + (d.firstOrderOnly ? ' · لأول طلب' : '') + (d.expires ? ' · لحد ' + d.expires : '') }; });
         let mine = []; try { mine = JSON.parse(localStorage.getItem('rr_my_codes') || '[]'); } catch (e) {}
         mine.slice(0, 4).forEach(m => { if (m && m.code) items.push({ code: m.code, txt: '⭐ كود نقاطك — خصم ' + m.value + ' ج.م' }); });
         cpList.innerHTML = items.map(i => { const on = coupon && coupon.code === i.code;
@@ -4161,6 +4190,7 @@ html[lang="en"] .rr-so-badge::before{content:"Sold out"}
         if (p.length === 11 && !u.phones.includes(p)) u.phones.push(p);
         all[code] = u; LS.set('rr_used_coupons', all);
     }
+    const CP_ERR = { coupon_invalid: '❌ الكوبون غير صحيح أو متوقّف', coupon_expired: '⌛ الكوبون ده انتهت صلاحيته', coupon_limit: '😕 الكوبون ده العدد المتاح منه خلص' };
     const USED_MSG = code => `❌ كود ${code} تم استخدامه من قبل. الخصم متاح لأول طلب بس.`;
     function dropUsedCoupon(phone) {
         if (coupon && coupon.def.firstOrderOnly && couponUsed(coupon.code, phone)) {
@@ -4181,6 +4211,10 @@ html[lang="en"] .rr-so-badge::before{content:"Sold out"}
             const j = await r.json(); return j && j.ok ? !!j.used : null;
         } catch (e) { return null; }
     }
+    async function serverCouponDef(code) {
+        if (!CONFIG.couponApi) return null;
+        try { const r = await fetch(apiUrl('action=couponDef&code=' + encodeURIComponent(code))), j = await r.json(); return j && j.ok ? j : null; } catch (e) { return null; }
+    }
     async function claimCoupon(code, phone) {
         if (!CONFIG.couponApi) return 'local';
         try {
@@ -4198,6 +4232,21 @@ html[lang="en"] .rr-so-badge::before{content:"Sold out"}
     }
 
     window.RR_API = CONFIG.couponApi;
+    window.RR_ETA = CONFIG.eta;
+    /* الكوبونات العامة من السيرفر (بتتدار من الداشبورد): بتضيف الجديد وبتشيل المتوقّف/المنتهي + متوسط وقت التوصيل الفعلي */
+    (async function syncServerData() {
+        if (!CONFIG.couponApi) return;
+        try {
+            const j = await (await fetch(apiUrl('action=coupons'))).json();
+            if (j && j.ok && Array.isArray(j.coupons)) {
+                const srv = {}; j.coupons.forEach(c => srv[c.code] = c);
+                Object.keys(CONFIG.coupons).forEach(k => { if (!CONFIG.coupons[k].hidden && !srv[k]) delete CONFIG.coupons[k]; });
+                j.coupons.forEach(c => { CONFIG.coupons[c.code] = { type: c.type, value: +c.value, min: +c.min || 0, firstOrderOnly: !!c.firstOrderOnly, expires: c.expires || '' }; });
+                cBox.style.display = Object.keys(CONFIG.coupons).length ? '' : 'none'; buildCpList();
+            }
+        } catch (e) {}
+        try { const j = await (await fetch(apiUrl('action=eta'))).json(); if (j && j.ok && j.eta) { window.RR_ETA_LIVE = j.eta; renderSummary(); } } catch (e) {}
+    })();
     async function applyLoyalty(code) {
         setCouponMsg('⏳ بنتحقق من الكود...', true);
         try {
@@ -4210,8 +4259,16 @@ html[lang="en"] .rr-so-badge::before{content:"Sold out"}
         const code = $('couponInput').value.trim().toUpperCase();
         const upd = () => { render(); renderSummary(); };
         if (!code) { coupon = null; setCouponMsg('', true); upd(); return; }
-        const def = CONFIG.coupons[code];
-        if (!def && /^RR-/.test(code) && CONFIG.couponApi) { applyLoyalty(code); return; }
+        if (/^RR-/.test(code) && CONFIG.couponApi) { applyLoyalty(code); return; }
+        let def = CONFIG.coupons[code];
+        if (CONFIG.couponApi) {   /* السيرفر هو المرجع (تفعيل/تاريخ/عدد) — ولو مفيش نت بنستخدم النسخة المحلية */
+            setCouponMsg('⏳ بنتحقق من الكود...', true);
+            const r = await serverCouponDef(code);
+            if (r) {
+                if (!r.found) { coupon = null; setCouponMsg(CP_ERR[r.reason] || '❌ الكوبون غير صحيح', false); upd(); return; }
+                def = { type: r.def.type, value: +r.def.value, min: +r.def.min || 0, firstOrderOnly: !!r.def.firstOrderOnly };
+            }
+        }
         if (!def) { coupon = null; setCouponMsg('❌ الكوبون غير صحيح', false); upd(); return; }
         if (def.firstOrderOnly) {
             /* التحقق بالرقم بس: لازم رقم الموبايل يكون مكتوب وصحيح */
@@ -4461,6 +4518,7 @@ imChips.previousElementSibling.style.display = noChips ? 'none' : '';
     }
     function setPay(v) {
         $('f_pay').value = v;
+        $('payRefBox').style.display = v === 'cash' ? 'none' : '';
         document.querySelectorAll('#paygrid button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
         const n = $('payNote');
         if (v === 'cash') n.innerHTML = '💵 الدفع كاش عند الاستلام. الطلب بيوصلنا مباشرة من الموقع وهنكلمك نأكده.';
@@ -4492,7 +4550,7 @@ imChips.previousElementSibling.style.display = noChips ? 'none' : '';
             (d ? `<div class="sum-row disc"><span>🎟️ خصم (${esc(coupon.code)})</span><span>− ${fmt(d)}</span></div>` : '') +
             `<div class="sum-row"><span>${pk() ? 'استلام من الفرع' : 'التوصيل'}</span><span>${pk() ? 'بدون رسوم' : (fee === null ? 'اختار المنطقة' : fmt(fee))}</span></div>` +
             `<div class="sum-row total"><span>الإجمالي</span><span>${fmt(sub - d + (fee || 0))}</span></div>` +
-            (pk() ? '' : `<div class="delivery-time-note">⏱️ وقت التوصيل يبدأ من تأكيد الأوردر ويستغرق 60 دقيقة كحد أقصى</div>`);
+            (pk() ? '' : `<div class="delivery-time-note">⏱️ وقت التوصيل المتوقع حاليًا حوالي ${(window.RR_ETA_LIVE && RR_ETA_LIVE.delivery) || (CONFIG.eta && CONFIG.eta.delivery) || 45} دقيقة — والحد الأقصى 60 دقيقة من تأكيد الأوردر</div>`);
     }
 
     $('goCheckout').addEventListener('click', () => {
@@ -4587,7 +4645,7 @@ imChips.previousElementSibling.style.display = noChips ? 'none' : '';
         let res = 'fail';
         try {
             res = await window.rrTrackSave({ id: orderId, name: v('f_name'), phone: num('f_phone'), phone2: pickup ? '' : num('f_phone2'), type: pickup ? 'pickup' : 'delivery', address: addr,
-                items: cart.map(i => ({ n: i.name, q: i.qty, p: i.price, o: i.opts || [], t: i.note || '' })), subtotal: sub, discount: d, coupon: d ? coupon.code : '', claim: claim, fee: area.fee, total: total, payment: $('f_pay').value, notes: v('f_notes') });
+                items: cart.map(i => ({ n: i.name, q: i.qty, p: i.price, o: i.opts || [], t: i.note || '' })), subtotal: sub, discount: d, coupon: d ? coupon.code : '', claim: claim, fee: area.fee, total: total, payment: $('f_pay').value, payref: $('f_pay').value === 'cash' ? '' : v('f_payref'), notes: v('f_notes') });
         } catch (err) {}
         sending = false; if (sbtn) { sbtn.disabled = false; sbtn.textContent = lbl; }
 
@@ -4597,6 +4655,9 @@ imChips.previousElementSibling.style.display = noChips ? 'none' : '';
             dropUsedCoupon(v('f_phone')); return;
         }
         if (res === 'closed') { pendingId = null; toast(closedMsg(), 7000); return; }
+        if (/^coupon_(invalid|expired|limit)$/.test(res)) { pendingId = null; const bad = coupon && coupon.code; coupon = null; $('couponInput').value = ''; setCouponMsg(CP_ERR[res] || '', false); render(); renderSummary(); toast((CP_ERR[res] || '') + (bad ? ' (' + bad + ') — اتشال من طلبك، راجع الإجمالي وأكّد تاني' : ''), 7500); return; }
+        if (res === 'busy') { toast('⏳ طلبات كتيرة في وقت قصير. جرّب بعد دقيقة.', 6000); return; }
+        if (res === 'bad_total') { pendingId = null; toast('⚠️ في اختلاف في حسابات الطلب. حدّث الصفحة وجرّب تاني، أو كلمنا على 0237721525', 8000); return; }
         if (res === 'soldout') { pendingId = null; refreshSoldout(); showFail('so', window.rrSoNames && window.rrSoNames.length ? window.rrSoNames : soInCart()); return; }
         if (res !== 'ok') { showFail('net'); return; }
 
@@ -4604,6 +4665,9 @@ imChips.previousElementSibling.style.display = noChips ? 'none' : '';
         if (coupon && coupon.def.firstOrderOnly && d > 0) markCouponUsed(coupon.code, v('f_phone'));
         if (window.rrOrderHook) rrOrderHook({ orderId: orderId, phone: v('f_phone'), total: Math.max(0, sub - d), code: (coupon && coupon.def.loyalty) ? coupon.code : '' });
         const pay = $('f_pay').value;
+        LS.set('rr_last_order', { id: orderId, t: Date.now(), items: cart.map(i => ({ n: i.name, q: i.qty, p: i.price, o: i.opts || [], t: i.note || '' })) });
+        document.dispatchEvent(new Event('rr:ordered'));
+        $('f_payref').value = '';
         cart = []; coupon = null; $('couponInput').value = ''; setCouponMsg('', true);
         LS.set('rr_cart', cart); render(); closeAll();
         toast(pay === 'cash' ? '✅ وصلنا طلبك رقم ' + orderId + ' — هنكلمك نأكده 🐓'
@@ -5176,7 +5240,7 @@ new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:tru
   /* بعد كل طلب: نسجّل النقاط (قيد التأكيد) ونحرق كود النقاط المستخدم */
   window.rrOrderHook=function(o){ var ph=norm(o.phone); if(ph.length!==11) return;
     if(o.total>0) post({action:'order',phone:ph,total:o.total,orderId:o.orderId||('RR'+Date.now())}).catch(function(){});
-    if(o.code) post({action:'useCode',code:o.code}).catch(function(){}); };
+  };
 })();
 </script>
 
@@ -5587,6 +5651,15 @@ new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:tru
 .tk-find button{border:0;background:#1E1411;color:#fff;border-radius:12px;padding:0 18px;font:800 .9rem "Cairo",sans-serif;cursor:pointer;min-height:42px}
 #tkMsg{font-size:.82rem;color:#e11d48;margin-top:6px;min-height:1.1em}
 .tk-empty{text-align:center;color:#6B6B6B;padding:26px 6px;font-size:.95rem}
+.tk-pay{margin:8px 0;padding:8px 12px;border-radius:12px;font-size:.84rem;font-weight:800;line-height:1.6}
+.tk-pay.wait{background:#FFF3CD;color:#7A5800;border:1px solid #F5A623}.tk-pay.ok{background:#E3F6EC;color:#0B6E4F;border:1px solid #b6e2cb}
+.tk-eta{margin:10px 0 4px;padding:9px 12px;border-radius:12px;background:#EEF4FF;color:#1d3f8f;font-size:.86rem;font-weight:700}.tk-eta.late{background:#FFF3CD;color:#7A5800}
+.cart-up{margin-top:14px;padding:12px;border:1.5px dashed #eadfd8;border-radius:16px}.cart-up b{display:block;font-size:.9rem;margin-bottom:8px}.cart-up .row{display:flex;gap:8px;flex-wrap:wrap}
+.cart-up button{border:1.5px solid #eadfd8;background:#fff;border-radius:999px;padding:7px 12px;font:700 .82rem "Cairo",sans-serif;cursor:pointer;color:#1E1411}.cart-up button:hover{border-color:#D92B2B;color:#D92B2B}
+.rr-share-btn{border:1.5px solid rgba(0,0,0,.18);background:#fff;border-radius:999px;padding:8px 18px;font:800 .88rem "Cairo",sans-serif;cursor:pointer;color:#1E1411}
+#rrRe{display:none;align-items:center;justify-content:space-between;gap:10px;margin:10px 12px;padding:10px 14px;border-radius:16px;background:#FFF3CD;border:1.5px solid #F5A623;color:#5c4300;font-weight:800;font-size:.9rem}
+#rrRe small{display:block;font-weight:600;color:#7A5800}#rrRe .a{display:flex;gap:6px;flex:0 0 auto}
+#rrRe button{border:0;border-radius:12px;padding:9px 14px;font:800 .85rem "Cairo",sans-serif;cursor:pointer}#rrRe .go{background:#D92B2B;color:#fff}#rrRe .x{background:transparent;color:#7A5800;padding:9px 8px}
 </style>
 <div id="rrTkOv"></div>
 <div id="rrTkSheet" role="dialog" aria-label="تتبع الطلب"><div class="tk-h"><span>📦 تتبع طلبي</span><button id="rrTkX" aria-label="إغلاق">✕</button></div>
@@ -5604,6 +5677,13 @@ new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:tru
   var url=function(q){return API+(API.indexOf('?')>-1?'&':'?')+q};
   var PAY={cash:'كاش عند الاستلام',wallet:'محفظة إلكترونية',instapay:'إنستا باي'};
   function steps(type){return [['new','تم الاستلام','🧾'],['confirmed','تم التأكيد','✅'],['preparing','بنجهّزه','👨‍🍳'],['out',type==='pickup'?'جاهز للاستلام':'خرج للتوصيل',type==='pickup'?'🏪':'🛵'],['delivered','تم التسليم','🎉']];}
+  function etaHtml(o,type,st){
+    if(!o||type==='pickup'||st==='delivered'||st==='cancelled') return '';
+    var m=o.eta||(window.RR_ETA&&window.RR_ETA.delivery)||0; if(!m) return '';
+    var target=o.time+m*60000, left=Math.round((target-Date.now())/60000), clk=''; try{ clk=new Date(target).toLocaleTimeString('ar-EG',{hour:'numeric',minute:'2-digit'}); }catch(x){}
+    if(st==='out'&&left<=0) return '<div class="tk-eta">🛵 الطيار في الطريق ليك — قربنا نوصل 🙏</div>';
+    return left>1?'<div class="tk-eta">⏱️ الوصول المتوقع حوالي <b>'+clk+'</b> <small>(بعد '+left+' دقيقة تقريبًا)</small></div>':'<div class="tk-eta late">⏱️ اتأخرنا شوية عن الميعاد المتوقع، بنسرّع عشان نوصلك 🙏</div>';
+  }
   function when(t){try{return new Date(t).toLocaleString('ar-EG',{day:'numeric',month:'short',hour:'numeric',minute:'2-digit'})}catch(e){return ''}}
 
   /* ── حفظ الأوردر على السيرفر (مع إعادة المحاولة لو النت فصل) ── */
@@ -5617,7 +5697,7 @@ new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:tru
   /* بيرجّع 'ok' | 'coupon_used' | 'fail' — محاولتين (السيرفر بيتجاهل التكرار بنفس رقم الطلب) */
   window.rrTrackSave=function(o){
     function attempt(n){ return post1(o,18000).then(function(j){
-        if(j&&j.ok) return 'ok'; if(j&&j.error==='coupon_used') return 'coupon_used'; if(j&&j.error==='closed') return 'closed'; if(j&&j.error==='soldout'){ window.rrSoNames=j.items||[]; return 'soldout'; }
+        if(j&&j.ok) return 'ok'; if(j&&j.error==='coupon_used') return 'coupon_used'; if(j&&j.error==='closed') return 'closed'; if(j&&/^coupon_(invalid|expired|limit)$/.test(j.error)) return j.error; if(j&&j.error==='busy') return 'busy'; if(j&&j.error==='bad_total') return 'bad_total'; if(j&&j.error==='soldout'){ window.rrSoNames=j.items||[]; return 'soldout'; }
         return n<2?attempt(n+1):'fail';
       },function(){ return n<2?attempt(n+1):'fail'; }); }
     return attempt(1).then(function(r){
@@ -5651,6 +5731,7 @@ new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:tru
     var lbl=st==='cancelled'?'ملغي':(S.filter(function(x){return x[0]===st})[0]||S[0])[1];
     var h='<div class="tk-card"><div class="tk-top"><span class="tk-id">#'+esc(e.id)+'</span><span class="tk-badge '+(st==='delivered'?'done':st==='cancelled'?'bad':'')+'">'+esc(lbl)+'</span></div>';
     h+='<div class="tk-meta">'+when(o?o.time:e.t)+(o?' · '+o.total+' ج.م':'')+(type==='pickup'?' · استلام من الفرع':' · دليفري')+'</div>';
+    if(o&&o.payment&&o.payment!=='cash'&&st!=='cancelled') h+='<div class="tk-pay '+(o.paid?'ok':'wait')+'">'+(o.paid?'✅ تم استلام التحويل':'⏳ في انتظار تأكيد التحويل'+(o.hasRef?'':' — ابعت صورة التحويل على واتساب 01023278000'))+'</div>';
     if(o===undefined) h+='<div class="tk-wait">⏳ بنجيب حالة الطلب...</div>';
     else if(o===null) h+='<div class="tk-wait">'+(Date.now()-e.t<600000?'⏳ بنسجّل طلبك.. ثواني ويظهر هنا.':'مش لاقيين الطلب ده. لو محتاج مساعدة كلمنا على الواتساب.')+'</div>';
     else if(st==='cancelled') h+='<div class="tk-cancel">❌ الطلب ده اتلغى'+(o.reason?'<br>السبب: '+esc(o.reason):'')+'<br><small>لو محتاج مساعدة أو ده غلط كلمنا على الواتساب.</small></div>';
@@ -5660,6 +5741,7 @@ new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:tru
       var pct=Math.max(6,Math.round((idx<0?0:idx)/(S.length-1)*100));
       h+='<div class="tk-now"><span class="e">'+(idx<0?'':S[idx][2])+'</span><div><b>'+MSG[0]+'</b><small>'+MSG[1]+'</small></div></div><div class="tk-bar'+(st==='delivered'?' fin':'')+'"><i style="width:'+pct+'%"></i></div>';
       h+='<div class="tk-steps">'+S.map(function(x,i){return '<div class="tk-step'+(i<=idx?' on':'')+(i===idx?' cur':'')+'"><i>'+x[2]+'</i>'+esc(x[1])+'</div>'}).join('')+'</div>';
+      h+=etaHtml(o,type,st);
       if(o.updated) h+='<div class="tk-meta">آخر تحديث: '+when(o.updated)+'</div>';
     }
     if(o&&o.items&&o.items.length){
@@ -5982,6 +6064,46 @@ window.RR_GA='';
   if(ios){ document.getElementById('rrInstT').textContent='📲 للتثبيت: دوس زرار المشاركة ثم Add to Home Screen'; document.getElementById('rrInstGo').style.display='none'; setTimeout(function(){ bar.classList.add('show'); },6000); }
   document.getElementById('rrInstGo').onclick=function(){ if(!ev) return; ev.prompt(); ev.userChoice.finally(function(){ bar.classList.remove('show'); ev=null; }); };
   document.getElementById('rrInstX').onclick=function(){ bar.classList.remove('show'); try{ localStorage.setItem(KEY,'1'); }catch(e){} };
+})();
+</script>
+
+<div id="rrRe" role="region" aria-label="كرر طلبك الأخير"><div><span id="rrReT">🔁 كرر طلبك الأخير</span><small id="rrReS"></small></div><div class="a"><button type="button" class="go" id="rrReGo">اطلبه تاني</button><button type="button" class="x" id="rrReX" aria-label="إخفاء">✕</button></div></div>
+<script>
+/* ═══ مشاركة · كرر آخر طلب · إشعارات حالة الطلب ═══ */
+(function(){
+  var $=function(i){return document.getElementById(i)};
+  var lsg=function(k){try{return localStorage.getItem(k)}catch(e){return null}}, lss=function(k,v){try{localStorage.setItem(k,v)}catch(e){}};
+  function say(m){ var t=$('toast')||document.querySelector('.toast'); if(t){ t.textContent=m; t.classList.add('show'); clearTimeout(say.t); say.t=setTimeout(function(){t.classList.remove('show')},2600); } else { try{ alert(m); }catch(e){} } }
+  var SITE=location.origin+location.pathname;
+  function share(title,text){
+    var data={title:title,text:text,url:SITE};
+    if(navigator.share){ navigator.share(data).catch(function(){}); return; }
+    var full=text+'\n'+SITE;
+    if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(full).then(function(){say('✅ اتنسخ الرابط — ابعته لصحابك')},function(){say(SITE)});
+    else say(SITE);
+  }
+  /* الفوتر بيتعاد بناؤه بسكريبت تاني، فبنضيف الزرار تاني لو اتمسح */
+  function ensureShareBtn(){ var f=document.querySelector('footer'); if(!f||$('rrShareSite')) return; var cols=f.querySelectorAll('.pf-in > div'), host=cols.length?cols[cols.length-1]:f, b=document.createElement('button'); b.type='button'; b.id='rrShareSite'; b.className=cols.length?'l':'rr-share-btn'; b.textContent='📤 شارك الموقع مع صحابك'; host.appendChild(b); }
+  ensureShareBtn(); setTimeout(ensureShareBtn,800); setTimeout(ensureShareBtn,2500);
+  var ftEl=document.querySelector('footer'); if(ftEl&&window.MutationObserver) new MutationObserver(ensureShareBtn).observe(ftEl,{childList:true});
+  document.addEventListener('click',function(e){ if(e.target.closest&&e.target.closest('#rrShareSite')) share('Red Roosters 🐓','جرّب ريد روستر 🍗 ساندوتشات كرسبي وناشفيل طازة — اطلب أونلاين وتوصيلك لحد البيت:'); });
+  if($('imShare')) $('imShare').onclick=function(){ var n=($('im_title')||{}).textContent||'', p=($('im_price')||{}).textContent||''; share(n+' — Red Roosters','🍗 '+n+(p?' — '+p:'')+' من ريد روستر. اطلبه أونلاين:'); };
+
+  /* كرر آخر طلب: شريط بيظهر لو فيه طلب سابق على الجهاز والسلة فاضية */
+  var re=$('rrRe'), main=document.querySelector('main');
+  function lastOrder(){ try{ var o=JSON.parse(lsg('rr_last_order')||'null'); return o&&o.items&&o.items.length&&Date.now()-o.t<60*864e5?o:null; }catch(e){ return null; } }
+  function cartEmpty(){ try{ return !(JSON.parse(lsg('rr_cart')||'[]')||[]).length; }catch(e){ return true; } }
+  function paintRe(){
+    var o=lastOrder(); if(!o||!cartEmpty()||lsg('rr_re_hide')===String(o.id)||!window.rrReorder){ re.style.display='none'; return; }
+    var n=o.items.reduce(function(s,i){return s+(+i.q||1)},0), tot=o.items.reduce(function(s,i){return s+(+i.p||0)*(+i.q||1)},0);
+    $('rrReS').textContent=o.items.slice(0,2).map(function(i){return i.q+'× '+String(i.n).replace(/\s*\(.*\)\s*$/,'')}).join('، ')+(o.items.length>2?' …':'')+' · '+tot+' ج.م'; $('rrReT').textContent='🔁 كرر طلبك الأخير ('+n+' صنف)';
+    re.style.display='flex';
+  }
+  if(re&&main){ main.insertAdjacentElement('afterbegin',re); paintRe(); setInterval(paintRe,4000);
+    $('rrReGo').onclick=function(){ var o=lastOrder(); if(!o) return; window.rrReorder(o.items); re.style.display='none'; var f=document.querySelector('.cart-fab')||document.querySelector('#rrTabs [data-t=cart]'); if(f) setTimeout(function(){f.click()},350); };
+    $('rrReX').onclick=function(){ var o=lastOrder(); if(o) lss('rr_re_hide',String(o.id)); re.style.display='none'; };
+    document.addEventListener('rr:ordered',function(){ setTimeout(paintRe,300); }); }
+
 })();
 </script>
 </body>
