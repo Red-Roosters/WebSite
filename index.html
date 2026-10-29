@@ -3672,6 +3672,7 @@ html[lang="en"] .rr-so-badge::before{content:"Sold out"}
             <div class="field"><label>الدور <i>*</i></label><input id="f_floor"><div class="msg">اكتب رقم الدور</div></div>
             <div class="field"><label>الشقة <i>*</i></label><input id="f_apt"><div class="msg">اكتب رقم الشقة</div></div>
             <div class="field full"><label>علامة مميزة <i>*</i></label><input id="f_landmark" placeholder="مثال: أمام مستشفى ... / جنب صيدلية ..."><div class="msg">اكتب علامة مميزة تسهّل الوصول</div></div>
+            <div class="field full"><label>📍 موقعك على الخريطة <small>(اختياري — بيسرّع وصول الطيار)</small></label><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button type="button" id="locBtn" style="border:1px solid #9E1B1B;background:#fff;color:#9E1B1B;border-radius:999px;padding:9px 16px;font:800 .9rem Cairo,sans-serif;cursor:pointer">📍 استخدم موقعي الحالي</button><span id="locMsg" style="font-size:.82rem;font-weight:700"></span></div></div>
             <div class="field full"><label>ملاحظات على الطلب</label><textarea id="f_notes" rows="2" placeholder="مثال: ناشفيل حار، من غير صوص..."></textarea></div>
         </div>
 
@@ -4566,6 +4567,15 @@ imChips.previousElementSibling.style.display = noChips ? 'none' : '';
         if (p === 'instapay') return ['💳 *الدفع:* حساب بنكي (إنستا باي)', '📲 التحويل على الرقم: ' + PAY_NUM, '📸 هبعتلكم صورة التحويل هنا على الواتساب لتأكيد الطلب'];
         return ['💵 الدفع: كاش عند الاستلام'];
     }
+    let RR_LOC = null;
+    (function () { const b = $('locBtn'), m = $('locMsg');
+        b.addEventListener('click', () => {
+            if (RR_LOC) { RR_LOC = null; b.textContent = '📍 استخدم موقعي الحالي'; m.textContent = ''; return; }
+            if (!navigator.geolocation) { m.textContent = 'المتصفح مش بيدعم تحديد الموقع'; return; }
+            b.disabled = true; m.textContent = '⏳ بنحدد موقعك...';
+            navigator.geolocation.getCurrentPosition(p => { b.disabled = false; RR_LOC = { lat: p.coords.latitude, lon: p.coords.longitude }; b.textContent = '✖ إزالة الموقع'; m.textContent = '✅ تم تحديد موقعك (دقة حوالي ' + Math.round(p.coords.accuracy) + ' متر)'; },
+                () => { b.disabled = false; m.textContent = '⚠️ مقدرناش نحدد موقعك — اسمح للمتصفح بالموقع أو كمّل بالعنوان بس'; }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 });
+        }); })();
     function applyPayCfg() {
         const p = (window.RR_CFG && RR_CFG.pay) || null; if (!p) return;
         const msg = p.msg || 'غير متاحة حاليًا';
@@ -4593,7 +4603,7 @@ imChips.previousElementSibling.style.display = noChips ? 'none' : '';
         const p = v === 'pickup';
         $('pickupBox').style.display = p ? '' : 'none';
         $('addrTitle').style.display = p ? 'none' : '';
-        ['f_area_q', 'f_street', 'f_station', 'f_building', 'f_floor', 'f_apt', 'f_landmark', 'f_phone2'].forEach(id => { const w = $(id).closest('.field'); if (w) w.style.display = p ? 'none' : ''; });
+        ['f_area_q', 'f_street', 'f_station', 'f_building', 'f_floor', 'f_apt', 'f_landmark', 'locBtn', 'f_phone2'].forEach(id => { const w = $(id).closest('.field'); if (w) w.style.display = p ? 'none' : ''; });
         document.querySelector('#checkoutModal .drawer-head h3').textContent = p ? '📝 بيانات الاستلام' : '📝 بيانات التوصيل';
         document.querySelectorAll('#checkoutForm .field.err').forEach(f => f.classList.remove('err'));
         renderSummary();
@@ -4718,7 +4728,7 @@ imChips.previousElementSibling.style.display = noChips ? 'none' : '';
         let res = 'fail';
         try {
             res = await window.rrTrackSave({ id: orderId, name: v('f_name'), phone: num('f_phone'), phone2: pickup ? '' : num('f_phone2'), type: pickup ? 'pickup' : 'delivery', address: addr, area: pickup ? '' : area.name,
-                items: cart.map(i => ({ n: i.name, q: i.qty, p: i.price, o: i.opts || [], t: i.note || '' })), subtotal: sub, discount: d, coupon: d ? coupon.code : '', claim: claim, fee: area.fee, total: total, payment: $('f_pay').value, payref: $('f_pay').value === 'cash' ? '' : v('f_payref'), notes: v('f_notes') });
+                items: cart.map(i => ({ n: i.name, q: i.qty, p: i.price, o: i.opts || [], t: i.note || '' })), subtotal: sub, discount: d, coupon: d ? coupon.code : '', claim: claim, fee: area.fee, total: total, payment: $('f_pay').value, payref: $('f_pay').value === 'cash' ? '' : v('f_payref'), notes: v('f_notes'), lat: !pickup && RR_LOC ? RR_LOC.lat : undefined, lon: !pickup && RR_LOC ? RR_LOC.lon : undefined });
         } catch (err) {}
         sending = false; if (sbtn) { sbtn.disabled = false; sbtn.textContent = lbl; }
 
@@ -4744,7 +4754,7 @@ imChips.previousElementSibling.style.display = noChips ? 'none' : '';
         const pay = $('f_pay').value;
         LS.set('rr_last_order', { id: orderId, t: Date.now(), items: cart.map(i => ({ n: i.name, q: i.qty, p: i.price, o: i.opts || [], t: i.note || '' })) });
         document.dispatchEvent(new Event('rr:ordered'));
-        $('f_payref').value = '';
+        $('f_payref').value = ''; if (RR_LOC) $('locBtn').click();
         cart = []; coupon = null; $('couponInput').value = ''; setCouponMsg('', true);
         LS.set('rr_cart', cart); render(); closeAll();
         toast(pay === 'cash' ? '✅ وصلنا طلبك رقم ' + orderId + ' — هنكلمك نأكده 🐓'
@@ -5799,14 +5809,32 @@ new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:tru
     var s=document.createElement('script'); s.src='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js'; s.onload=function(){ var q=drvLoad.q; drvLoad.q=null; q.forEach(function(f){ f(); }); }; document.head.appendChild(s); }
   function drvFetch(){ get(KEY).filter(function(e){ var o=cache[e.id]; return o&&o.status==='out'&&o.type!=='pickup'; }).slice(0,3).forEach(function(e){
     fetch(url('action=drvpos&id='+encodeURIComponent(e.id)+'&phone='+e.phone)).then(function(r){return r.json()}).then(function(j){ if(j&&j.ok){ DRV[e.id]=j; drvPaint(); } }).catch(function(){}); }); }
+  var drvHide=false; try{ drvHide=localStorage.getItem('rr_drvhide')==='1'; }catch(x){}
+  (function(){ var st=document.createElement('style'); st.textContent='.rr-dm{width:46px;height:46px;border-radius:50%;background:#9E1B1B;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;font-size:24px;line-height:1;position:relative}.rr-dm:after{content:"";position:absolute;inset:-6px;border-radius:50%;border:2px solid rgba(158,27,27,.5);animation:rrdm 1.6s ease-out infinite}@keyframes rrdm{from{transform:scale(.8);opacity:1}to{transform:scale(1.5);opacity:0}}.rr-dm.h{background:#1d3f8f}.rr-dm.h:after{display:none}.tk-dmb{border:1px solid #c9d8f5;background:#fff;color:#1d3f8f;border-radius:999px;padding:6px 14px;font:700 .8rem Cairo,sans-serif;margin-top:6px;cursor:pointer}'; document.head.appendChild(st);
+    document.addEventListener('click',function(ev){ var b=ev.target.closest&&ev.target.closest('[data-dm]'); if(!b) return; drvHide=!drvHide; try{ localStorage.setItem('rr_drvhide',drvHide?'1':''); }catch(x){} drvPaint(); }); })();
+  function drvIcon(){ return L.divIcon({className:'',iconSize:[46,46],iconAnchor:[23,23],html:'<div class="rr-dm"><span>🛵</span></div>'}); }
+  function drvKm(a,b,c,d){ var R=6371,x=(c-a)*Math.PI/180,y=(d-b)*Math.PI/180,q=Math.sin(x/2)*Math.sin(x/2)+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(y/2)*Math.sin(y/2); return 2*R*Math.asin(Math.sqrt(q)); }
+  function drvRoute(m,d){ if(d.dlat==null||(m.rt&&Date.now()-m.rt<30000)) return; m.rt=Date.now();
+    fetch('https://router.project-osrm.org/route/v1/driving/'+d.lon+','+d.lat+';'+d.dlon+','+d.dlat+'?overview=full&geometries=geojson').then(function(r){return r.json()}).then(function(j){ var r=j&&j.routes&&j.routes[0]; if(!r) return;
+      m.info={km:r.distance/1000,min:Math.max(1,Math.round(r.duration/60))};
+      if(m.map){ if(m.line) m.map.removeLayer(m.line); m.line=L.polyline(r.geometry.coordinates.map(function(c){return [c[1],c[0]]}),{color:'#9E1B1B',weight:5,opacity:.85}).addTo(m.map); }
+      drvPaint(); }).catch(function(){}); }
   function drvPaint(){ document.querySelectorAll('.tk-drv').forEach(function(box){ var id=box.getAttribute('data-id'), d=DRV[id]; if(!d||!d.on) return;
     var nm=d.name?esc(d.name):'الطيار';
     if(d.lat==null){ box.innerHTML='<div class="tk-eta">🛵 '+nm+' خرج بطلبك — بنستنى إشارة الموقع...</div>'; return; }
-    var ago=d.age<60?'دلوقتي':'من '+Math.round(d.age/60)+' د', m=drvMaps[id];
-    if(!m){ m=drvMaps[id]={el:document.createElement('div')}; m.el.style.cssText='height:200px;border-radius:12px;margin-top:8px;overflow:hidden;direction:ltr'; }
-    box.innerHTML='<div class="tk-eta">🛵 <b>'+nm+'</b> في الطريق ليك · آخر تحديث للموقع '+ago+'</div>'; box.appendChild(m.el);
-    drvLoad(function(){ if(!m.map){ m.map=L.map(m.el).setView([d.lat,d.lon],15); L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(m.map); m.mk=L.marker([d.lat,d.lon]).addTo(m.map); }
-      else{ m.mk.setLatLng([d.lat,d.lon]); m.map.panTo([d.lat,d.lon]); } setTimeout(function(){ m.map.invalidateSize(); },60); }); }); }
+    var ago=d.age<60?'دلوقتي':'من '+Math.round(d.age/60)+' د', m=drvMaps[id], hasD=d.dlat!=null, inf=m&&m.info;
+    var dist=inf?' · باقي حوالي <b>'+inf.min+'</b> دقيقة ('+inf.km.toFixed(1)+' كم)':(hasD?' · يبعد حوالي '+drvKm(d.lat,d.lon,d.dlat,d.dlon).toFixed(1)+' كم':'');
+    box.innerHTML='<div class="tk-eta">🛵 <b>'+nm+'</b> في الطريق ليك'+dist+'<br><small>آخر تحديث للموقع '+ago+'</small></div><button type="button" class="tk-dmb" data-dm="1">'+(drvHide?'🗺️ إظهار الخريطة':'🗺️ إخفاء الخريطة')+'</button>';
+    if(drvHide) return;
+    if(!m){ m=drvMaps[id]={el:document.createElement('div')}; m.el.style.cssText='height:220px;border-radius:12px;margin-top:8px;overflow:hidden;direction:ltr'; }
+    box.appendChild(m.el);
+    drvLoad(function(){ if(!m.map){ m.map=L.map(m.el).setView([d.lat,d.lon],15); L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(m.map); m.mk=L.marker([d.lat,d.lon],{icon:drvIcon()}).addTo(m.map); }
+      else m.mk.setLatLng([d.lat,d.lon]);
+      setTimeout(function(){ m.map.invalidateSize();
+        if(hasD){ if(!m.dk) m.dk=L.marker([d.dlat,d.dlon],{icon:L.divIcon({className:'',iconSize:[46,46],iconAnchor:[23,23],html:'<div class="rr-dm h"><span>🏠</span></div>'})}).addTo(m.map);
+          if(!m.info){ if(m.line) m.map.removeLayer(m.line); m.line=L.polyline([[d.lat,d.lon],[d.dlat,d.dlon]],{color:'#9E1B1B',weight:3,dashArray:'6 8'}).addTo(m.map); }
+          m.map.fitBounds([[d.lat,d.lon],[d.dlat,d.dlon]],{padding:[40,40],maxZoom:17}); drvRoute(m,d); }
+        else m.map.panTo([d.lat,d.lon]); },60); }); }); }
 
   /* ── الرسم ── */
   var LBL=['','سيئ 😞','مش كويس 😕','عادي 🙂','حلو 😋','ممتاز 🤩'], draft={},
