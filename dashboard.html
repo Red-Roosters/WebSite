@@ -144,6 +144,8 @@ main.wide{max-width:none}
 .card.new{animation:ringc 1.1s ease-in-out infinite}
 @keyframes ringc{0%,100%{box-shadow:0 0 0 3px rgba(217,43,43,.15)}50%{box-shadow:0 0 0 9px rgba(217,43,43,.35)}}
 .card.moved{animation:mv 1.6s ease-out}
+.card.saving [data-act]{pointer-events:none;opacity:.5}
+.card.saving .top::after{content:"⏳ بيتحفظ…";font-size:.72rem;font-weight:800;color:#7A5800;background:#FFF3CD;border-radius:999px;padding:2px 9px;margin-inline-start:6px}
 @keyframes mv{0%{box-shadow:0 0 0 0 rgba(11,110,79,.7);transform:scale(1.03)}100%{box-shadow:0 0 0 14px rgba(11,110,79,0);transform:none}}
 #alertBar{position:sticky;top:54px;z-index:19;background:var(--red);color:#fff;text-align:center;font-weight:900;padding:11px 14px;cursor:pointer;animation:fl 1s steps(2) infinite}
 @keyframes fl{50%{background:#a81d1d}}
@@ -298,6 +300,7 @@ let user = '', pass = '', token = '', role = 'staff', myName = '', view = 'order
 try { const c = JSON.parse(sessionStorage.getItem('rr_admin_cred') || localStorage.getItem('rr_admin_cred') || 'null'); if (c) { user = c.u || ''; pass = c.p || ''; token = c.t || ''; } } catch (e) {}
 const AUTH_ERR = {locked:'اتقفل الدخول مؤقتًا (محاولات كتير غلط). جرّب بعد 10 دقايق.', bad:'اسم المستخدم أو كلمة السر غلط', disabled:'الحساب ده متوقّف. كلّم المدير.', bad_token:'انتهت الجلسة، سجّل دخولك تاني.', bad_action:'لازم تحدّث ملف Code.gs وتعمل Deploy ▸ New version الأول.', busy:'محاولات كتير، جرّب بعد شوية.'};
 function bizStart(ts){ const d = new Date(ts == null ? Date.now() : ts); const t = d.getTime(); d.setHours(DAY_START_HOUR, 0, 0, 0); if (t < d.getTime()) d.setDate(d.getDate() - 1); return d.getTime(); }
+const pend = new Map();   // تغييرات لسه ماتأكدتش من السيرفر: id → {st, reason, upd, paid, busy, t}
 let orders = [], tab = 'board', query = '', known = null, sound = true, lastBeep = 0, timer = null, ac = null, ringT = null, wl = null, flip = false;
 
 /* ═══ API ═══ */
@@ -345,10 +348,25 @@ document.addEventListener('visibilitychange', () => { if (document.visibilitySta
 function toast(t){ const el = $('toast'); el.textContent = t; el.classList.add('show'); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('show'), 3200); }
 
 /* ═══ تحميل الأوردرات ═══ */
+/* بنطبّق التغييرات اللي لسه ماتأكدتش فوق رد السيرفر، عشان الكارت مايرجعش لمرحلته القديمة لو الرد جه قبل ما الحفظ يخلص */
+function overlay(list){
+  const now = Date.now();
+  list.forEach(o => { const p = pend.get(o.id); if (!p) return;
+    if (p.st !== undefined) { if (!p.busy && (o.status === p.st || now - p.t > 20000)) p.st = undefined; else { o.status = p.st; o.reason = p.reason || ''; o.updated = p.upd || o.updated; } }
+    if (p.paid !== undefined) { if (!p.busy && (o.paid === p.paid || now - p.t > 20000)) p.paid = undefined; else o.paid = p.paid; }
+    if (p.st === undefined && p.paid === undefined && !p.busy) pend.delete(o.id); });
+}
+let loading = false, loadT = 0;
 async function load(){
+  if (loading && Date.now() - loadT < 25000) return true;   // مفيش تحديثين فوق بعض
+  loading = true; loadT = Date.now();
+  try { return await loadNow(); } finally { loading = false; }
+}
+async function loadNow(){
   try {
     const j = await post({action:'adminList', user});
     if (!j.ok) return logout(AUTH_ERR[j.error] || 'فشل الدخول');
+    overlay(j.orders);
     setLive(true); role = j.role || 'staff'; myName = j.name || user; applyRole();
     const fresh = j.orders.filter(o => known && !known.has(o.id) && o.status === 'new');
     known = new Set(j.orders.map(o => o.id)); orders = j.orders;
@@ -410,7 +428,7 @@ function render(){
 }
 function cardHtml(o){
   const mins = (Date.now() - o.time) / 60000, late = ACTIVE.includes(o.status) && mins > LATE_MIN, ns = nextStep(o);
-  return '<article class="card ' + o.status + (late ? ' late' : '') + '" data-id="' + esc(o.id) + '">' +
+  return '<article class="card ' + o.status + (late ? ' late' : '') + ((pend.get(o.id) || {}).busy ? ' saving' : '') + '" data-id="' + esc(o.id) + '">' +
     '<div class="top"><span class="oid">#' + esc(o.id) + '</span><span class="chip ' + o.status + '">' + esc(lbl(o)) + '</span></div>' +
     '<div class="sub"><span>🕒 ' + clock(o.time) + ' · ' + ago(o.time) + '</span><span>' + (o.type === 'pickup' ? '🏪 استلام من الفرع' : '🛵 دليفري') + '</span>' + lastBy(o) + (late ? '<span class="late">⏰ عدّى ' + LATE_MIN + ' دقيقة</span>' : '') + '</div>' +
     '<div class="who">' + esc(o.name) + '</div>' +
@@ -432,24 +450,40 @@ function cardHtml(o){
       (!ACTIVE.includes(o.status) && role === 'manager' ? '<button class="btn ghost" data-act="set" data-st="new">↩︎ رجّعه جديد</button>' : '') + '</div></article>';
 }
 
-/* ═══ تغيير الحالة ═══ */
+/* ═══ تغيير الحالة (فوري على الشاشة، والحفظ في الخلفية بالترتيب) ═══ */
+const chain = {};
 async function setStatus(id, st, reason){
   const o = orders.find(x => x.id === id); if (!o) return;
   if (st === 'cancelled' && reason === undefined) return openCancel(id);   // الأول بنسأل عن السبب
-  const prev = o.status, prevR = o.reason; o.status = st; o.reason = st === 'cancelled' ? reason : ''; o.updated = Date.now(); render();
+  const prev = {s: o.status, r: o.reason, u: o.updated}, rs = st === 'cancelled' ? reason : '';
+  const p = pend.get(id) || {}; p.st = st; p.reason = rs; p.upd = Date.now(); p.t = Date.now(); p.busy = (p.busy || 0) + 1; pend.set(id, p);
+  o.status = st; o.reason = rs; o.updated = p.upd; render();
   const mv = document.querySelector('.card[data-id="' + id + '"]');
   if (mv) { mv.classList.add('moved'); const c = mv.closest('.col'); if (c) c.scrollIntoView({behavior:'smooth', inline:'center', block:'nearest'}); }
-  try {
-    const j = await post({action:'setStatus', user, id, status:st, reason: st === 'cancelled' ? reason : ''});
-    if (!j.ok) { if (j.error === 'forbidden') { o.status = prev; o.reason = prevR; render(); load(); return toast('⛔ مش مسموح للموظف يعدّل طلب منتهي'); } throw new Error(j.error || 'fail'); }
-    o.updated = j.updated || Date.now(); toast('✅ ' + id + ' ← ' + LABEL[st]);
-  } catch (e) { o.status = prev; o.reason = prevR; render(); toast('⚠️ معرفناش نحفظ التغيير، جرّب تاني'); }
+  toast('⏳ بنحفظ ' + id + ' ← ' + LABEL[st] + '...');
+  chain[id] = (chain[id] || Promise.resolve()).then(async () => {
+    try {
+      const j = await post({action:'setStatus', user, id, status:st, reason:rs, deferPush:true});
+      if (!j.ok) throw new Error(j.error || 'fail');
+      p.t = Date.now(); if (p.st === st) p.upd = j.updated || p.upd;
+      toast('✅ ' + id + ' ← ' + LABEL[st]);
+      if (!j.same) post({action:'pushStatus', user, id, status:st, reason:rs}).catch(() => {});   // إشعار العميل في الخلفية (مش بيعطّل الشاشة)
+    } catch (e) {
+      if (p.st === st) { p.st = undefined; const x = orders.find(y => y.id === id); if (x) { x.status = prev.s; x.reason = prev.r; x.updated = prev.u; } }
+      toast(String(e.message) === 'forbidden' ? '⛔ مش مسموح للموظف يعدّل طلب منتهي' : '⚠️ معرفناش نحفظ التغيير، جرّب تاني'); load();
+    } finally { p.busy--; render(); }
+  });
 }
 
 async function setPaid(id, paid){
-  const o = orders.find(x => x.id === id); if (!o) return; const prev = o.paid; o.paid = paid; render();
-  try { const j = await post({action:'setPaid', user, id, paid}); if (!j.ok) throw 0; toast(paid ? '💰 اتسجّل استلام التحويل: ' + id : '↩︎ اتشال تأكيد التحويل: ' + id); }
-  catch (e) { o.paid = prev; render(); toast('⚠️ معرفناش نحفظ التغيير، جرّب تاني'); }
+  const o = orders.find(x => x.id === id); if (!o) return; const prev = o.paid;
+  const p = pend.get(id) || {}; p.paid = paid; p.t = Date.now(); p.busy = (p.busy || 0) + 1; pend.set(id, p);
+  o.paid = paid; render(); toast('⏳ بنحفظ...');
+  chain[id] = (chain[id] || Promise.resolve()).then(async () => {
+    try { const j = await post({action:'setPaid', user, id, paid}); if (!j.ok) throw 0; p.t = Date.now(); toast(paid ? '💰 اتسجّل استلام التحويل: ' + id : '↩︎ اتشال تأكيد التحويل: ' + id); }
+    catch (e) { if (p.paid === paid) { p.paid = undefined; const x = orders.find(y => y.id === id); if (x) x.paid = prev; } toast('⚠️ معرفناش نحفظ التغيير، جرّب تاني'); load(); }
+    finally { p.busy--; render(); }
+  });
 }
 
 /* ═══ نافذة سبب الإلغاء ═══ */
