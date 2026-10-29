@@ -5792,6 +5792,22 @@ new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:tru
     return Promise.all(jobs).then(function(){ put(KEY,a); updatePill(); if($('rrTkSheet').classList.contains('open')) render(); });
   }
 
+  /* ── تتبع الطيار (OwnTracks) على خريطة ── */
+  var DRV={}, drvMaps={}, drvT=0;
+  function drvLoad(cb){ if(window.L) return cb(); if(drvLoad.q) return drvLoad.q.push(cb); drvLoad.q=[cb];
+    var l=document.createElement('link'); l.rel='stylesheet'; l.href='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css'; document.head.appendChild(l);
+    var s=document.createElement('script'); s.src='https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js'; s.onload=function(){ var q=drvLoad.q; drvLoad.q=null; q.forEach(function(f){ f(); }); }; document.head.appendChild(s); }
+  function drvFetch(){ get(KEY).filter(function(e){ var o=cache[e.id]; return o&&o.status==='out'&&o.type!=='pickup'; }).slice(0,3).forEach(function(e){
+    fetch(url('action=drvpos&id='+encodeURIComponent(e.id)+'&phone='+e.phone)).then(function(r){return r.json()}).then(function(j){ if(j&&j.ok){ DRV[e.id]=j; drvPaint(); } }).catch(function(){}); }); }
+  function drvPaint(){ document.querySelectorAll('.tk-drv').forEach(function(box){ var id=box.getAttribute('data-id'), d=DRV[id]; if(!d||!d.on) return;
+    var nm=d.name?esc(d.name):'الطيار';
+    if(d.lat==null){ box.innerHTML='<div class="tk-eta">🛵 '+nm+' خرج بطلبك — بنستنى إشارة الموقع...</div>'; return; }
+    var ago=d.age<60?'دلوقتي':'من '+Math.round(d.age/60)+' د', m=drvMaps[id];
+    if(!m){ m=drvMaps[id]={el:document.createElement('div')}; m.el.style.cssText='height:200px;border-radius:12px;margin-top:8px;overflow:hidden;direction:ltr'; }
+    box.innerHTML='<div class="tk-eta">🛵 <b>'+nm+'</b> في الطريق ليك · آخر تحديث للموقع '+ago+'</div>'; box.appendChild(m.el);
+    drvLoad(function(){ if(!m.map){ m.map=L.map(m.el).setView([d.lat,d.lon],15); L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(m.map); m.mk=L.marker([d.lat,d.lon]).addTo(m.map); }
+      else{ m.mk.setLatLng([d.lat,d.lon]); m.map.panTo([d.lat,d.lon]); } setTimeout(function(){ m.map.invalidateSize(); },60); }); }); }
+
   /* ── الرسم ── */
   var LBL=['','سيئ 😞','مش كويس 😕','عادي 🙂','حلو 😋','ممتاز 🤩'], draft={},
       STAR='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l2.9 6 6.5.9-4.7 4.6 1.1 6.5L12 17.7l-5.8 3.1 1.1-6.5L2.6 9.7l6.5-.9z"/></svg>';
@@ -5820,6 +5836,7 @@ new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:tru
       h+='<div class="tk-now"><span class="e">'+(idx<0?'':S[idx][2])+'</span><div><b>'+MSG[0]+'</b><small>'+MSG[1]+'</small></div></div><div class="tk-bar'+(st==='delivered'?' fin':'')+'"><i style="width:'+pct+'%"></i></div>';
       h+='<div class="tk-steps">'+S.map(function(x,i){return '<div class="tk-step'+(i<=idx?' on':'')+(i===idx?' cur':'')+'"><i>'+x[2]+'</i>'+esc(x[1])+'</div>'}).join('')+'</div>';
       h+=etaHtml(o,type,st);
+      if(st==='out'&&type!=='pickup') h+='<div class="tk-drv" data-id="'+esc(e.id)+'"></div>';
       if(o.updated) h+='<div class="tk-meta">آخر تحديث: '+when(o.updated)+'</div>';
     }
     if(o&&o.items&&o.items.length){
@@ -5832,7 +5849,7 @@ new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:tru
     if(o&&o.items&&o.items.length) h+='<button type="button" class="tk-re" data-re="'+esc(e.id)+'">🔁 اطلب نفس الطلب تاني</button>';
     return h+'</div>';
   }
-  function render(force){ var ae=document.activeElement; if(!force&&ae&&ae.classList&&ae.classList.contains('tk-cm')&&$('tkList').contains(ae)) return; var a=get(KEY), ch=false; a.forEach(function(e){ if(e.status==='cancelled'&&!e.seen){ e.seen=true; ch=true; } }); $('tkList').innerHTML=a.length?a.map(card).join(''):'<div class="tk-empty">مفيش طلبات على الجهاز ده لسه 🍗<br>اطلب دلوقتي، أو تتبّع طلب برقمه من تحت.</div>'; if(ch){ put(KEY,a); updatePill(); } }
+  function render(force){ var ae=document.activeElement; if(!force&&ae&&ae.classList&&ae.classList.contains('tk-cm')&&$('tkList').contains(ae)) return; var a=get(KEY), ch=false; a.forEach(function(e){ if(e.status==='cancelled'&&!e.seen){ e.seen=true; ch=true; } }); $('tkList').innerHTML=a.length?a.map(card).join(''):'<div class="tk-empty">مفيش طلبات على الجهاز ده لسه 🍗<br>اطلب دلوقتي، أو تتبّع طلب برقمه من تحت.</div>'; if(ch){ put(KEY,a); updatePill(); } try{ drvPaint(); }catch(x){} }
 
   /* ── زرار التتبع في الهيدر: بيبان أوضح لما يكون فيه طلب شغال ── */
   function updatePill(){ try{ window.rrPushSync&&rrPushSync(); }catch(x){}
@@ -5852,9 +5869,9 @@ new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:tru
     try{ window.rrPushUI&&rrPushUI(); }catch(x){}
     $('rrTkOv').classList.add('open'); $('rrTkSheet').classList.add('open'); render();
     if(id&&!get(KEY).some(function(e){return e.id===id})){ $('tkId').value=id; try{ var c=JSON.parse(localStorage.getItem('rr_customer')||'{}'); if(c&&c.phone) $('tkPh').value=norm(c.phone); }catch(x){} }
-    refresh(true); clearInterval(timer); timer=setInterval(function(){ refresh(false); },30000);
+    refresh(true).then(drvFetch); clearInterval(timer); timer=setInterval(function(){ refresh(false); },30000); clearInterval(drvT); drvT=setInterval(function(){ if(!document.hidden) drvFetch(); },15000);
   }
-  function close(){ $('rrTkOv').classList.remove('open'); $('rrTkSheet').classList.remove('open'); clearInterval(timer); }
+  function close(){ $('rrTkOv').classList.remove('open'); $('rrTkSheet').classList.remove('open'); clearInterval(timer); clearInterval(drvT); }
   window.rrTrackOpen=open;
   $('tkList').addEventListener('click',function(ev){var s=ev.target.closest('[data-star]'), box=ev.target.closest('[data-rbox]');
     if(s&&box){ var id=box.dataset.rbox, d=draft[id]||(draft[id]={s:0,c:''}); d.s=+s.dataset.star;

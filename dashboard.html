@@ -296,6 +296,11 @@ main.wide{max-width:none}
         <label class="ck"><input type="checkbox" id="sePayInsta"> 🏦 إنستا باي</label></div>
       <div class="cpf" style="margin-top:8px"><label>رسالة تظهر للعميل على الطريقة المقفولة (اختياري)<input id="sePayMsg" maxlength="60" placeholder="مثلاً: متوقفة مؤقتًا"></label></div>
       <div class="hint">شيل العلامة من أي طريقة وبعدين اضغط حفظ عشان توقفها، وحطها تاني عشان تشغّلها. لازم طريقة واحدة شغّالة على الأقل. السيرفر بيرفض أي طلب بطريقة مقفولة حتى لو الصفحة عند العميل لسه قديمة.</div>
+      <h2 style="margin-top:18px">🛵 تتبع الطيارين (OwnTracks)</h2>
+      <div class="cpf" style="margin-top:8px">
+        <label>مفتاح سري (حروف وأرقام بس)<input id="seOtKey" dir="ltr" maxlength="40" autocomplete="off" placeholder="مثلاً: rr2026secret"></label>
+        <label>الطيارين (كود:اسم، مفصولين بفاصلة)<input id="seDrivers" maxlength="300" placeholder="AH:أحمد, MO:محمد"></label></div>
+      <div class="hint">رابط OwnTracks (Mode: HTTP): <b id="seOtUrl" dir="ltr" style="user-select:all;word-break:break-all"></b><br>الكود (Tracker ID) في تطبيق كل طيار لازم يطابق الكود هنا (حرفين). عند الضغط على «خرج للتوصيل» هتختار الطيار، والعميل يشوف مكانه على الخريطة.</div>
       <div class="hint">التغيير بيظهر على الموقع خلال دقيقة تقريبًا، والسيرفر هو اللي بيطبّقه. وقت الزحمة: الرقم اللي هنا بيتضاف على الوقت المتوقع اللي العميل بيشوفه. السيرفر بيدّي ٥ دقايق سماح بعد ميعاد القفل.</div></div>
     <div class="panel"><h2>🗺️ مناطق التوصيل والرسوم</h2><div id="seAreas">⏳...</div></div>
     <div class="panel"><h2>💾 النسخ الاحتياطي والتقرير اليومي</h2><div id="seBk">⏳...</div></div>
@@ -420,7 +425,7 @@ async function loadNow(){
     overlay(j.orders);
     setLive(true); role = j.role || 'staff'; myName = j.name || user; applyRole();
     const fresh = j.orders.filter(o => known && !known.has(o.id) && o.status === 'new');
-    known = new Set(j.orders.map(o => o.id)); orders = j.orders;
+    known = new Set(j.orders.map(o => o.id)); orders = j.orders; drivers = j.drivers || []; dseen = j.dseen || {};
     if (Array.isArray(j.soldout) && !soBusy && Date.now() - soLast > 4000) { soList = j.soldout; mnRender(); }
     render();
     if (fresh.length) { toast('🔔 طلب جديد: ' + fresh.map(o => o.name).join('، ')); pushNotify('🔔 طلب جديد — ريد روستر', fresh.map(o => o.name + ' · ' + o.total + ' ج').join('\n')); ringTick(); }
@@ -503,7 +508,15 @@ function cardHtml(o){
 
 /* ═══ تغيير الحالة (فوري على الشاشة، والحفظ في الخلفية بالترتيب) ═══ */
 const chain = {};
-async function setStatus(id, st, reason){
+let drivers = [], dseen = {};
+function pickDriver(){
+  if (!drivers.length) return undefined;
+  const m = drivers.map((x, i) => (i + 1) + ') ' + x.name + (dseen[x.id] == null ? ' ⚪' : dseen[x.id] < 120 ? ' 🟢' : ' 🟠')).join('\n');
+  const r = prompt('مين الطيار اللي خرج بالطلب؟ اكتب رقمه (أو سيبها فاضية من غير تتبع):\n' + m + '\n\n🟢 الموقع شغال · 🟠 قديم · ⚪ مفيش إشارة');
+  const n = parseInt(String(r || '').replace(/[٠-٩]/g, x => '٠١٢٣٤٥٦٧٨٩'.indexOf(x)), 10);
+  return n >= 1 && n <= drivers.length ? drivers[n - 1].id : '';
+}
+async function setStatus(id, st, reason, driver){
   const o = orders.find(x => x.id === id); if (!o) return;
   if (st === 'cancelled' && reason === undefined) return openCancel(id);   // الأول بنسأل عن السبب
   const prev = {s: o.status, r: o.reason, u: o.updated}, rs = st === 'cancelled' ? reason : '';
@@ -514,7 +527,7 @@ async function setStatus(id, st, reason){
   toast('⏳ بنحفظ ' + id + ' ← ' + LABEL[st] + '...');
   chain[id] = (chain[id] || Promise.resolve()).then(async () => {
     try {
-      const j = await post({action:'setStatus', user, id, status:st, reason:rs, deferPush:true});
+      const j = await post({action:'setStatus', user, id, status:st, reason:rs, deferPush:true, driver});
       if (!j.ok) throw new Error(j.error || 'fail');
       p.t = Date.now(); if (p.st === st) p.upd = j.updated || p.upd;
       toast('✅ ' + id + ' ← ' + LABEL[st]);
@@ -1018,14 +1031,16 @@ async function seLoad(){
     if (!j.ok) { $('seAreas').innerHTML = '<div class="empty">' + (j.error === 'forbidden' ? '⛔ للمدير بس' : (AUTH_ERR[j.error] || '⚠️ حصل خطأ (اتأكد إنك حدّثت Code.gs وعملت Deploy ▸ New version)')) + '</div>'; return; }
     const c = j.settings; $('seOpen').value = c.open_at; $('seClose').value = c.close_at; $('seBusy').value = c.busy_extra || 0; $('seBusyMsg').value = c.busy_msg || ''; $('sePauseMsg').value = c.pause_msg || '';
     $('seHours').checked = c.hours_on === 'true'; $('sePause').checked = c.pause_on === 'true';
-    $('sePayCash').checked = c.pay_cash !== 'false'; $('sePayWallet').checked = c.pay_wallet !== 'false'; $('sePayInsta').checked = c.pay_instapay !== 'false'; $('sePayMsg').value = c.pay_msg || '';
+    $('sePayCash').checked = c.pay_cash !== 'false'; $('sePayWallet').checked = c.pay_wallet !== 'false'; $('sePayInsta').checked = c.pay_instapay !== 'false'; $('sePayMsg').value = c.pay_msg || ''; $('seOtKey').value = c.ot_key || ''; $('seDrivers').value = c.drivers || ''; updOtUrl();
     seAreas = j.areas.map(a => Object.assign({}, a)); seBuiltin = !!j.builtin; seAreaRender();
   } catch (e) { $('seAreas').innerHTML = '<div class="empty">⚠️ مفيش اتصال</div>'; }
   bkLoad();
 }
+function updOtUrl(){ $('seOtUrl').textContent = $('seOtKey').value.trim() ? API + '?k=' + $('seOtKey').value.trim() : '(اكتب المفتاح الأول)'; }
+$('seOtKey').oninput = updOtUrl;
 $('seSave').onclick = async () => {
   try {
-    const j = await post({action:'settingsSave', user, settings:{hours_on:$('seHours').checked, open_at:$('seOpen').value, close_at:$('seClose').value, busy_extra:+$('seBusy').value || 0, busy_msg:$('seBusyMsg').value.trim(), pause_on:$('sePause').checked, pause_msg:$('sePauseMsg').value.trim(), pay_cash:$('sePayCash').checked, pay_wallet:$('sePayWallet').checked, pay_instapay:$('sePayInsta').checked, pay_msg:$('sePayMsg').value.trim()}});
+    const j = await post({action:'settingsSave', user, settings:{hours_on:$('seHours').checked, open_at:$('seOpen').value, close_at:$('seClose').value, busy_extra:+$('seBusy').value || 0, busy_msg:$('seBusyMsg').value.trim(), pause_on:$('sePause').checked, pause_msg:$('sePauseMsg').value.trim(), pay_cash:$('sePayCash').checked, pay_wallet:$('sePayWallet').checked, pay_instapay:$('sePayInsta').checked, pay_msg:$('sePayMsg').value.trim(), ot_key:$('seOtKey').value.trim(), drivers:$('seDrivers').value.trim()}});
     toast(j.ok ? '✅ اتحفظت الإعدادات' : (j.error === 'bad_time' ? 'المواعيد غير صحيحة' : j.error === 'no_pay' ? '⚠️ لازم طريقة دفع واحدة شغّالة على الأقل' : '⚠️ حصل خطأ'));
   } catch (e) { toast('⚠️ مفيش اتصال'); }
 };
@@ -1092,7 +1107,7 @@ $('grid').addEventListener('click', e => {
   const cp = e.target.closest('[data-copy]'); if (cp) { e.preventDefault(); copyText(cp.dataset.copy); return; }
   const b = e.target.closest('[data-act]'); if (!b) return;
   const card = b.closest('.card'), id = card.dataset.id;
-  if (b.dataset.act === 'set') setStatus(id, b.dataset.st);
+  if (b.dataset.act === 'set') { const oo = orders.find(x => x.id === id); setStatus(id, b.dataset.st, undefined, b.dataset.st === 'out' && oo && oo.type !== 'pickup' ? pickDriver() : undefined); }
   if (b.dataset.act === 'paid') setPaid(id, b.dataset.p === '1');
   if (b.dataset.act === 'print') { const o = orders.find(x => x.id === id); if (o) kotPrint(o); }
 });
