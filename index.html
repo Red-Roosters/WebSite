@@ -4000,13 +4000,14 @@ html[lang="en"] .rr-so-badge::before{content:"Sold out"}
     }
     const t12 = t => { const h = +t.split(':')[0], m = t.split(':')[1], hh = (h % 12) || 12; return hh + (m !== '00' ? ':' + m : '') + ' ' + (h < 6 ? 'فجرًا' : h < 12 ? 'صباحًا' : 'مساءً'); };
     const closedMsg = () => `⏰ المطعم حاليًا مغلق لأنه خارج ساعات العمل، هننتظر تشريفك لينا بطلب في مواعيد العمل من ${t12(CONFIG.hours.open)} إلى ${t12(CONFIG.hours.close)} 🐓`;
+    window.rrIsOpen = isOpenNow; window.rrClosedMsg = closedMsg;   /* السكربتات التانية تقرا نفس المواعيد (من الداشبورد) */
     /* شريط "مقفولين دلوقتي" أعلى الصفحة */
     (function closedBar() {
         const bar = document.createElement('div');
         bar.style.cssText = 'display:none;background:#9E1B1B;color:#fff;text-align:center;font:800 .92rem Cairo,sans-serif;padding:9px 12px;position:relative;z-index:50';
         document.body.insertBefore(bar, document.body.firstChild);
         const sync = () => { const c = !isOpenNow(); bar.style.display = c ? 'block' : 'none'; if (c) bar.textContent = closedMsg(); };
-        sync(); setInterval(sync, 30000);
+        sync(); window.rrSync = sync; setInterval(sync, 30000);
     })();
     /* شريط إشعار: وقف التوصيل / وقت الزحمة (بيتحكم فيه المدير من الداشبورد) */
     const rrNotice = document.createElement('div');
@@ -4286,7 +4287,7 @@ html[lang="en"] .rr-so-badge::before{content:"Sold out"}
         const j = await (await fetch(apiUrl('action=config'))).json(); if (!j || !j.ok) return;
         window.RR_CFG = j;
         try { applyPayCfg(); } catch (e) {}
-        if (j.hours) { CONFIG.hours.enabled = !!j.hours.enabled; if (j.hours.open) CONFIG.hours.open = j.hours.open; if (j.hours.close) CONFIG.hours.close = j.hours.close; }
+        if (j.hours) { CONFIG.hours.enabled = !!j.hours.enabled; if (j.hours.open) CONFIG.hours.open = j.hours.open; if (j.hours.close) CONFIG.hours.close = j.hours.close; if (window.rrSync) window.rrSync(); if (window.rrTick) window.rrTick(); }
         if (Array.isArray(j.areas) && j.areas.length) {
             const cur = areaVal.value !== '' && CONFIG.areas[+areaVal.value] ? CONFIG.areas[+areaVal.value].name : (window.RR_SAVED_AREA || '');
             CONFIG.areas.length = 0; j.areas.forEach(a => CONFIG.areas.push({ name: a.name, fee: +a.fee || 0 }));
@@ -6122,14 +6123,14 @@ html[lang="en"] body{font-family:"Cairo","Tajawal",sans-serif}
 <script>
 (function(){
   try{ if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js'); }catch(e){}
-  function isOpen(){ try{ var p=new Intl.DateTimeFormat('en-GB',{timeZone:'Africa/Cairo',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date()); return p>='11:00'||p<'05:00'; }catch(e){ return true; } }
+  function isOpen(){ try{ if(window.rrIsOpen) return window.rrIsOpen(); var p=new Intl.DateTimeFormat('en-GB',{timeZone:'Africa/Cairo',hour:'2-digit',minute:'2-digit',hour12:false}).format(new Date()); return p>='11:00'||p<'05:00'; }catch(e){ return true; } }
   var f=document.getElementById('checkoutForm'); if(!f) return;
   var msg=document.createElement('div'); msg.id='rrClosed'; msg.textContent='🕙 المطعم مقفول دلوقتي — بنفتح 11 صباحًا. تقدر تجهّز طلبك وتبعته بعد الفتح.';
   function tick(){ var b=f.querySelector('[type=submit]'); if(!b) return; if(!msg.parentNode) b.parentNode.insertBefore(msg,b);
-    var c=!isOpen(); msg.style.display=c?'block':'none';
+    var c=!isOpen(); msg.style.display=c?'block':'none'; if(c&&window.rrClosedMsg) msg.textContent=window.rrClosedMsg();
     if(c){ if(!b.dataset.okt) b.dataset.okt=b.textContent; b.disabled=true; b.textContent='مقفول حاليًا'; }
     else if(b.dataset.okt&&b.textContent==='مقفول حاليًا'){ b.disabled=false; b.textContent=b.dataset.okt; delete b.dataset.okt; } }
-  tick(); setInterval(tick,20000);
+  tick(); window.rrTick=tick; setInterval(tick,20000);
 })();
 </script>
 
