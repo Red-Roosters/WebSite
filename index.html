@@ -4221,7 +4221,7 @@ html[lang="en"] .rr-so-badge::before{content:"Sold out"}
         if (p.length === 11 && !u.phones.includes(p)) u.phones.push(p);
         all[code] = u; LS.set('rr_used_coupons', all);
     }
-    const CP_ERR = { coupon_invalid: '❌ الكوبون غير صحيح أو متوقّف', coupon_expired: '⌛ الكوبون ده انتهت صلاحيته', coupon_limit: '😕 الكوبون ده العدد المتاح منه خلص' };
+    const CP_ERR = { coupon_invalid: '❌ الكوبون غير صحيح أو متوقّف', coupon_expired: '⌛ الكوبون ده انتهت صلاحيته', coupon_limit: '😕 الكوبون ده العدد المتاح منه خلص', coupon_not_new: '🙋 الخصم ده للعملاء الجداد بس (أول طلب ليك)' };
     const USED_MSG = code => `❌ كود ${code} تم استخدامه من قبل. الخصم متاح لأول طلب بس.`;
     function dropUsedCoupon(phone) {
         if (coupon && coupon.def.firstOrderOnly && couponUsed(coupon.code, phone)) {
@@ -4739,7 +4739,8 @@ imChips.previousElementSibling.style.display = noChips ? 'none' : '';
         }
         if (res === 'closed') { pendingId = null; toast(closedMsg(), 7000); return; }
         if (res === 'pay_off') { pendingId = null; loadServerConfig().catch(() => {}); toast('⚠️ طريقة الدفع دي مش متاحة دلوقتي — اختار طريقة تانية', 7000); return; }
-        if (/^coupon_(invalid|expired|limit)$/.test(res)) { pendingId = null; const bad = coupon && coupon.code; coupon = null; $('couponInput').value = ''; setCouponMsg(CP_ERR[res] || '', false); render(); renderSummary(); toast((CP_ERR[res] || '') + (bad ? ' (' + bad + ') — اتشال من طلبك، راجع الإجمالي وأكّد تاني' : ''), 7500); return; }
+        if (res === 'blocked') { pendingId = null; toast('⚠️ تعذّر تنفيذ الطلب حاليًا. كلّمنا على 0237721525 وهنساعدك.', 9000); return; }
+        if (/^coupon_(invalid|expired|limit|not_new)$/.test(res)) { pendingId = null; const bad = coupon && coupon.code; coupon = null; $('couponInput').value = ''; setCouponMsg(CP_ERR[res] || '', false); render(); renderSummary(); toast((CP_ERR[res] || '') + (bad ? ' (' + bad + ') — اتشال من طلبك، راجع الإجمالي وأكّد تاني' : ''), 7500); return; }
         if (res === 'busy') { toast('⏳ طلبات كتيرة في وقت قصير. جرّب بعد دقيقة.', 6000); return; }
         if (res === 'delivery_paused') { pendingId = null; loadServerConfig().catch(() => {}); toast('⏸️ التوصيل متوقف مؤقتًا — تقدر تختار الاستلام من الفرع', 7000); return; }
         if (res === 'area_closed' || res === 'bad_area') { pendingId = null; loadServerConfig().catch(() => {}); toast('⚠️ التوصيل لمنطقتك مش متاح دلوقتي — اختار منطقة تانية أو الاستلام من الفرع', 7000); return; }
@@ -5304,13 +5305,20 @@ new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:tru
   function close(){ $('rrPtsOv').classList.remove('open'); $('rrPtsSheet').classList.remove('open'); }
   b.addEventListener('click',open); $('rrPtsOv').onclick=close; $('rrPtsX').onclick=close; $('ptGo').onclick=load;
   function mine(){try{return JSON.parse(localStorage.getItem('rr_my_codes')||'[]')}catch(e){return []}}
+  function refBlock(r){
+    var fd=r.friend?('خصم '+(r.friend.type==='percent'?r.friend.value+'%':r.friend.value+' جنيه')+(r.friend.min?' على طلب '+r.friend.min+' جنيه فأكتر':'')):'خصم على أول طلب';
+    return '<div class="pt-h">🎁 ادعُ صاحبك</div><div class="pt-card" style="text-align:right"><small>صاحبك بياخد '+fd+' على أول طلب، وانت بتاخد <b>'+r.reward+' نقطة</b> لما طلبه يتسلّم.</small>'+(r.invited?'<small style="display:block;margin-top:6px">دعواتك: '+r.invited+' · نقاط اتأكدت: '+r.earned+(r.pending?' · قيد التأكيد: '+r.pending:'')+'</small>':'')+'<button class="pt-btn" data-ref="'+r.code+'" style="margin-top:10px;width:100%">📤 ابعت الدعوة لصاحبك</button></div>';
+  }
   function load(){
     var ph=norm($('ptPhone').value), out=$('ptOut'); if(ph.length!==11){ out.innerHTML='<p class="pt-note">⚠️ اكتب رقم موبايل صحيح (11 رقم)</p>'; return; }
     out.innerHTML='<p class="pt-note">⏳ جاري التحميل...</p>';
-    fetch(u('action=points&phone='+ph)).then(function(r){return r.json()}).then(function(j){
-      if(!j||!j.ok) throw 0; var p=j.points, next=(Math.floor(p/STEP)+1)*STEP, pct=Math.min(100,Math.round((p%STEP)/STEP*100));
+    fetch(u('action=points&phone='+ph+'&did='+(window.rrDid?window.rrDid():''))).then(function(r){return r.json()}).then(function(j){
+      if(!j||!j.ok) throw 0;
+      if(j.locked){ out.innerHTML='<div class="pt-card"><small>🔒 رصيد النقاط</small><b style="font-size:1.05rem;display:block;margin:6px 0">بيظهر من الجهاز اللي طلبت منه</b><small>حفاظًا على نقاطك، الرصيد والاستبدال متاحين بس من المتصفح اللي عملت منه طلب بالرقم ده. لو غيّرت جهازك أو مسحت بيانات المتصفح: اعمل طلب من الجهاز الجديد وهيتربط تلقائيًا، أو كلّمنا على 0237721525.</small></div>'; return; }
+      var p=j.points, next=(Math.floor(p/STEP)+1)*STEP, pct=Math.min(100,Math.round((p%STEP)/STEP*100));
       var h='<div class="pt-card"><small>رصيدك الحالي</small><b>'+p+'</b><small>نقطة · قيمة تعادل '+(p/PER).toFixed(0)+' جنيه</small><div class="pt-bar"><i style="width:'+pct+'%"></i></div><small style="display:block;margin-top:6px">باقي '+(next-p)+' نقطة للحصول على خصم '+(next/PER)+' جنيه</small></div>';
       if(j.pending>0) h+='<p class="pt-note">⏳ نقاط قيد التأكيد: '+j.pending+' (بتتضاف بعد ما المطعم يأكد استلامك للطلب)</p>';
+      if(j.ref) h+=refBlock(j.ref);
       h+='<div class="pt-h">🛍️ متجر النقاط</div>';
       [2000,4000,6000,10000].forEach(function(t){ h+='<div class="pt-tier"><span>خصم '+(t/PER)+' ج<small>'+t+' نقطة</small></span><button class="pt-btn" data-p="'+t+'"'+(p>=t?'':' disabled')+'>استبدل</button></div>'; });
       var m=mine().filter(function(c){return c.phone===ph});
@@ -5320,7 +5328,7 @@ new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:tru
   }
   $('ptOut').addEventListener('click',function(e){
     var r=e.target.closest('[data-p]'), us=e.target.closest('[data-use]');
-    if(r){ r.disabled=true; r.textContent='...'; post({action:'redeem',phone:norm($('ptPhone').value),points:+r.dataset.p}).then(function(j){
+    if(r){ r.disabled=true; r.textContent='...'; post({action:'redeem',phone:norm($('ptPhone').value),points:+r.dataset.p,did:window.rrDid?window.rrDid():''}).then(function(j){
         if(j&&j.ok){ var a=mine(); a.unshift({code:j.code,value:j.value,phone:norm($('ptPhone').value)}); localStorage.setItem('rr_my_codes',JSON.stringify(a)); } load(); }).catch(load); }
     if(us){ var i=document.getElementById('couponInput'), cb=document.getElementById('couponBtn'); if(i&&cb){ i.value=us.dataset.use; cb.click(); } close(); }
   });
@@ -5784,8 +5792,9 @@ new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:tru
   /* بيرجّع 'ok' | 'coupon_used' | 'fail' — محاولتين (السيرفر بيتجاهل التكرار بنفس رقم الطلب) */
   window.rrTrackSave=function(o){
     if(!o.did&&window.rrDid) o.did=window.rrDid();
+    if(o.coupon==='FRIEND'&&!o.ref){ try{ o.ref=localStorage.getItem('rr_ref')||''; }catch(e){} }   // كود دعوة الصاحب
     function attempt(n){ return post1(o,18000).then(function(j){
-        if(j&&j.ok) return 'ok'; if(j&&j.error==='coupon_used') return 'coupon_used'; if(j&&j.error==='closed') return 'closed'; if(j&&j.error==='pay_off') return 'pay_off'; if(j&&/^coupon_(invalid|expired|limit)$/.test(j.error)) return j.error; if(j&&j.error==='busy') return 'busy'; if(j&&j.error==='bad_total') return 'bad_total'; if(j&&(j.error==='bad_price'||j.error==='bad_item')) return 'bad_price'; if(j&&/^(delivery_paused|area_closed|bad_area)$/.test(j.error)) return j.error; if(j&&j.error==='soldout'){ window.rrSoNames=j.items||[]; return 'soldout'; }
+        if(j&&j.ok) return 'ok'; if(j&&j.error==='coupon_used') return 'coupon_used'; if(j&&j.error==='closed') return 'closed'; if(j&&j.error==='pay_off') return 'pay_off'; if(j&&/^coupon_(invalid|expired|limit|not_new)$/.test(j.error)) return j.error; if(j&&j.error==='blocked') return 'blocked'; if(j&&j.error==='busy') return 'busy'; if(j&&j.error==='bad_total') return 'bad_total'; if(j&&(j.error==='bad_price'||j.error==='bad_item')) return 'bad_price'; if(j&&/^(delivery_paused|area_closed|bad_area)$/.test(j.error)) return j.error; if(j&&j.error==='soldout'){ window.rrSoNames=j.items||[]; return 'soldout'; }
         return n<2?attempt(n+1):'fail';
       },function(){ return n<2?attempt(n+1):'fail'; }); }
     return attempt(1).then(function(r){
@@ -6198,7 +6207,7 @@ window.RR_GA='';
 (function(){
   var $=function(i){return document.getElementById(i)};
   var lsg=function(k){try{return localStorage.getItem(k)}catch(e){return null}}, lss=function(k,v){try{localStorage.setItem(k,v)}catch(e){}};
-  function say(m){ var t=$('toast')||document.querySelector('.toast'); if(t){ t.textContent=m; t.classList.add('show'); clearTimeout(say.t); say.t=setTimeout(function(){t.classList.remove('show')},2600); } else { try{ alert(m); }catch(e){} } }
+  function say(m){ var t=$('rrToast')||$('toast'); if(t){ t.textContent=m; t.classList.add('show'); clearTimeout(say.t); say.t=setTimeout(function(){t.classList.remove('show')},2600); } else { try{ alert(m); }catch(e){} } }
   var SITE=location.origin+location.pathname;
   function share(title,text){
     var data={title:title,text:text,url:SITE};
@@ -6229,6 +6238,92 @@ window.RR_GA='';
     $('rrReX').onclick=function(){ var o=lastOrder(); if(o) lss('rr_re_hide',String(o.id)); re.style.display='none'; };
     document.addEventListener('rr:ordered',function(){ setTimeout(paintRe,300); }); }
 
+})();
+</script>
+
+<style>
+#rrRf{display:none;align-items:center;justify-content:space-between;gap:10px;margin:10px 12px;padding:10px 14px;border-radius:16px;background:#E8F6EE;border:1.5px solid #8fd0ae;color:#0B5A3C;font-weight:800;font-size:.9rem}
+#rrRf small{display:block;font-weight:600;color:#1b7a55}#rrRf .a{display:flex;gap:6px;flex:0 0 auto}
+#rrRf button{border:0;border-radius:12px;padding:9px 14px;font:800 .85rem "Cairo",sans-serif;cursor:pointer}#rrRf .go{background:#0B6E4F;color:#fff}#rrRf .x{background:transparent;color:#1b7a55;padding:9px 8px}
+.ab{margin:8px 0 2px;grid-column:1/-1}.ab small{display:block;color:#6B6B6B;font-weight:700;margin-bottom:6px}
+.ab-chips{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ab-chip{border:1.5px solid #eadfd8;background:#fff;border-radius:999px;padding:7px 12px;font:800 .84rem "Cairo",sans-serif;cursor:pointer;color:#1E1411}
+.ab-chip:hover{border-color:#D92B2B;color:#D92B2B}.ab-chip i{font-style:normal;margin-inline-start:8px;opacity:.55}
+.ab-save{border:1.5px dashed #D92B2B;background:#fff;color:#D92B2B;border-radius:999px;padding:7px 12px;font:800 .84rem "Cairo",sans-serif;cursor:pointer}
+</style>
+<div id="rrRf" role="region" aria-label="دعوة صاحب"><div><span id="rrRfT">🎁 صاحبك بعتلك خصم على أول طلب</span><small id="rrRfS"></small></div><div class="a"><button type="button" class="go" id="rrRfGo">فعّل الخصم</button><button type="button" class="x" id="rrRfX" aria-label="إخفاء">✕</button></div></div>
+<script>
+/* ═══ دعوة صديق + عناوين محفوظة ═══ */
+(function(){
+  var $=function(i){return document.getElementById(i)};
+  var lsg=function(k){try{return localStorage.getItem(k)}catch(e){return null}}, lss=function(k,v){try{localStorage.setItem(k,v)}catch(e){}};
+  function say(m){ var t=$('rrToast')||$('toast'); if(t){ t.textContent=m; t.classList.add('show'); clearTimeout(say.t); say.t=setTimeout(function(){t.classList.remove('show')},3200); } else { try{ alert(m); }catch(e){} } }
+  var SITE=location.origin+location.pathname;
+
+  /* مشاركة الدعوة (من شاشة نقاطي) */
+  document.addEventListener('click',function(e){
+    var b=e.target.closest&&e.target.closest('[data-ref]'); if(!b) return;
+    var code=b.dataset.ref, url=SITE+'?ref='+code, text='🎁 جرّب ريد روستر 🍗 ساندوتشات كرسبي وناشفيل طازة — ادخل من اللينك ده وخد خصم على أول طلب:';
+    if(navigator.share){ navigator.share({title:'Red Roosters 🐓',text:text,url:url}).catch(function(){}); }
+    else if(navigator.clipboard&&navigator.clipboard.writeText){ navigator.clipboard.writeText(text+'\n'+url).then(function(){say('✅ اتنسخت الدعوة — ابعتها لصاحبك')},function(){say(url)}); }
+    else say(url);
+  });
+
+  /* الصاحب اللي جه من لينك دعوة: شريط خصم أول طلب */
+  var m=/[?&]ref=([A-Za-z0-9]{7})(?:&|#|$)/.exec(location.search); if(m) lss('rr_ref',m[1].toUpperCase());
+  var ref=lsg('rr_ref'), rf=$('rrRf'), mainEl=document.querySelector('main'), API=window.RR_API;
+  function hasOrders(){ try{ if((JSON.parse(lsg('rr_orders')||'[]')||[]).length) return true; }catch(e){} return !!lsg('rr_last_order'); }
+  if(ref&&rf&&mainEl&&API&&!hasOrders()&&lsg('rr_ref_hide')!==ref){
+    fetch(API+(API.indexOf('?')>-1?'&':'?')+'action=couponDef&code=FRIEND').then(function(r){return r.json()}).then(function(j){
+      if(!j||!j.ok||!j.found) return; var d=j.def, v=d.type==='percent'?d.value+'%':d.value+' جنيه';
+      $('rrRfT').textContent='🎁 صاحبك بعتلك خصم '+v+' على أول طلب'; $('rrRfS').textContent=d.min?('لأي طلب '+d.min+' جنيه فأكتر'):'';
+      mainEl.insertAdjacentElement('afterbegin',rf); rf.style.display='flex';
+    }).catch(function(){});
+    $('rrRfGo').onclick=function(){
+      var i=$('couponInput'), cb=$('couponBtn'); if(!i||!cb) return; i.value='FRIEND'; cb.click(); rf.style.display='none';
+      var f=document.querySelector('.cart-fab')||document.querySelector('#rrTabs [data-t=cart]'); if(f) setTimeout(function(){f.click()},300);
+    };
+    $('rrRfX').onclick=function(){ rf.style.display='none'; lss('rr_ref_hide',ref); };
+    document.addEventListener('rr:ordered',function(){ rf.style.display='none'; });
+  }
+
+  /* عناوين محفوظة (لحد ٥) */
+  var AK='rr_addrs', MAX=5, F=['street','station','building','floor','apt','landmark'], title=$('addrTitle');
+  function book(){ try{ var a=JSON.parse(lsg(AK)||'[]'); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
+  function store(a){ lss(AK,JSON.stringify(a.slice(0,MAX))); }
+  function cur(){ var ar=window.rrArea, a={}, i=ar?ar.idx():''; F.forEach(function(f){ a[f]=(($('f_'+f)||{}).value||'').trim(); }); a.area=(i!==''&&ar&&ar.areas[+i])?ar.areas[+i].name:''; return a; }
+  function same(x,y){ return x.area===y.area&&x.street===y.street&&x.building===y.building&&x.floor===y.floor&&x.apt===y.apt; }
+  function complete(a){ return a.area&&a.street&&a.building&&a.floor&&a.apt&&a.landmark; }
+  function esc(t){ return String(t).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]}); }
+  var box=null;
+  function paint(){
+    if(!box) return; var a=book();
+    box.innerHTML='<small>📍 عناويني المحفوظة</small><div class="ab-chips">'+a.map(function(x,i){ return '<button type="button" class="ab-chip" data-use="'+i+'">'+esc(x.label)+'<i data-del="'+i+'" title="مسح" role="button">✕</i></button>'; }).join('')+(a.length<MAX?'<button type="button" class="ab-save" id="abSave">💾 احفظ العنوان ده</button>':'')+'</div>';
+    box.style.display=(title&&title.style.display==='none')?'none':'';
+  }
+  function fill(x){
+    var ar=window.rrArea, i=ar?ar.areas.findIndex(function(z){return z.name===x.area}):-1;
+    if(i<0){ say('⚠️ المنطقة دي مش متاحة للتوصيل دلوقتي — اختار منطقة تانية'); } else ar.set(i);
+    F.forEach(function(f){ var el=$('f_'+f); if(el){ el.value=x[f]||''; el.dispatchEvent(new Event('input',{bubbles:true})); } });
+    say('✅ اتحمّل عنوان "'+x.label+'"');
+  }
+  function add(label,a){ var l=book().filter(function(x){return x.label!==label&&!same(x,a)}); l.unshift(Object.assign({label:label},a)); store(l); paint(); }
+  if(title&&title.parentNode){
+    box=document.createElement('div'); box.className='ab'; title.insertAdjacentElement('afterend',box); paint();
+    box.addEventListener('click',function(e){
+      var del=e.target.closest('[data-del]'), use=e.target.closest('[data-use]');
+      if(del){ e.stopPropagation(); var a=book(); a.splice(+del.dataset.del,1); store(a); paint(); return; }
+      if(use){ var x=book()[+use.dataset.use]; if(x) fill(x); return; }
+      if(e.target.id==='abSave'){
+        var c=cur(); if(!complete(c)){ say('⚠️ كمّل بيانات العنوان الأول (المنطقة والشارع والعمارة والدور والشقة والعلامة)'); return; }
+        var n=book().length, def=n===0?'البيت':n===1?'الشغل':'عنوان '+(n+1), l=(window.prompt('اسم العنوان (مثال: البيت، الشغل):',def)||'').trim().slice(0,20); if(!l) return;
+        add(l,c); say('✅ اتحفظ العنوان "'+l+'"');
+      }
+    });
+    if(window.MutationObserver) new MutationObserver(paint).observe(title,{attributes:true,attributeFilter:['style']});
+    /* أول طلب توصيل: بنحفظ العنوان تلقائيًا باسم "البيت" */
+    document.addEventListener('rr:ordered',function(){ var c=cur(); if(!book().length&&complete(c)&&title.style.display!=='none') add('البيت',c); });
+  }
 })();
 </script>
 </body>
