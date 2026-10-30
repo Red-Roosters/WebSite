@@ -196,6 +196,15 @@ main.wide{max-width:none}
 .frm label.ck{display:flex;gap:6px;align-items:center;font-size:.86rem;font-weight:700}
 .frm input[type=checkbox]{flex:0 0 auto;min-width:0;width:auto}
 .vd{font-size:.78rem;font-weight:800}
+
+.flg{font-size:.8rem;font-weight:800;border-radius:10px;padding:5px 10px;background:#FFF3CD;color:#7A5800;border:1px solid #F5A623}
+.flg.bl{background:#FDE7EC;color:#a01036;border-color:#f3b4c2}
+#lrChip{background:#FFF3CD;border-color:#F5A623;color:#7A5800}
+#pbChip{background:#FDE7EC;border-color:#f3b4c2;color:#a01036}
+.cx .ck{display:flex;gap:8px;align-items:center;font-size:.86rem;font-weight:700;margin:10px 0 0;color:#7A5800}
+.cx .ck input{width:auto;flex:0 0 auto}
+.lri{padding:9px 0;border-top:1px dashed #ddd;font-size:.92rem}.lri:first-child{border-top:0}
+.sp-ok{color:var(--green)}.sp-bad{color:#c01048}.sp-warn{color:#8a6100}
 </style>
 </head>
 <body>
@@ -217,6 +226,8 @@ main.wide{max-width:none}
   <div class="bar">
     <h1>🐓 طلبات ريد روستر</h1>
     <span id="who"></span>
+    <button class="ib hide" id="lrChip" type="button">⭐ 0</button>
+    <button class="ib hide" id="pbChip" type="button">🔕 الإشعارات واقفة</button>
     <button class="ib act hide" id="vOrders">🗂️ الطلبات</button>
     <button class="ib hide" id="vMenu">🚫 الأصناف</button>
     <button class="ib hide" id="vAn">📊 التحليلات</button>
@@ -304,6 +315,12 @@ main.wide{max-width:none}
       <div class="hint">رابط OwnTracks (Mode: HTTP): <b id="seOtUrl" dir="ltr" style="user-select:all;word-break:break-all"></b><br>الكود (Tracker ID) في تطبيق كل طيار لازم يطابق الكود هنا (حرفين). عند الضغط على «خرج للتوصيل» هتختار الطيار، والعميل يشوف مكانه على الخريطة.</div>
       <div class="hint">التغيير بيظهر على الموقع خلال دقيقة تقريبًا، والسيرفر هو اللي بيطبّقه. وقت الزحمة: الرقم اللي هنا بيتضاف على الوقت المتوقع اللي العميل بيشوفه. السيرفر بيدّي ٥ دقايق سماح بعد ميعاد القفل.</div></div>
     <div class="panel"><h2>🗺️ مناطق التوصيل والرسوم</h2><div id="seAreas">⏳...</div></div>
+    <div class="panel"><h2>🎁 دعوة صديق</h2>
+      <div class="cpf"><label>مكافأة اللي دعا (نقطة)<input type="number" id="seRefPts" min="0" max="5000" placeholder="500"></label><label>أقصى مكافآت لكل عميل في ٣٠ يوم<input type="number" id="seRefCap" min="1" max="100" placeholder="20"></label></div>
+      <div class="frm" style="margin-top:12px;align-items:center"><label class="ck"><input type="checkbox" id="seRefOn"> البرنامج شغّال</label><button class="btn main" id="seRefSave" type="button">💾 حفظ</button></div>
+      <div class="hint">العميل بيبعت لصاحبه لينك من "نقاطي". الصاحب بياخد خصم أول طلب بكوبون <b dir="ltr">FRIEND</b> (قيمته وحده الأدنى من تبويب الكوبونات)، واللي دعا بياخد النقاط بعد ما طلب صاحبه يتسلّم. الخصم بيشتغل بس لعميل جديد فعلًا (رقم وجهاز مالهمش طلبات قبل كده). ١٠ نقاط = ١ جنيه والاستبدال بمضاعفات ٢٠٠٠.</div></div>
+    <div class="panel"><h2>🔔 حالة إشعارات العملاء</h2><div id="seBell">⏳...</div></div>
+    <div class="panel"><h2>🚫 الأرقام المحظورة والتنبيهات</h2><div id="seBl">⏳...</div></div>
     <div class="panel"><h2>💾 النسخ الاحتياطي والتقرير اليومي</h2><div id="seBk">⏳...</div></div>
   </main>
   <main id="stMain" class="hide">
@@ -329,9 +346,11 @@ main.wide{max-width:none}
     <p>اختار السبب — هيظهر للعميل في صفحة تتبع طلبه.</p>
     <div class="cxl" id="cxList"></div>
     <textarea id="cxOther" class="hide" maxlength="120" placeholder="اكتب السبب اللي هيظهر للعميل"></textarea>
+    <label class="ck"><input type="checkbox" id="cxFlag"> 🚩 علّم الرقم كعميل مزعج (طلب وهمي / مردّش) — ٣ تنبيهات = حظر تلقائي، ومش بيظهر للعميل</label>
     <div class="cxa"><button class="btn cancelok" id="cxOk" disabled>تأكيد الإلغاء</button><button class="btn ghost" id="cxNo">رجوع</button></div>
   </div>
 </div>
+<div id="lr" class="cx hide" role="dialog" aria-modal="true" aria-label="تقييمات منخفضة"><div class="cxb"><h2>⭐ تقييمات منخفضة (آخر ٣ أيام)</h2><p>كلّم العميل بسرعة — الرقم والطلب في كارت الطلب أو تبويب العملاء.</p><div id="lrList"></div><div class="cxa"><button class="btn ghost" id="lrX" type="button">إغلاق</button></div></div></div>
 <div id="toast"></div>
 
 <script>
@@ -357,6 +376,7 @@ let user = '', pass = '', token = '', role = 'staff', myName = '', view = 'order
 try { const c = JSON.parse(sessionStorage.getItem('rr_admin_cred') || localStorage.getItem('rr_admin_cred') || 'null'); if (c) { user = c.u || ''; pass = c.p || ''; token = c.t || ''; } } catch (e) {}
 const AUTH_ERR = {locked:'اتقفل الدخول مؤقتًا (محاولات كتير غلط). جرّب بعد 10 دقايق.', bad:'اسم المستخدم أو كلمة السر غلط', disabled:'الحساب ده متوقّف. كلّم المدير.', bad_token:'انتهت الجلسة، سجّل دخولك تاني.', bad_action:'لازم تحدّث ملف Code.gs وتعمل Deploy ▸ New version الأول.', busy:'محاولات كتير، جرّب بعد شوية.'};
 function bizStart(ts){ const d = new Date(ts == null ? Date.now() : ts); const t = d.getTime(); d.setHours(DAY_START_HOUR, 0, 0, 0); if (t < d.getTime()) d.setDate(d.getDate() - 1); return d.getTime(); }
+let flags = {}, lowData = null;
 const pend = new Map();   // تغييرات لسه ماتأكدتش من السيرفر: id → {st, reason, upd, paid, busy, t}
 let orders = [], tab = 'board', query = '', known = null, sound = true, lastBeep = 0, timer = null, ac = null, ringT = null, wl = null, flip = false;
 
@@ -426,7 +446,7 @@ async function loadNow(){
     overlay(j.orders);
     setLive(true); role = j.role || 'staff'; myName = j.name || user; applyRole();
     const fresh = j.orders.filter(o => known && !known.has(o.id) && o.status === 'new');
-    known = new Set(j.orders.map(o => o.id)); orders = j.orders; drivers = j.drivers || []; dseen = j.dseen || {}; dpos = j.dpos || {}; dasg = j.dasg || {};
+    known = new Set(j.orders.map(o => o.id)); orders = j.orders; flags = j.flags || {}; drivers = j.drivers || []; dseen = j.dseen || {}; dpos = j.dpos || {}; dasg = j.dasg || {}; chips(j);
     if (Array.isArray(j.soldout) && !soBusy && Date.now() - soLast > 4000) { soList = j.soldout; mnRender(); }
     render(); drvBarRender(); updateDrvMap();
     if (fresh.length) { toast('🔔 طلب جديد: ' + fresh.map(o => o.name).join('، ')); pushNotify('🔔 طلب جديد — ريد روستر', fresh.map(o => o.name + ' · ' + o.total + ' ج').join('\n')); ringTick(); }
@@ -488,7 +508,7 @@ function cardHtml(o){
   return '<article class="card ' + o.status + (late ? ' late' : '') + ((pend.get(o.id) || {}).busy ? ' saving' : '') + '" data-id="' + esc(o.id) + '">' +
     '<div class="top"><span class="oid">#' + esc(o.id) + '</span><span class="chip ' + o.status + '">' + esc(lbl(o)) + '</span></div>' +
     '<div class="sub"><span>🕒 ' + clock(o.time) + ' · ' + ago(o.time) + '</span><span>' + (o.type === 'pickup' ? '🏪 استلام من الفرع' : '🛵 دليفري') + '</span>' + lastBy(o) + (late ? '<span class="late">⏰ عدّى ' + LATE_MIN + ' دقيقة</span>' : '') + '</div>' +
-    '<div class="who">' + esc(o.name) + '</div>' +
+    '<div class="who">' + esc(o.name) + '</div>' + flagHtml(o) +
     '<div class="ph"><a class="n" href="#" data-copy="' + esc(o.phone) + '" title="اضغط للنسخ">📋 ' + esc(o.phone) + '</a><a class="cl2" href="tel:' + esc(o.phone) + '" title="اتصال">📞</a>' + (o.phone2 ? '<a class="n" href="#" data-copy="' + esc(o.phone2) + '" title="اضغط للنسخ">📋 ' + esc(o.phone2) + '</a><a class="cl2" href="tel:' + esc(o.phone2) + '" title="اتصال">📞</a>' : '') + '<a class="wa" target="_blank" rel="noopener" href="' + waLink(o) + '">💬 ابعت تحديث للعميل</a></div>' +
     '<div class="addr">📍 ' + esc(o.address) + '</div>' +
     '<div class="items">' + o.items.map(i => '<div class="it"><span><span class="q">' + i.q + '×</span>' + esc(i.n) +
@@ -503,7 +523,7 @@ function cardHtml(o){
     (o.type !== 'pickup' && o.lat != null && ACTIVE.includes(o.status) ? '<div class="note">📍 <a href="https://www.google.com/maps/dir/?api=1&destination=' + o.lat + ',' + o.lon + '" target="_blank" rel="noopener">لوكيشن العميل على الخريطة</a></div>' : '') +
     (o.status === 'out' && o.type !== 'pickup' && drivers.length ? (() => { const dv = drivers.find(x => x.id === dasg[o.id]); return '<div class="note">🛵 الطيار: <b>' + (dv ? esc(dv.name) + ' ' + dDot(dv.id) : 'مش محدد (العميل مش شايف خريطة)') + '</b></div>'; })() : '') +
     '<div class="acts">' + (ns ? '<button class="btn main" data-act="set" data-st="' + ns[0] + '">' + ns[1] + '</button>' : '') +
-      (o.payment !== 'cash' ? '<button class="btn ghost" data-act="paid" data-p="' + (o.paid ? 0 : 1) + '">' + (o.paid ? '↩︎ التحويل لسه ماوصلش' : '💰 تم استلام التحويل') + '</button>' : '') +
+      flagBtns(o) + (o.payment !== 'cash' ? '<button class="btn ghost" data-act="paid" data-p="' + (o.paid ? 0 : 1) + '">' + (o.paid ? '↩︎ التحويل لسه ماوصلش' : '💰 تم استلام التحويل') + '</button>' : '') +
       (o.status === 'out' && o.type !== 'pickup' && drivers.length ? '<button class="btn ghost" data-act="drv">🛵 غيّر الطيار</button>' + (dasg[o.id] ? '<button class="btn ghost" data-act="drvmap">🗺️ الخريطة</button><button class="btn ghost" data-act="drvwa">📲 ابعت للطيار</button>' : '') : '') +
       '<button class="btn ghost" data-act="print">🖨️ طباعة</button>' +
       (ACTIVE.includes(o.status) ? '<button class="btn danger" data-act="set" data-st="cancelled">إلغاء</button>' : '') +
@@ -634,7 +654,7 @@ let cxId = null, cxPick = null;
 function cxReason(){ return cxPick === 'other' ? $('cxOther').value.trim() : cxPick; }
 function cxSync(){ $('cxOk').disabled = !cxReason(); }
 function openCancel(id){
-  cxId = id; cxPick = null; $('cxId').textContent = '#' + id; $('cxOther').value = ''; $('cxOther').classList.add('hide');
+  cxId = id; cxPick = null; $('cxFlag').checked = false; $('cxId').textContent = '#' + id; $('cxOther').value = ''; $('cxOther').classList.add('hide');
   $('cxList').innerHTML = CANCEL_REASONS.map((r, i) => '<button type="button" class="rs" data-i="' + i + '">' + esc(r) + '</button>').join('') + '<button type="button" class="rs" data-i="other">✍️ سبب تاني...</button>';
   $('cx').classList.remove('hide'); cxSync();
 }
@@ -649,7 +669,7 @@ $('cxOther').addEventListener('input', cxSync);
 $('cxNo').onclick = closeCancel;
 $('cx').addEventListener('click', e => { if (e.target === $('cx')) closeCancel(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && cxId) closeCancel(); });
-$('cxOk').onclick = () => { const r = cxReason(), id = cxId; if (!r) return; closeCancel(); setStatus(id, 'cancelled', r); };
+$('cxOk').onclick = () => { const r = cxReason(), id = cxId, fl = $('cxFlag').checked; if (!r) return; closeCancel(); setStatus(id, 'cancelled', r); if (fl) { const oo = orders.find(x => x.id === id); if (oo) custFlag(oo.phone, 'strike', true); } };
 
 
 /* ═══ الأدوار والتنقل ═══ */
@@ -1110,19 +1130,96 @@ async function seLoad(){
     if (!j.ok) { $('seAreas').innerHTML = '<div class="empty">' + (j.error === 'forbidden' ? '⛔ للمدير بس' : (AUTH_ERR[j.error] || '⚠️ حصل خطأ (اتأكد إنك حدّثت Code.gs وعملت Deploy ▸ New version)')) + '</div>'; return; }
     const c = j.settings; $('seOpen').value = c.open_at; $('seClose').value = c.close_at; $('seBusy').value = c.busy_extra || 0; $('seBusyMsg').value = c.busy_msg || ''; $('sePauseMsg').value = c.pause_msg || '';
     $('seHours').checked = c.hours_on === 'true'; $('sePause').checked = c.pause_on === 'true';
+    $('seRefOn').checked = c.ref_on !== 'false'; $('seRefPts').value = c.ref_points || 500; $('seRefCap').value = c.ref_cap || 20;
     $('sePayCash').checked = c.pay_cash !== 'false'; $('sePayWallet').checked = c.pay_wallet !== 'false'; $('sePayInsta').checked = c.pay_instapay !== 'false'; $('sePayMsg').value = c.pay_msg || ''; $('seOtKey').value = c.ot_key || ''; $('seDrivers').value = c.drivers || ''; updOtUrl();
     seAreas = j.areas.map(a => Object.assign({}, a)); seBuiltin = !!j.builtin; seAreaRender();
   } catch (e) { $('seAreas').innerHTML = '<div class="empty">⚠️ مفيش اتصال</div>'; }
-  bkLoad();
+  bkLoad(); bellLoad(); blLoad();
 }
 function updOtUrl(){ $('seOtUrl').textContent = $('seOtKey').value.trim() ? API + '?k=' + $('seOtKey').value.trim() : '(اكتب المفتاح الأول)'; }
 $('seOtKey').oninput = updOtUrl;
 $('seSave').onclick = async () => {
   try {
-    const j = await post({action:'settingsSave', user, settings:{hours_on:$('seHours').checked, open_at:$('seOpen').value, close_at:$('seClose').value, busy_extra:+$('seBusy').value || 0, busy_msg:$('seBusyMsg').value.trim(), pause_on:$('sePause').checked, pause_msg:$('sePauseMsg').value.trim(), pay_cash:$('sePayCash').checked, pay_wallet:$('sePayWallet').checked, pay_instapay:$('sePayInsta').checked, pay_msg:$('sePayMsg').value.trim(), ot_key:$('seOtKey').value.trim(), drivers:$('seDrivers').value.trim()}});
+    const j = await post({action:'settingsSave', user, settings:{hours_on:$('seHours').checked, open_at:$('seOpen').value, close_at:$('seClose').value, busy_extra:+$('seBusy').value || 0, busy_msg:$('seBusyMsg').value.trim(), pause_on:$('sePause').checked, pause_msg:$('sePauseMsg').value.trim(), ref_on:$('seRefOn').checked, ref_points:+$('seRefPts').value || 0, ref_cap:+$('seRefCap').value || 20, pay_cash:$('sePayCash').checked, pay_wallet:$('sePayWallet').checked, pay_instapay:$('sePayInsta').checked, pay_msg:$('sePayMsg').value.trim(), ot_key:$('seOtKey').value.trim(), drivers:$('seDrivers').value.trim()}});
     toast(j.ok ? '✅ اتحفظت الإعدادات' : (j.error === 'bad_time' ? 'المواعيد غير صحيحة' : j.error === 'no_pay' ? '⚠️ لازم طريقة دفع واحدة شغّالة على الأقل' : '⚠️ حصل خطأ'));
   } catch (e) { toast('⚠️ مفيش اتصال'); }
 };
+/* ═══ تنبيهات: تقييم منخفض + الإشعارات واقفة ═══ */
+function chips(j){
+  const lr = $('lrChip'), pb = $('pbChip');
+  if (j.low) {
+    lowData = j.low; const seen = +localStorage.getItem('rr_lr_seen') || 0, fresh = j.low.list.filter(x => x.t > seen).length;
+    lr.classList.toggle('hide', !fresh); lr.textContent = '⭐ ' + fresh + ' تقييم منخفض';
+    if (fresh > (chips.last || 0)) toast('⭐ تقييم منخفض جديد — اضغط على الزرار فوق'); chips.last = fresh;
+  } else lr.classList.add('hide');
+  pb.classList.toggle('hide', !j.pushBad);
+}
+$('lrChip').onclick = () => {
+  const l = (lowData && lowData.list) || [];
+  $('lrList').innerHTML = l.length ? l.map(x => '<div class="lri"><b dir="ltr">#' + esc(x.id) + '</b> ' + '★'.repeat(x.stars) + '☆'.repeat(5 - x.stars) + ' <small style="color:#6B6B6B">' + new Date(x.time || x.t).toLocaleString('ar-EG', {day:'numeric', month:'short', hour:'numeric', minute:'2-digit'}) + '</small>' + (x.comment ? '<div>' + esc(x.comment) + '</div>' : '') + '</div>').join('') : '<div class="empty">مفيش</div>';
+  $('lr').classList.remove('hide'); localStorage.setItem('rr_lr_seen', String(Date.now())); $('lrChip').classList.add('hide'); chips.last = 0;
+};
+$('lrX').onclick = () => $('lr').classList.add('hide'); $('lr').addEventListener('click', e => { if (e.target === $('lr')) $('lr').classList.add('hide'); });
+$('pbChip').onclick = () => $('vSet').click();
+
+/* ═══ علامات العميل: تنبيه / حظر ═══ */
+function flagHtml(o){
+  const f = flags[o.phone]; if (!f) return '';
+  const p = []; if (f.b) p.push('🚫 رقم محظور'); else if (f.s) p.push('🚩 ' + f.s + ' تنبيه سابق'); if (f.c >= 2) p.push('⚠️ ' + f.c + ' طلب ملغي سابقًا');
+  return p.length ? '<div class="flg' + (f.b ? ' bl' : '') + '">' + p.join(' · ') + '</div>' : '';
+}
+function flagBtns(o){
+  const f = flags[o.phone] || {};
+  if (f.b) return role === 'manager' ? '<button class="btn ghost" data-act="flag" data-op="unblock">✅ رفع الحظر</button>' : '';
+  return '<button class="btn ghost" data-act="flag" data-op="strike">🚩 تنبيه</button><button class="btn ghost" data-act="flag" data-op="block">🚫 حظر</button>';
+}
+async function custFlag(phone, op, quiet, name){
+  if (!quiet && op === 'block' && !confirm('حظر الرقم ' + phone + (name ? ' (' + name + ')' : '') + '؟ هيتمنع من الطلب من الموقع.')) return;
+  if (!quiet && op === 'unblock' && !confirm('رفع الحظر عن ' + phone + '؟')) return;
+  try {
+    const j = await post({action:'custFlag', user, phone, op});
+    if (!j.ok) throw new Error(j.error || 'fail');
+    flags[phone] = Object.assign({}, flags[phone], j.flag); render();
+    toast(op === 'block' ? '🚫 اتحظر ' + phone : op === 'unblock' ? '✅ اترفع الحظر' : j.flag.b ? '🚫 وصل ٣ تنبيهات — الرقم اتحظر تلقائيًا' : '🚩 اتسجّل تنبيه (' + j.flag.s + ')');
+  } catch (e) { toast(String(e.message) === 'forbidden' ? '⛔ رفع الحظر للمدير بس' : '⚠️ معرفناش نسجّل'); }
+}
+async function blLoad(){
+  try {
+    const j = await post({action:'blockList', user});
+    if (!j.ok) { $('seBl').innerHTML = '<div class="empty">' + (j.error === 'forbidden' ? '⛔ للمدير بس' : '⚠️ حصل خطأ (اتأكد إنك حدّثت Code.gs)') + '</div>'; return; }
+    $('seBl').innerHTML = j.list.length ? tbl(['الرقم', 'تنبيهات', 'الحالة', 'السبب', 'بواسطة', 'التاريخ', ''], j.list.map(x => ['<b dir="ltr">' + esc(x.phone) + '</b>', num(x.strikes), x.blocked ? '<span class="bdg off">🚫 محظور</span>' : '<span class="bdg">🚩 تنبيه</span>', esc(x.reason), esc(staffNames[x.by] || x.by), x.t ? new Date(x.t).toLocaleDateString('ar-EG', {day:'numeric', month:'short'}) : '',
+      (x.blocked ? '<button class="btn ghost tiny" data-bl="unblock" data-p="' + esc(x.phone) + '">✅ رفع الحظر</button> ' : '') + '<button class="btn danger tiny" data-bl="clear" data-p="' + esc(x.phone) + '">🗑️ مسح</button>'])) + '<p class="hint">٣ تنبيهات = حظر تلقائي. الرقم المحظور مابيقدرش يطلب من الموقع ويشوف رسالة إنه يتواصل معاكم.</p>' : '<div class="empty">مفيش أرقام محظورة ولا عليها تنبيهات 👌</div>';
+  } catch (e) { $('seBl').innerHTML = '<div class="empty">⚠️ مفيش اتصال</div>'; }
+}
+$('seBl').addEventListener('click', async e => {
+  const b = e.target.closest('[data-bl]'); if (!b) return;
+  try { const j = await post({action:'custFlag', user, phone:b.dataset.p, op:b.dataset.bl}); if (!j.ok) throw 0; toast('✅ تم'); delete flags[b.dataset.p]; blLoad(); render(); } catch (er) { toast('⚠️ حصل خطأ'); }
+});
+
+/* ═══ حالة الإشعارات ═══ */
+async function bellLoad(){
+  try {
+    const j = await post({action:'pushHealth', user});
+    if (!j.ok) { $('seBell').innerHTML = '<div class="empty">' + (j.error === 'forbidden' ? '⛔ للمدير بس' : '⚠️ حصل خطأ (اتأكد إنك حدّثت Code.gs)') + '</div>'; return; }
+    const S = {off:['warnb', '⚪ مش متفعّلة — ضيف ONESIGNAL_APP_ID و ONESIGNAL_API_KEY في Script properties'], bad:['badb', '❌ الإشعارات مش بتتبعت — المفتاح أو الحساب فيه مشكلة'], warn:['warnb', '⚠️ فيه محاولات فشلت (غالبًا عملاء مش مشتركين في الإشعارات)'], ok:['okb', '✅ شغّالة'], idle:['okb', '✅ مفعّلة — لسه ماتبعتش إشعار']}[j.state] || ['warnb', j.state];
+    $('seBell').innerHTML = '<div class="' + S[0] + '">' + S[1] + (j.last ? '<br><small>آخر محاولة ' + ago2(j.last.t) + (j.last.ok ? ' — نجحت' : ' — فشلت: ' + esc((j.last.code || '') + ' ' + (j.last.msg || ''))) + '</small>' : '') + '</div>' +
+      '<p class="hint">محاولات فاشلة في آخر ٢٤ ساعة: <b>' + num(j.fails24) + '</b>. خطأ ٤٠٠ مع عميل مش مشترك طبيعي؛ ٤٠١/٤٠٣ معناه إن المفتاح غلط أو اتغيّر، وبيجيلك إيميل لما ده يحصل.</p>' +
+      (j.recent && j.recent.length ? tbl(['الوقت', 'الطلب', 'الحالة', 'الكود', 'الرسالة'], j.recent.map(x => [ago2(x.t), '<b dir="ltr">#' + esc(x.id) + '</b>', esc(x.st), num(x.code), esc(x.msg)])) : '');
+    $('pbChip').classList.toggle('hide', j.state !== 'bad');
+  } catch (e) { $('seBell').innerHTML = '<div class="empty">⚠️ مفيش اتصال</div>'; }
+}
+$('seRefSave').onclick = () => $('seSave').click();
+
+/* ═══ الأرشفة (ضمن لوحة النسخ الاحتياطي) ═══ */
+function archHtml(a){
+  if (!a) return '';
+  const l = a.last;
+  return '<hr style="border:0;border-top:1px dashed #ddd;margin:14px 0"><div class="' + (l && l.ok === false ? 'warnb' : 'okb') + '">📦 الأرشفة: ' + (l ? (l.ok ? 'آخر مرة ' + ago2(l.t) + ' — اتنقل ' + num(l.moved || 0) + ' طلب' : '❌ ' + (l.error === 'no_recent_backup' ? 'مفيش نسخة احتياطية في آخر ٣٦ ساعة' : esc(l.error || ''))) : 'لسه ماحصلتش') + '</div>' +
+    '<p class="hint">الطلبات الشغّالة: <b>' + num(a.live) + '</b> · في الأرشيف: <b>' + num(a.archived) + '</b>. بنرحّل الطلبات المنتهية الأقدم من ' + num(a.days) + ' يوم لورقة Archive أول كل شهر (بعد النسخة الاحتياطية)، والتقارير الطويلة بتقرا الأرشيف كمان.</p>' +
+    (a.trigger === false ? '<div class="warnb">⚠️ الأرشفة الشهرية مش متجدولة — شغّل <b dir="ltr">setupBackup</b> مرة تانية من محرر Apps Script.</div>' : '') +
+    '<div class="frm"><button class="btn ghost" id="arcNow" type="button">📦 أرشفة دلوقتي</button></div>';
+}
+
 function seAreaRender(){
   const q = seFilter.trim().toLowerCase();
   let h = seBuiltin ? '<div class="warnb" style="margin-bottom:10px">المناطق دلوقتي جاية من ملف الموقع (مش متدارة من الشيت). استورد القايمة مرة واحدة عشان تقدر تغيّر الرسوم وتقفل أي منطقة من هنا.</div><button class="btn main" id="seImport" type="button">📥 استيراد مناطق الموقع</button>' : '';
@@ -1173,11 +1270,12 @@ async function bkLoad(){
   h += '<p class="hint">تقرير الإقفال: ' + (r ? (r.ok ? '✅ آخر إرسال ' + ago2(r.t) : '❌ فشل: ' + esc(r.err || '')) : 'لسه ماتبعتش') + ' — بيوصل كل يوم ٧ الصبح على إيميل صاحب الحساب (أو Script property اسمها REPORT_EMAIL).</p>' +
     '<div class="frm"><button class="btn main" id="bkNow" type="button">💾 نسخة احتياطية دلوقتي</button><button class="btn ghost" id="rpPrev" type="button">📧 ابعت تقرير امبارح</button><button class="btn ghost" id="rpToday" type="button">📧 تقرير النهاردة لحد دلوقتي</button></div>' +
     '<details style="margin-top:12px"><summary style="font-weight:800;cursor:pointer">🛟 إزاي أسترجع من نسخة؟</summary><ol class="hint" style="line-height:1.9"><li>افتح Drive ▸ مجلد <b>RedRoosters Backups</b> وافتح النسخة اللي عايزها (تاريخها في الاسم).</li><li>للطلبات: انسخ ورقة <b>Tickets</b> من النسخة (كليك يمين ▸ Copy to ▸ الملف الأصلي)، وامسح الورقة الحالية أو غيّر اسمها واسم الجديدة <b>Tickets</b>.</li><li>كرر ده لأي ورقة تانية محتاجها (Orders, Redeem, Coupons, CouponDefs, Staff, Settings, Areas...).</li><li>لو الملف الأصلي اتمسح خالص: افتح النسخة ▸ File ▸ Make a copy، وحدّث <b>RR_API</b> لو اتغيّر رابط الـ Deploy.</li></ol></details>';
-  $('seBk').innerHTML = h;
+  h += archHtml(j.archive); $('seBk').innerHTML = h;
 }
 $('seBk').addEventListener('click', async e => {
   const t = e.target.closest('button'); if (!t) return;
-  const run = async (body, msg) => { t.disabled = true; const x = t.textContent; t.textContent = '⏳...'; try { const j = await post(body); toast(j.ok ? msg(j) : '⚠️ ' + (j.error === 'mail_failed' ? 'الإيميل فشل: ' + (j.msg || '') : j.error === 'backup_failed' ? 'النسخة فشلت — شوف الرسالة تحت' : j.error === 'busy' ? 'استنى شوية وجرّب تاني' : 'حصل خطأ')); } catch (er) { toast('⚠️ مفيش اتصال'); } t.disabled = false; t.textContent = x; bkLoad(); };
+  const run = async (body, msg) => { t.disabled = true; const x = t.textContent; t.textContent = '⏳...'; try { const j = await post(body); toast(j.ok ? msg(j) : '⚠️ ' + (j.error === 'mail_failed' ? 'الإيميل فشل: ' + (j.msg || '') : j.error === 'backup_failed' ? 'النسخة فشلت — شوف الرسالة تحت' : j.error === 'no_recent_backup' ? 'اعمل نسخة احتياطية الأول (لازم تكون في آخر ٣٦ ساعة)' : j.error === 'busy' ? 'استنى شوية وجرّب تاني' : 'حصل خطأ')); } catch (er) { toast('⚠️ مفيش اتصال'); } t.disabled = false; t.textContent = x; bkLoad(); };
+  if (t.id === 'arcNow') run({action:'archiveNow', user}, j => '📦 اتنقل ' + ((j.archive && j.archive.last && j.archive.last.moved) || 0) + ' طلب قديم للأرشيف');
   if (t.id === 'bkNow') run({action:'backupNow', user}, () => '✅ اتعملت نسخة احتياطية');
   if (t.id === 'rpPrev') run({action:'reportNow', user}, j => '📧 اتبعت التقرير على ' + j.sent);
   if (t.id === 'rpToday') run({action:'reportNow', user, today:true}, j => '📧 اتبعت التقرير على ' + j.sent);
@@ -1191,6 +1289,7 @@ $('grid').addEventListener('click', e => {
   if (b.dataset.act === 'drvmap') openDrvMap(id);
   if (b.dataset.act === 'drvwa') { const o = orders.find(x => x.id === id), dv = o && drivers.find(x => x.id === dasg[id]); if (!dv) toast('⚠️ اختار الطيار الأول'); else if (!dv.phone) toast('⚠️ ضيف رقم واتساب الطيار في الإعدادات: كود:اسم:رقم'); else window.open(drvWa(o, dv), '_blank'); }
   if (b.dataset.act === 'paid') setPaid(id, b.dataset.p === '1');
+  if (b.dataset.act === 'flag') { const oo = orders.find(x => x.id === id); if (oo) custFlag(oo.phone, b.dataset.op, false, oo.name); }
   if (b.dataset.act === 'print') { const o = orders.find(x => x.id === id); if (o) kotPrint(o); }
 });
 window.addEventListener('afterprint', () => { document.body.classList.remove('pk'); const k = $('kot'); if (k) k.remove(); document.body.classList.remove('p1'); document.querySelectorAll('.pme').forEach(c => c.classList.remove('pme')); });
