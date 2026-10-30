@@ -428,7 +428,7 @@ async function loadNow(){
     const fresh = j.orders.filter(o => known && !known.has(o.id) && o.status === 'new');
     known = new Set(j.orders.map(o => o.id)); orders = j.orders; drivers = j.drivers || []; dseen = j.dseen || {}; dpos = j.dpos || {}; dasg = j.dasg || {};
     if (Array.isArray(j.soldout) && !soBusy && Date.now() - soLast > 4000) { soList = j.soldout; mnRender(); }
-    render(); drvBarRender();
+    render(); drvBarRender(); updateDrvMap();
     if (fresh.length) { toast('🔔 طلب جديد: ' + fresh.map(o => o.name).join('، ')); pushNotify('🔔 طلب جديد — ريد روستر', fresh.map(o => o.name + ' · ' + o.total + ' ج').join('\n')); ringTick(); }
     return true;
   } catch (e) { setLive(false); }
@@ -504,7 +504,7 @@ function cardHtml(o){
     (o.status === 'out' && o.type !== 'pickup' && drivers.length ? (() => { const dv = drivers.find(x => x.id === dasg[o.id]); return '<div class="note">🛵 الطيار: <b>' + (dv ? esc(dv.name) + ' ' + dDot(dv.id) : 'مش محدد (العميل مش شايف خريطة)') + '</b></div>'; })() : '') +
     '<div class="acts">' + (ns ? '<button class="btn main" data-act="set" data-st="' + ns[0] + '">' + ns[1] + '</button>' : '') +
       (o.payment !== 'cash' ? '<button class="btn ghost" data-act="paid" data-p="' + (o.paid ? 0 : 1) + '">' + (o.paid ? '↩︎ التحويل لسه ماوصلش' : '💰 تم استلام التحويل') + '</button>' : '') +
-      (o.status === 'out' && o.type !== 'pickup' && drivers.length ? '<button class="btn ghost" data-act="drv">🛵 غيّر الطيار</button>' + (dasg[o.id] ? '<button class="btn ghost" data-act="drvwa">📲 ابعت للطيار</button>' : '') : '') +
+      (o.status === 'out' && o.type !== 'pickup' && drivers.length ? '<button class="btn ghost" data-act="drv">🛵 غيّر الطيار</button>' + (dasg[o.id] ? '<button class="btn ghost" data-act="drvmap">🗺️ الخريطة</button><button class="btn ghost" data-act="drvwa">📲 ابعت للطيار</button>' : '') : '') +
       '<button class="btn ghost" data-act="print">🖨️ طباعة</button>' +
       (ACTIVE.includes(o.status) ? '<button class="btn danger" data-act="set" data-st="cancelled">إلغاء</button>' : '') +
       (!ACTIVE.includes(o.status) && role === 'manager' ? '<button class="btn ghost" data-act="set" data-st="new">↩︎ رجّعه جديد</button>' : '') + '</div></article>';
@@ -515,6 +515,53 @@ const chain = {};
 let drivers = [], dseen = {}, dpos = {}, dasg = {};
 const dAge = s => s < 60 ? 'دلوقتي' : s < 3600 ? 'من ' + Math.round(s / 60) + ' د' : 'من ' + Math.round(s / 3600) + ' س';
 const dDot = id => dseen[id] == null ? '⚪' : dseen[id] < 120 ? '🟢' : '🟠';
+/* ===== خريطة تتبع الطيار جوه الداشبورد ===== */
+let dm = null;
+function dmLoad(cb){
+  if (window.L) return cb(); if (dmLoad.q) return dmLoad.q.push(cb); dmLoad.q = [cb];
+  const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css'; document.head.appendChild(l);
+  const s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js'; s.onload = () => { const q = dmLoad.q; dmLoad.q = null; q.forEach(f => f()); }; document.head.appendChild(s);
+}
+function dmKm(a, b, c, e){ const R = 6371, x = (c - a) * Math.PI / 180, y = (e - b) * Math.PI / 180, q = Math.sin(x / 2) ** 2 + Math.cos(a * Math.PI / 180) * Math.cos(c * Math.PI / 180) * Math.sin(y / 2) ** 2; return 2 * R * Math.asin(Math.sqrt(q)); }
+function dmIcon(home){ return L.divIcon({className: '', iconSize: [46, 46], iconAnchor: [23, 23], html: '<div class="rr-dm' + (home ? ' h' : '') + '"><span>' + (home ? '🏠' : '🛵') + '</span></div>'}); }
+function openDrvMap(id){
+  closeDrvMap();
+  if (!document.getElementById('dmCss')) { const s = document.createElement('style'); s.id = 'dmCss'; s.textContent = '.rr-dm{width:46px;height:46px;border-radius:50%;background:#9E1B1B;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;font-size:24px;line-height:1;position:relative}.rr-dm:after{content:"";position:absolute;inset:-6px;border-radius:50%;border:2px solid rgba(158,27,27,.5);animation:rrdm 1.6s ease-out infinite}.rr-dm.h{background:#1d3f8f}.rr-dm.h:after{display:none}@keyframes rrdm{from{transform:scale(.8);opacity:1}to{transform:scale(1.5);opacity:0}}'; document.head.appendChild(s); }
+  const ov = document.createElement('div'); ov.className = 'cx';
+  ov.innerHTML = '<div style="background:#fff;color:#222;border-radius:16px;padding:14px;width:min(560px,100%);direction:rtl;font-family:inherit"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><b id="dmT"></b><button type="button" id="dmX" style="border:0;background:#f1eeee;border-radius:50%;width:34px;height:34px;font-size:1.1rem;cursor:pointer">✕</button></div><div id="dmI" style="font-size:.85rem;margin-bottom:8px;line-height:1.7"></div><div id="dmM" style="height:min(60vh,420px);border-radius:12px;overflow:hidden;direction:ltr"></div></div>';
+  ov.addEventListener('click', e => { if (e.target === ov || e.target.id === 'dmX') closeDrvMap(); });
+  document.body.appendChild(ov);
+  dm = {id, ov};
+  dmLoad(() => { if (!dm || dm.id !== id) return; dm.map = L.map($('dmM')); L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom: 19, attribution: '© OpenStreetMap'}).addTo(dm.map); dm.map.setView([30.0, 31.2], 11); updateDrvMap(); });
+}
+function closeDrvMap(){ if (dm) { try { dm.map && dm.map.remove(); } catch (e) {} dm.ov.remove(); dm = null; } }
+function dmRoute(p, q){
+  if (dm.rt && Date.now() - dm.rt < 30000) return; dm.rt = Date.now(); const my = dm;
+  fetch('https://router.project-osrm.org/route/v1/driving/' + p[1] + ',' + p[0] + ';' + q[1] + ',' + q[0] + '?overview=full&geometries=geojson').then(r => r.json()).then(j => {
+    const r = j && j.routes && j.routes[0]; if (!r || dm !== my || !dm.map) return;
+    dm.info = {km: r.distance / 1000, min: Math.max(1, Math.round(r.duration / 60))};
+    if (dm.line) dm.map.removeLayer(dm.line);
+    dm.line = L.polyline(r.geometry.coordinates.map(c => [c[1], c[0]]), {color: '#9E1B1B', weight: 5, opacity: .85}).addTo(dm.map); dm.solid = true; updateDrvMap();
+  }).catch(() => {});
+}
+function updateDrvMap(){
+  if (!dm || !dm.map) return;
+  const o = orders.find(x => x.id === dm.id); if (!o) { closeDrvMap(); return; }
+  const dv = drivers.find(x => x.id === dasg[o.id]), p = dv && dpos[dv.id], q = o.lat != null ? [o.lat, o.lon] : null, pts = [];
+  if (p) { pts.push(p); if (!dm.mk) dm.mk = L.marker(p, {icon: dmIcon(false)}).addTo(dm.map); else dm.mk.setLatLng(p); }
+  if (q) { pts.push(q); if (!dm.dk) dm.dk = L.marker(q, {icon: dmIcon(true)}).addTo(dm.map); }
+  let info = !dv ? '⚠️ مفيش طيار متحدد للطلب ده' : !p ? '⚪ مفيش إشارة من ' + esc(dv.name) + ' لسه' : (dDot(dv.id) + ' آخر تحديث لموقع <b>' + esc(dv.name) + '</b> ' + dAge(dseen[dv.id]));
+  if (!q) info += ' · العميل مبعتش لوكيشن';
+  else if (p) info += dm.info ? ' · باقي حوالي <b>' + dm.info.min + '</b> دقيقة (' + dm.info.km.toFixed(1) + ' كم)' : ' · يبعد حوالي ' + dmKm(p[0], p[1], q[0], q[1]).toFixed(1) + ' كم';
+  if (q) info += ' · <a href="https://www.google.com/maps/dir/?api=1&destination=' + q[0] + ',' + q[1] + '" target="_blank" rel="noopener">🧭 جوجل مابس</a>';
+  $('dmT').textContent = '🛵 #' + o.id + (o.name ? ' — ' + o.name : ''); $('dmI').innerHTML = info;
+  if (p && q) {
+    if (!dm.solid) { if (dm.line) dm.map.removeLayer(dm.line); dm.line = L.polyline([p, q], {color: '#9E1B1B', weight: 3, dashArray: '6 8'}).addTo(dm.map); }
+    if (!dm.fit || dm.solid && !dm.fit2) { dm.map.fitBounds([p, q], {padding: [40, 40], maxZoom: 17}); dm.fit = true; if (dm.solid) dm.fit2 = true; }
+    dmRoute(p, q);
+  } else if (pts.length && !dm.fit) { dm.map.setView(pts[0], 15); dm.fit = true; }
+  setTimeout(() => dm && dm.map && dm.map.invalidateSize(), 60);
+}
 function drvWa(o, dv){
   const loc = o.lat != null ? 'https://www.google.com/maps/dir/?api=1&destination=' + o.lat + ',' + o.lon + '&travelmode=driving' : 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent((o.address || '') + ' ' + (o.area || ''));
   const items = (o.items || []).map(i => i.q + '× ' + i.n).join('، ');
@@ -1141,6 +1188,7 @@ $('grid').addEventListener('click', e => {
   const card = b.closest('.card'), id = card.dataset.id;
   if (b.dataset.act === 'set') { (async () => { const oo = orders.find(x => x.id === id); let dv; if (b.dataset.st === 'out' && oo && oo.type !== 'pickup') { dv = await pickDriver(); if (dv === null) return; } setStatus(id, b.dataset.st, undefined, dv); })(); }
   if (b.dataset.act === 'drv') { (async () => { const dv = await pickDriver(); if (dv == null) return; try { const j = await post({action:'setStatus', user, id, status:'out', deferPush:true, driver:dv}); if (j.ok) { if (dv) dasg[id] = dv; else delete dasg[id]; render(); drvBarRender(); toast(dv ? '✅ اتغيّر الطيار' : '✅ اتشال الطيار (من غير تتبع)'); } else toast('⚠️ حصل خطأ'); } catch (e) { toast('⚠️ مفيش اتصال'); } })(); }
+  if (b.dataset.act === 'drvmap') openDrvMap(id);
   if (b.dataset.act === 'drvwa') { const o = orders.find(x => x.id === id), dv = o && drivers.find(x => x.id === dasg[id]); if (!dv) toast('⚠️ اختار الطيار الأول'); else if (!dv.phone) toast('⚠️ ضيف رقم واتساب الطيار في الإعدادات: كود:اسم:رقم'); else window.open(drvWa(o, dv), '_blank'); }
   if (b.dataset.act === 'paid') setPaid(id, b.dataset.p === '1');
   if (b.dataset.act === 'print') { const o = orders.find(x => x.id === id); if (o) kotPrint(o); }
