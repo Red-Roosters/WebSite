@@ -1773,6 +1773,8 @@ nav button.new-badge:hover,
   border-radius:28px 28px 0 0!important;transform:translate(-50%,105%)!important;opacity:1!important;transition:transform .42s var(--ease)!important;
   box-shadow:0 -20px 60px -10px rgba(30,20,17,.45)!important;display:flex;flex-direction:column}
 .item-modal.open{transform:translate(-50%,0)!important}
+/* شريط «بتضيف أصناف لطلب» ميغطيش زرار الإضافة: الشيت بيقعد فوقه */
+html.rr-adding .item-modal{bottom:var(--rr-addbar-h,84px)!important;max-height:calc(90vh - var(--rr-addbar-h,84px))!important;max-height:calc(90dvh - var(--rr-addbar-h,84px))!important;border-radius:22px!important}
 .item-modal.drag{transition:none!important}
 .item-modal::before{display:none!important}
 .im-grip{flex:none;height:26px;position:relative;cursor:grab;touch-action:none}
@@ -5976,14 +5978,17 @@ new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:tru
   var ADD=null;
   function addBar(){
     var b=$('rrAddBar');
-    if(!ADD){ if(b) b.style.display='none'; return; }
+    if(!ADD){ if(b) b.style.display='none'; document.documentElement.classList.remove('rr-adding'); return; }
     if(!b){ b=document.createElement('div'); b.id='rrAddBar';
       b.style.cssText='position:fixed;left:10px;right:10px;bottom:max(12px,env(safe-area-inset-bottom));z-index:99999;background:#1E1411;color:#fff;border-radius:16px;padding:10px 12px;display:flex;gap:10px;align-items:center;box-shadow:0 6px 24px rgba(0,0,0,.4);font:700 .9rem Cairo,sans-serif';
       b.addEventListener('click',function(ev){ if(!ev.target.closest('[data-ab]')) return; var id=ADD; ADD=null; addBar(); if(id) open(id); });
       document.body.appendChild(b); }
     var n=(EDIT[ADD]&&EDIT[ADD].adds||[]).length;
     b.innerHTML='<span style="flex:1;line-height:1.5">✏️ بتضيف أصناف لطلب <b dir="ltr">#'+esc(ADD)+'</b>'+(n?' — ضفت '+n:'')+'</span><button type="button" data-ab="1" style="border:0;border-radius:12px;padding:10px 14px;background:#D92B2B;color:#fff;font:800 .9rem Cairo,sans-serif;cursor:pointer">✅ تم — ارجع للتعديل</button>';
-    b.style.display='flex'; }
+    b.style.display='flex';
+    document.documentElement.classList.add('rr-adding');
+    var h=(b.offsetHeight||60)+24; document.documentElement.style.setProperty('--rr-addbar-h',h+'px'); }
+  window.addEventListener('resize',function(){ if(ADD) addBar(); });
   window.RR_EDIT_HOOK=function(o){
     if(!ADD) return false; var ed=EDIT[ADD]; if(!ed){ ADD=null; addBar(); return false; }
     var n=o.label?o.name+' ('+o.label+')':o.name, opts=(o.opts||[]).slice(), t=o.note||'', hit=null;
