@@ -156,6 +156,16 @@ main.wide{max-width:none}
 .chc .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.chc .acts .btn{min-width:90px}.chc .acts a.btn{text-decoration:none;text-align:center}
 .ed{display:inline-block;background:#FFF3CD;color:#7A5800;border-radius:999px;padding:2px 9px;font-size:.74rem;font-weight:900}
 .dvt{font-size:.78rem;color:var(--mute)}
+.hif{display:flex;gap:10px;flex-wrap:wrap;margin:10px 0}.hif label{font-size:.8rem;font-weight:800;display:grid;gap:3px}.hif select,.hif input[type=date]{padding:8px 10px;border:1.5px solid var(--line);border-radius:10px;font:600 .9rem "Cairo",sans-serif;background:#fff;color:var(--ink)}
+.hid{background:#fff;border:1.5px solid var(--line);border-radius:14px;margin:0 0 8px;overflow:hidden}.hid>summary{list-style:none;cursor:pointer;padding:10px 12px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-weight:700}.hid>summary::-webkit-details-marker{display:none}.hid[open]>summary{background:#faf6f3;border-bottom:1px solid var(--line)}
+.hid>summary small{color:var(--mute);margin-inline-start:auto;font-weight:600}.hid .ofb{padding:10px 12px}
+.ofb .ofl{display:flex;justify-content:space-between;gap:10px;font-size:.88rem;padding:3px 0}.ofb .ofl>span{color:var(--mute);flex:0 0 auto}.ofb .ofl>b{text-align:left;word-break:break-word}
+.ofb .ofit{margin:6px 0;padding:8px 10px;background:#f6f1ee;border-radius:10px}.ofb .ofi{display:flex;gap:6px;font-size:.88rem;padding:2px 0;align-items:baseline}.ofb .ofi>span{margin-inline-start:auto;font-weight:800;white-space:nowrap}.ofb .ofi small{color:var(--mute)}
+.ofb .oft{border-top:1px dashed var(--line);margin-top:6px;padding-top:6px}
+.ob{display:inline-block;border-radius:999px;padding:2px 9px;font-size:.74rem;font-weight:900;background:#FFF3CD;color:#7A5800}.ob.s-delivered{background:#E3F6EC;color:var(--green)}.ob.s-cancelled{background:#FDECEC;color:#9E1B1B}
+.stz{color:#E8A400;letter-spacing:1px}.rcd{background:#fff;border:1.5px solid var(--line);border-radius:16px;padding:12px;margin:0 0 10px}.rcd.low{border-color:#e0a1a1;background:#FFF8F8}
+.rcd .rh{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:6px}.rcd .rc{background:#FFF8E8;border-radius:10px;padding:8px 10px;margin:6px 0;font-weight:700}
+.rcd .ofb{border-top:1px dashed var(--line);margin-top:8px;padding-top:6px}
 #unlock{position:fixed;inset:0;z-index:80;background:rgba(20,12,10,.85);color:#fff;display:grid;place-items:center;text-align:center;padding:24px;font:900 1.4rem "Tajawal",sans-serif;cursor:pointer}
 #unlock small{display:block;margin-top:8px;font:600 .95rem "Cairo",sans-serif;color:#e6dcd6}
 #kot{display:none}
@@ -240,6 +250,7 @@ main.wide{max-width:none}
     <button class="ib hide" id="vAn">📊 التحليلات</button>
     <button class="ib hide" id="vCp">🎟️ الكوبونات</button>
     <button class="ib hide" id="vCust">📇 العملاء</button>
+    <button class="ib hide" id="vHist">🔎 سجل الطلبات</button>
     <button class="ib hide" id="vSet">⚙️ الإعدادات</button>
     <button class="ib hide" id="vStaff">👥 الموظفين</button>
     <div class="live" id="live"><i></i><span id="liveT">متصل</span></div>
@@ -263,6 +274,20 @@ main.wide{max-width:none}
     </div>
     <div class="panel"><h2>⭐ تقييمات العملاء</h2><button class="btn ghost" id="rtGo" type="button">عرض التقييمات</button><div id="rtOut" style="margin-top:12px"></div></div>
     <div id="anOut"></div>
+  </main>
+  <main id="hiMain" class="hide">
+    <div class="panel"><h2>🔎 سجل الطلبات السابقة</h2>
+      <div class="frm"><input id="hiQ" type="search" placeholder="رقم الطلب / اسم العميل / الموبايل / العنوان / صنف / كوبون"><button class="btn main" id="hiGo" type="button">بحث</button></div>
+      <div class="seg" id="hiRng"><button type="button" data-d="1">النهاردة</button><button type="button" data-d="7" class="on">٧ أيام</button><button type="button" data-d="30">٣٠ يوم</button><button type="button" data-d="90">٩٠ يوم</button><button type="button" data-d="0">كل الفترة</button></div>
+      <div class="hif">
+        <label>من يوم<input type="date" id="hiFrom"></label><label>إلى يوم<input type="date" id="hiTo"></label>
+        <label>الحالة<select id="hiSt"><option value="">الكل</option><option value="new">جديد</option><option value="confirmed">مؤكد</option><option value="preparing">بيتحضّر</option><option value="out">خرج / جاهز</option><option value="delivered">تم التسليم</option><option value="cancelled">ملغي</option></select></label>
+        <label>الدفع<select id="hiPay"><option value="">الكل</option><option value="cash">كاش</option><option value="wallet">محفظة</option><option value="instapay">إنستا باي</option></select></label>
+        <label>التقييم<select id="hiRt"><option value="">الكل</option><option value="rated">بتقييم</option><option value="high">٤–٥ نجوم</option><option value="low">١–٢ نجمة</option><option value="unrated">من غير تقييم</option></select></label>
+      </div>
+      <div class="hint" id="hiInfo">اكتب أي حاجة تفتكرها عن الطلب، أو سيبها فاضية واختار الفترة والفلتر. بيدوّر في الطلبات الحالية والأرشيف.</div>
+    </div>
+    <div id="hiOut"></div>
   </main>
   <main id="cpMain" class="hide">
     <div class="panel"><h2 id="cpFt">➕ كوبون جديد</h2>
@@ -701,18 +726,18 @@ $('cxOk').onclick = () => { const r = cxReason(), id = cxId, fl = $('cxFlag').ch
 function applyRole(){
   const m = role === 'manager';
   ['vOrders','vMenu'].forEach(id => $(id).classList.remove('hide'));   // الموظف والمدير الاتنين يقدروا يوقّفوا الأصناف
-  ['vAn','vStaff','vCp','vCust','vSet'].forEach(id => $(id).classList.toggle('hide', !m));
+  ['vAn','vStaff','vCp','vCust','vSet','vHist'].forEach(id => $(id).classList.toggle('hide', !m));
   if (m && !applyRole.bk) { applyRole.bk = 1; setTimeout(bkCheck, 1500); }   // تنبيه لو النسخة الاحتياطية متأخرة/فاشلة
   $('who').textContent = (m ? '👑 ' : '👤 ') + myName;
   if (!m && view !== 'orders' && view !== 'menu') setView('orders');
 }
 function setView(v){
   view = v;
-  $('mainEl').classList.toggle('hide', v !== 'orders'); $('anMain').classList.toggle('hide', v !== 'analytics'); $('stMain').classList.toggle('hide', v !== 'staff'); $('mnMain').classList.toggle('hide', v !== 'menu'); $('cpMain').classList.toggle('hide', v !== 'coupons'); $('cuMain').classList.toggle('hide', v !== 'customers'); $('seMain').classList.toggle('hide', v !== 'settings');
-  [['vOrders','orders'],['vMenu','menu'],['vAn','analytics'],['vCp','coupons'],['vCust','customers'],['vSet','settings'],['vStaff','staff']].forEach(([id, k]) => $(id).classList.toggle('act', k === v));
-  if (v === 'orders') render(); if (v === 'analytics') anInit(); if (v === 'staff') stLoad(); if (v === 'menu') mnLoad(); if (v === 'coupons') cpLoad(); if (v === 'customers') cuLoad(); if (v === 'settings') seLoad();
+  $('mainEl').classList.toggle('hide', v !== 'orders'); $('anMain').classList.toggle('hide', v !== 'analytics'); $('stMain').classList.toggle('hide', v !== 'staff'); $('mnMain').classList.toggle('hide', v !== 'menu'); $('cpMain').classList.toggle('hide', v !== 'coupons'); $('cuMain').classList.toggle('hide', v !== 'customers'); $('seMain').classList.toggle('hide', v !== 'settings'); $('hiMain').classList.toggle('hide', v !== 'history');
+  [['vOrders','orders'],['vMenu','menu'],['vAn','analytics'],['vCp','coupons'],['vCust','customers'],['vSet','settings'],['vStaff','staff'],['vHist','history']].forEach(([id, k]) => $(id).classList.toggle('act', k === v));
+  if (v === 'orders') render(); if (v === 'analytics') anInit(); if (v === 'staff') stLoad(); if (v === 'menu') mnLoad(); if (v === 'coupons') cpLoad(); if (v === 'customers') cuLoad(); if (v === 'settings') seLoad(); if (v === 'history') hiInit();
 }
-$('vOrders').onclick = () => setView('orders'); $('vAn').onclick = () => setView('analytics'); $('vStaff').onclick = () => setView('staff'); $('vCp').onclick = () => setView('coupons'); $('vMenu').onclick = () => setView('menu'); $('vCust').onclick = () => setView('customers'); $('vSet').onclick = () => setView('settings');
+$('vOrders').onclick = () => setView('orders'); $('vAn').onclick = () => setView('analytics'); $('vStaff').onclick = () => setView('staff'); $('vCp').onclick = () => setView('coupons'); $('vMenu').onclick = () => setView('menu'); $('vCust').onclick = () => setView('customers'); $('vSet').onclick = () => setView('settings'); $('vHist').onclick = () => setView('history');
 
 /*ANALYZE-START*/
 const pad2 = n => String(n).padStart(2, '0');
@@ -1265,7 +1290,7 @@ function chips(j){
 }
 $('lrChip').onclick = () => {
   const l = (lowData && lowData.list) || [];
-  $('lrList').innerHTML = l.length ? l.map(x => '<div class="lri"><b dir="ltr">#' + esc(x.id) + '</b> ' + '★'.repeat(x.stars) + '☆'.repeat(5 - x.stars) + ' <small style="color:#6B6B6B">' + new Date(x.time || x.t).toLocaleString('ar-EG', {day:'numeric', month:'short', hour:'numeric', minute:'2-digit'}) + '</small>' + (x.comment ? '<div>' + esc(x.comment) + '</div>' : '') + '</div>').join('') : '<div class="empty">مفيش</div>';
+  $('lrList').innerHTML = l.length ? l.map(x => '<div class="lri"><b dir="ltr">#' + esc(x.id) + '</b> ' + '★'.repeat(x.stars) + '☆'.repeat(5 - x.stars) + ' <small style="color:#6B6B6B">' + new Date(x.time || x.t).toLocaleString('ar-EG', {day:'numeric', month:'short', hour:'numeric', minute:'2-digit'}) + '</small>' + (x.comment ? '<div>' + esc(x.comment) + '</div>' : '') + (x.o ? orderFull(x.o) : '') + '</div>').join('') : '<div class="empty">مفيش</div>';
   $('lr').classList.remove('hide'); localStorage.setItem('rr_lr_seen', String(Date.now())); $('lrChip').classList.add('hide'); chips.last = 0;
 };
 $('lrX').onclick = () => $('lr').classList.add('hide'); $('lr').addEventListener('click', e => { if (e.target === $('lr')) $('lr').classList.add('hide'); });
@@ -1534,17 +1559,81 @@ $('lgForm').addEventListener('submit', async e => {
   }
 })();
 
+/* ═══ تفاصيل الطلب الكاملة (بتتستخدم في التقييمات وسجل الطلبات) ═══ */
+function orderFull(o){
+  const dv = o.drv ? ((drivers.find(d => d.id === o.drv) || {}).name || o.drv) : '';
+  const ln = (a, b) => (b === '' || b == null) ? '' : '<div class="ofl"><span>' + a + '</span><b>' + b + '</b></div>';
+  const items = (o.items || []).map(i => '<div class="ofi"><b>' + esc(i.q) + '×</b> <span style="margin:0;font-weight:700">' + esc(i.n) + '</span>' + ((i.o && i.o.length) ? ' <small>(' + i.o.map(esc).join('، ') + ')</small>' : '') + (i.t ? ' <small>📝 ' + esc(i.t) + '</small>' : '') + '<span>' + money((i.p || 0) * (i.q || 1)) + '</span></div>').join('');
+  const wa = 'https://wa.me/20' + String(o.phone || '').replace(/^0/, '');
+  return '<div class="ofb">'
+    + ln('👤 العميل', esc(o.name)) + ln('📞 الموبايل', '<span dir="ltr">' + esc(o.phone) + '</span> · <a href="tel:' + esc(o.phone) + '">اتصال</a> · <a target="_blank" rel="noopener" href="' + wa + '">واتساب</a>')
+    + (o.phone2 ? ln('📞 رقم تاني', '<span dir="ltr">' + esc(o.phone2) + '</span>') : '')
+    + (o.type === 'pickup' ? ln('🏪 النوع', 'استلام من الفرع') : ln('📍 العنوان', esc(o.address) + (o.area ? ' (' + esc(o.area) + ')' : '')))
+    + ln('🕐 الوقت', new Date(o.time).toLocaleString('ar-EG', {weekday:'short', day:'numeric', month:'short', year:'numeric', hour:'numeric', minute:'2-digit'}))
+    + '<div class="ofit">' + (items || '<small>—</small>') + '</div>'
+    + '<div class="oft">' + ln('المجموع', money(o.subtotal)) + (o.discount ? ln('الخصم' + (o.coupon ? ' (' + esc(o.coupon) + ')' : ''), '− ' + money(o.discount)) : '') + (o.fee ? ln('التوصيل', money(o.fee)) : '') + ln('الإجمالي', '<b style="font-size:1.05rem">' + money(o.total) + '</b>') + '</div>'
+    + ln('💳 الدفع', esc(payL(o.payment)) + (o.paid ? ' ✅ مدفوع' : '')) + (o.notes ? ln('📝 ملاحظات', esc(o.notes)) : '')
+    + (o.status === 'cancelled' && o.reason ? ln('❌ سبب الإلغاء', esc(o.reason)) : '') + (dv ? ln('🛵 الطيار', esc(dv)) : '')
+    + '</div>';
+}
+const stars5 = n => '<span class="stz">' + '★'.repeat(n) + '</span><span style="color:#ccc">' + '☆'.repeat(5 - n) + '</span>';
+const stBadge = o => '<span class="ob s-' + esc(o.status) + '">' + esc(lbl(o)) + '</span>';
+
+/* ═══ سجل الطلبات السابقة ═══ */
+let hiBusy = false;
+function hiSetRange(days){
+  const to = new Date(), from = new Date(); from.setHours(0, 0, 0, 0); from.setDate(from.getDate() - Math.max(0, days - 1));
+  $('hiFrom').value = days ? ymd(from.getTime()) : ''; $('hiTo').value = days === 1 ? '' : (days ? ymd(to.getTime()) : '');
+  document.querySelectorAll('#hiRng button').forEach(b => b.classList.toggle('on', +b.dataset.d === days));
+}
+function hiInit(){ if (!hiInit.done) { hiInit.done = 1; hiSetRange(7); } }
+async function hiSearch(){
+  if (hiBusy) return; hiBusy = true; const out = $('hiOut'), info = $('hiInfo'), go = $('hiGo');
+  go.disabled = true; info.textContent = '⏳ بندوّر...';
+  const f = $('hiFrom').value, t = $('hiTo').value;
+  try {
+    const j = await post({action:'orderSearch', user, q:$('hiQ').value.trim(), from:f ? new Date(f + 'T00:00:00').getTime() : 0, to:t ? new Date(t + 'T23:59:59').getTime() : 0, status:$('hiSt').value, payment:$('hiPay').value, rating:$('hiRt').value});
+    if (!j.ok) { info.textContent = j.error === 'forbidden' ? '⛔ سجل الطلبات للمدير بس' : j.error === 'busy' ? '⏳ استنى شوية وجرّب تاني' : '⚠️ تعذّر البحث (حدّث Code.gs وعمل Deploy ▸ New version)'; out.innerHTML = ''; return; }
+    info.innerHTML = j.total ? 'لقينا <b>' + num(j.total) + '</b> طلب' + (j.total > j.shown ? ' (بنعرض أحدث ' + num(j.shown) + ' — ضيّق البحث عشان توصل للباقي)' : '') + ' · إجمالي المبيعات (من غير الملغي): <b>' + money(j.sum) + '</b>' + (j.cancelled ? ' · ملغي: ' + num(j.cancelled) : '') : 'مفيش طلبات مطابقة.';
+    out.innerHTML = j.list.map(o => '<details class="hid"><summary><b dir="ltr">#' + esc(o.id) + '</b> ' + esc(o.name) + ' ' + stBadge(o) + (o.rt ? ' ' + stars5(o.rt.stars) : '') + '<small>' + new Date(o.time).toLocaleString('ar-EG', {day:'numeric', month:'short', year:'numeric', hour:'numeric', minute:'2-digit'}) + ' · ' + money(o.total) + '</small></summary>'
+      + orderFull(o) + (o.rt ? '<div class="ofb" style="border-top:1px dashed var(--line)"><div class="ofl"><span>⭐ تقييم العميل</span><b>' + stars5(o.rt.stars) + '</b></div>' + (o.rt.comment ? '<div class="rc" style="background:#FFF8E8;border-radius:10px;padding:8px 10px;font-weight:700">' + esc(o.rt.comment) + '</div>' : '') + '</div>' : '') + '</details>').join('');
+  } catch (e) { info.textContent = '⚠️ مفيش اتصال'; }
+  finally { hiBusy = false; go.disabled = false; }
+}
+$('hiGo').onclick = hiSearch;
+$('hiQ').addEventListener('keydown', e => { if (e.key === 'Enter') hiSearch(); });
+$('hiRng').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; hiSetRange(+b.dataset.d); hiSearch(); });
+['hiFrom', 'hiTo'].forEach(id => $(id).addEventListener('change', () => document.querySelectorAll('#hiRng button').forEach(b => b.classList.remove('on'))));
+['hiSt', 'hiPay', 'hiRt'].forEach(id => $(id).addEventListener('change', hiSearch));
+
+/* ═══ التقييمات (كل تقييم ومعاه الطلب كامل) ═══ */
+let rtData = [], rtF = 'all', rtN = 30;
+function rtCard(x){
+  return '<div class="rcd' + (x.stars <= 2 ? ' low' : '') + '"><div class="rh"><span>' + stars5(x.stars) + ' <b dir="ltr">#' + esc(x.id) + '</b></span><small style="color:#6B6B6B">' + new Date(x.time).toLocaleString('ar-EG', {day:'numeric', month:'short', hour:'numeric', minute:'2-digit'}) + '</small></div>'
+    + (x.comment ? '<div class="rc">💬 ' + esc(x.comment) + '</div>' : '<div class="dvt">من غير تعليق</div>')
+    + (x.o ? '<div style="margin-top:6px">' + stBadge(x.o) + '</div>' + orderFull(x.o) : '<div class="hint">تفاصيل الطلب #' + esc(x.id) + ' مش موجودة في السجل.</div>') + '</div>';
+}
+function rtRender(){
+  const o = $('rtOut'), r = rtData, cnt = [0, 0, 0, 0, 0, 0]; r.forEach(x => cnt[x.stars]++);
+  const avg = (r.reduce((s, x) => s + x.stars, 0) / r.length).toFixed(1);
+  const list = r.filter(x => rtF === 'all' ? true : rtF === 'low' ? x.stars <= 2 : rtF === 'mid' ? x.stars === 3 : x.stars >= 4);
+  o.innerHTML = '<div style="font-weight:900;font-size:1.2rem">⭐ ' + avg + ' / 5 <small style="color:#6B6B6B">(' + r.length + ' تقييم)</small></div>'
+    + '<div style="margin:8px 0">' + [5, 4, 3, 2, 1].map(n => '<div>' + n + '★ — ' + cnt[n] + '</div>').join('') + '</div>'
+    + '<div class="seg" id="rtSeg">' + [['all', 'الكل'], ['low', '١–٢ ★'], ['mid', '٣ ★'], ['high', '٤–٥ ★']].map(([k, n]) => '<button type="button" data-f="' + k + '"' + (k === rtF ? ' class="on"' : '') + '>' + n + '</button>').join('') + '</div>'
+    + (list.length ? list.slice(0, rtN).map(rtCard).join('') : '<div class="empty">مفيش تقييمات بالفلتر ده</div>')
+    + (list.length > rtN ? '<button type="button" class="btn ghost" id="rtMore">عرض ' + Math.min(30, list.length - rtN) + ' كمان (فاضل ' + (list.length - rtN) + ')</button>' : '');
+}
+$('rtOut').addEventListener('click', e => {
+  const f = e.target.closest('#rtSeg button'); if (f) { rtF = f.dataset.f; rtN = 30; rtRender(); return; }
+  if (e.target.closest('#rtMore')) { rtN += 30; rtRender(); }
+});
 $('rtGo').addEventListener('click', async () => {
   const o = $('rtOut'); o.textContent = '⏳ بنحمّل...';
   try {
     const j = await post({action:'adminRatings', user});
     if (!j.ok) { o.textContent = j.error === 'forbidden' ? 'التقييمات للمدير بس' : 'تعذّر التحميل'; return; }
-    const r = j.ratings; if (!r.length) { o.textContent = 'مفيش تقييمات لسه'; return; }
-    const avg = (r.reduce((s, x) => s + x.stars, 0) / r.length).toFixed(1), cnt = [0, 0, 0, 0, 0, 0];
-    r.forEach(x => cnt[x.stars]++);
-    o.innerHTML = '<div style="font-weight:900;font-size:1.2rem">⭐ ' + avg + ' / 5 <small style="color:#6B6B6B">(' + r.length + ' تقييم)</small></div>'
-      + '<div style="margin:8px 0">' + [5, 4, 3, 2, 1].map(n => '<div>' + n + '★ — ' + cnt[n] + '</div>').join('') + '</div>'
-      + r.slice(0, 50).map(x => '<div style="padding:6px 0;border-top:1px dashed #ddd"><b dir="ltr">#' + esc(x.id) + '</b> ' + '★'.repeat(x.stars) + '☆'.repeat(5 - x.stars) + ' <small style="color:#6B6B6B">' + new Date(x.time).toLocaleString('ar-EG', {day:'numeric', month:'short', hour:'numeric', minute:'2-digit'}) + '</small>' + (x.comment ? '<div>' + esc(x.comment) + '</div>' : '') + '</div>').join('');
+    rtData = j.ratings; if (!rtData.length) { o.textContent = 'مفيش تقييمات لسه'; return; }
+    rtF = 'all'; rtN = 30; rtRender();
   } catch (e) { o.textContent = 'تعذّر الاتصال'; }
 });
 

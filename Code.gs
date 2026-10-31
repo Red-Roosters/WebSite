@@ -250,7 +250,7 @@ function flags_(list){var bm=blMap_(),cc=cancelCounts_(),fl={};list.forEach(func
 /* ── تقييم منخفض: آخر ٣ أيام (١-٢ نجمة) ── */
 function lowRate_(){var c=CacheService.getScriptCache(),j=c.get('lr_v1');if(j){try{return JSON.parse(j);}catch(_){}}
   var lim=Date.now()-3*864e5,l=lastRows_(sh_('Ratings',['time','orderId','stars','comment']),200).map(function(r){return {t:new Date(r[0]).getTime(),id:String(r[1]),stars:+r[2]||0,comment:String(r[3]||'')};}).filter(function(x){return x.stars<=2&&x.t>=lim;}).reverse();
-  var res={n:l.length,list:l.slice(0,15)};c.put('lr_v1',JSON.stringify(res),120);return res;}
+  var lst=l.slice(0,15),om=ordFind_(lst.map(function(x){return x.id;}));lst.forEach(function(x){var o=om[x.id.toUpperCase()];if(o)x.o=ordLite_(o);});var res={n:l.length,list:lst};c.put('lr_v1',JSON.stringify(res),120);return res;}
 /* ── دعوة صديق: كوبون FRIEND للصاحب الجديد + نقاط للي دعاه (بتتأكد لما طلب صاحبه يتسلّم) ── */
 var REF_COUPON='FRIEND';
 function refSh_(){var ss=SpreadsheetApp.getActiveSpreadsheet(),s=ss.getSheetByName('Referrals');if(!s){s=ss.insertSheet('Referrals');s.getRange('A:B').setNumberFormat('@');s.appendRow(['code','phone','created']);}return s;}
@@ -333,10 +333,26 @@ function chPending_(){var c=CacheService.getScriptCache(),ver=c.get('ch_ver')||'
   var js=JSON.stringify({v:ver,l:l});if(js.length<90000)c.put('ch_v2',js,20);return l;}   // الكاش مربوط بنسخة: أي كتابة بتبوّظه فورًا (حتى لو قراءة كانت شغالة وقتها)
 function setChg_(t,r,o){t.getRange(r,28).setValue(o?JSON.stringify(o):'');}
 function itN_(i){return {n:String(i.n||''),q:+i.q||0,p:+i.p||0,o:(i.o||[]).map(String),t:String(i.t||'')};}
-/* بيحسب الطلب بعد التعديل: inp = {items:[{i:رقم الصنف في الطلب, q:الكمية الجديدة (0 = شيله), }], notes} */
+/* أصناف جديدة بيضيفها العميل من المنيو: بنفس تحقق newOrder (سعر ≥ السعر المعلن في MenuPrices، والأصناف الموقوفة مرفوضة) */
+function edAdds_(arr,force){
+  if(arr==null)return {list:[]};
+  if(!Array.isArray(arr)||arr.length>15)return {err:'bad_items'};
+  var out=[];
+  for(var k=0;k<arr.length;k++){var x=arr[k]||{},n=String(x.n||'').replace(/\s+/g,' ').trim().slice(0,120),q=Math.round(+x.q),p=+x.p;
+    if(!n||!(q>=1&&q<=30)||!(p>0&&p<=5000))return {err:'bad_items'};
+    out.push({n:n,q:q,p:p,o:(Array.isArray(x.o)?x.o:[]).slice(0,12).map(function(y){return String(y).slice(0,80);}),t:String(x.t||'').replace(/\s+/g,' ').trim().slice(0,200)});}
+  if(out.length){
+    var mpm=mpMap_(),strict=PropertiesService.getScriptProperties().getProperty('MENU_STRICT')==='1',mpOn=Object.keys(mpm).length>0;
+    if(mpOn)for(var i=0;i<out.length;i++){var mk=nm_(out[i].n),mb=nm_(out[i].n.replace(/\s*\(.*\)\s*$/,'')),fl=mpm[mk]!==undefined?mpm[mk]:mpm[mb];
+      if(fl===undefined){if(strict)return {err:'bad_item',items:[out[i].n]};continue;}
+      if(out[i].p+0.01<fl)return {err:'bad_price'};}
+    if(!force){var bad=soBad_(out);if(bad.length)return {err:'soldout',items:bad};}}
+  return {list:out};}
+/* بيحسب الطلب بعد التعديل: inp = {items:[{i:رقم الصنف في الطلب, q:الكمية الجديدة (0 = شيله)}], add:[{n,q,p,o,t} أصناف جديدة من المنيو], notes} */
 function edCalc_(v,inp,force){
   var old=[];try{old=JSON.parse(v[7]||'[]').map(itN_);}catch(_){}
   if(!old.length||!inp||!inp.items||!inp.items.length||inp.items.length>old.length)return {err:'bad_items'};
+  var ad=edAdds_(inp.add,force);if(ad.err)return {err:ad.err,items:ad.items};
   var by={};
   for(var k=0;k<inp.items.length;k++){var x=inp.items[k]||{},ix=+x.i,q=Math.round(+x.q);
     if(!(ix>=0&&ix<old.length)||ix!==Math.floor(ix)||by[ix]!==undefined||!(q>=0&&q<=30))return {err:'bad_items'};by[ix]=q;}
@@ -344,7 +360,10 @@ function edCalc_(v,inp,force){
   for(var m=0;m<old.length;m++){var o=old[m],nq=by[m]===undefined?o.q:by[m];
     if(nq!==o.q)diff.push(nq?(o.n+': من '+o.q+' لـ '+nq):(o.n+': اتشال'));
     if(nq)out.push({n:o.n,q:nq,p:o.p,o:o.o,t:o.t});}
-  if(!out.length)return {err:'empty'};
+  ad.list.forEach(function(a){var hit=null;out.forEach(function(y){if(!hit&&y.n===a.n&&y.p===a.p&&y.t===a.t&&JSON.stringify(y.o)===JSON.stringify(a.o))hit=y;});
+    if(hit)hit.q=Math.min(30,hit.q+a.q);else out.push({n:a.n,q:a.q,p:a.p,o:a.o,t:a.t});
+    diff.push('➕ أضاف: '+a.q+'× '+a.n+(a.o.length?' ('+a.o.join('، ')+')':'')+(a.t?' — '+a.t:''));});
+  if(!out.length)return {err:'empty'};if(out.length>60)return {err:'bad_items'};
   var oldN=String(v[14]||'').trim(),nn=inp.notes==null?oldN:String(inp.notes).replace(/\s+/g,' ').trim().slice(0,400),nch=nn!==oldN;
   if(nch)diff.push('الملاحظات: '+(nn||'اتمسحت'));
   if(!diff.length)return {err:'nochange'};
@@ -354,7 +373,7 @@ function edCalc_(v,inp,force){
     if(cp&&!/^RR-/.test(cp)){var d=cdMap_()[cp];
       if(d&&d.min&&sub<d.min){if(!force)return {err:'coupon_min',min:d.min};}
       else if(d)nd=Math.min(sub,cdDisc_(d,sub));}}
-  return {old:old,items:out,diff:diff,sub:sub,nd:nd,fee:fee,tot:sub-nd+fee,oldTot:+v[12]||0,notes:nn,nch:nch};}
+  return {old:old,items:out,adds:ad.list,diff:diff,sub:sub,nd:nd,fee:fee,tot:sub-nd+fee,oldTot:+v[12]||0,notes:nn,nch:nch};}
 function edWrite_(t,r,v,c,id,ph,who){
   var lg=String(v[19]||'');
   t.getRange(r,8,1,6).setValues([[JSON.stringify(c.items),c.sub,c.nd,v[10],c.fee,c.tot]]);   // الأصناف + المجموع + الخصم + الكوبون + التوصيل + الإجمالي
@@ -370,6 +389,17 @@ function drvRaw_(l){return l.map(function(d){return d.id+':'+d.name+(d.phone?':'
 function cfgSet_(k,v){var s=setSh_(),d=s.getDataRange().getValues(),ix=0;for(var i=1;i<d.length;i++)if(String(d[i][0])===k){ix=i+1;break;}
   if(ix)s.getRange(ix,2).setValue(String(v));else s.appendRow([k,String(v)]);CacheService.getScriptCache().remove('set_v1');}
 function drvOut_(){var c=cfg_();return {ok:true,ot_key:c.ot_key,raw:c.drivers,drivers:drv_().map(function(d){d.tok=drvTok_(d.id);return d;})};}
+
+/* ═══ سجل الطلبات + تفاصيل الطلب جنب التقييم ═══ */
+function ordLite_(o){return {id:o.id,time:o.time,name:o.name,phone:o.phone,phone2:o.phone2,type:o.type,address:o.address,area:o.area,items:o.items,subtotal:o.subtotal,discount:o.discount,coupon:o.coupon,fee:o.fee,total:o.total,payment:o.payment,paid:o.paid,notes:o.notes,status:o.status,reason:o.reason,drv:o.drv};}
+/* بيرجّع {رقم الطلب بحروف كبيرة: الطلب} من الشيت الشغّال وبعدين الأرشيف للي ناقص */
+function ordFind_(ids){var want={};ids.forEach(function(i){want[String(i).toUpperCase()]=1;});var out={};
+  function take(rows){rows.forEach(function(r){var k=String(r[0]).toUpperCase();if(want[k]&&!out[k])out[k]=tkObj_(r);});}
+  take(lastRows_(tk_(),5000));
+  var miss=Object.keys(want).filter(function(k){return !out[k];});
+  if(miss.length){var a=SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Archive');if(a&&a.getLastRow()>1)take(lastRows_(a,8000));}
+  return out;}
+function ratMap_(){var m={};rows_(sh_('Ratings',['time','orderId','stars','comment'])).forEach(function(r){m[String(r[1]).toUpperCase()]={stars:+r[2]||0,comment:String(r[3]||''),time:new Date(r[0]).getTime()};});return m;}
 
 function doGet(e){
   var p=(e&&e.parameter)||{}, a=p.action;
@@ -508,8 +538,21 @@ function doPost_(e){
     var f0=+b.from||0,t0=+b.to||Date.now(),rp=rowsSince_(tk_(),f0).map(tkObj_).filter(function(o){return o.time>=f0&&o.time<t0;});
     rp.sort(function(x,y){return y.time-x.time;});var trunc=rp.length>5000;if(trunc)rp=rp.slice(0,5000);
     return out_({ok:true,orders:rp,truncated:trunc});}
+  if(b.action==='orderSearch'){var os=authAny_(b);if(os.err)return out_({ok:false,error:os.err});if(os.role!=='manager')return out_({ok:false,error:'forbidden'});
+    if(!rl_('osr_'+os.user,40,60))return out_({ok:false,error:'busy'});
+    var sf=b.from===undefined?Date.now()-30*864e5:(+b.from||0),st2=+b.to||0,sq=String(b.q||'').trim().toLowerCase().slice(0,60),sd=/^[\d٠-٩\s+\-]+$/.test(sq)&&norm_(sq).length>=4?norm_(sq):'',sst=String(b.status||''),spy=String(b.payment||''),sra=String(b.rating||''),rm=ratMap_();
+    var all2=rowsSince_(tk_(),sf).map(tkObj_).filter(function(o){
+      if(o.time<sf||(st2&&o.time>st2))return false;if(sst&&o.status!==sst)return false;if(spy&&o.payment!==spy)return false;
+      var r=rm[o.id.toUpperCase()];if(sra==='rated'&&!r)return false;if(sra==='low'&&!(r&&r.stars<=2))return false;if(sra==='high'&&!(r&&r.stars>=4))return false;if(sra==='unrated'&&r)return false;
+      if(!sq)return true;
+      var hay=(o.id+' '+o.name+' '+o.address+' '+o.area+' '+o.notes+' '+o.coupon+' '+o.items.map(function(i){return i.n+' '+(i.t||'')+' '+(i.o||[]).join(' ');}).join(' ')).toLowerCase();
+      return hay.indexOf(sq)>=0||(sd&&(o.phone.indexOf(sd)>=0||(o.phone2&&o.phone2.indexOf(sd)>=0)));});
+    all2.sort(function(x,y){return y.time-x.time;});var sum=0,cn=0;all2.forEach(function(o){if(o.status==='cancelled')cn++;else sum+=o.total;});
+    var shown=all2.slice(0,80).map(function(o){var x=ordLite_(o),r=rm[o.id.toUpperCase()];if(r)x.rt=r;return x;});
+    return out_({ok:true,total:all2.length,shown:shown.length,sum:sum,cancelled:cn,list:shown});}
   if(b.action==='adminRatings'){var ra=authAny_(b);if(ra.err)return out_({ok:false,error:ra.err});if(ra.role!=='manager')return out_({ok:false,error:'forbidden'});
-    return out_({ok:true,ratings:lastRows_(sh_('Ratings',['time','orderId','stars','comment']),300).map(function(r){return {time:new Date(r[0]).getTime(),id:String(r[1]),stars:+r[2]||0,comment:String(r[3]||'')};}).reverse()});}
+    var rl2=lastRows_(sh_('Ratings',['time','orderId','stars','comment']),300).map(function(r){return {time:new Date(r[0]).getTime(),id:String(r[1]),stars:+r[2]||0,comment:String(r[3]||'')};}).reverse(),om2=ordFind_(rl2.map(function(x){return x.id;}));
+    rl2.forEach(function(x){var o=om2[x.id.toUpperCase()];if(o)x.o=ordLite_(o);});return out_({ok:true,ratings:rl2});}
   if(b.action==='staffList'){var al=authAny_(b);if(al.err)return out_({ok:false,error:al.err});if(al.role!=='manager')return out_({ok:false,error:'forbidden'});
     return out_({ok:true,staff:rows_(staffSh_()).filter(function(r){return r[0];}).map(function(r){return {username:String(r[0]),name:String(r[3]||r[0]),active:r[4]===true||String(r[4]).toLowerCase()==='true',created:r[5]?new Date(r[5]).getTime():0};})});}
   if(b.action==='couponList'){var cL=authAny_(b);if(cL.err)return out_({ok:false,error:cL.err});if(cL.role!=='manager')return out_({ok:false,error:'forbidden'});
@@ -614,7 +657,7 @@ function doPost_(e){
       if(b.action!=='custReq'){
         if(EDITABLE.indexOf(cst)<0)return out_({ok:false,error:'locked'});
         if(!(cwin>0&&cage<=cwin+3000))return out_({ok:false,error:'expired'});   // ٣ ثواني سماح للنت
-        if(b.action==='custEdit'){var ce=edCalc_(cv,b,false);if(ce.err)return out_({ok:false,error:ce.err,min:ce.min});
+        if(b.action==='custEdit'){var ce=edCalc_(cv,b,false);if(ce.err)return out_({ok:false,error:ce.err,min:ce.min,items:ce.items});
           edWrite_(ct,cr,cv,ce,cid_,ph,'customer');
           chAdd_(cid_,cname,ph,'edit',{diff:ce.diff,before:ce.old,after:ce.items,oldTot:ce.oldTot,newTot:ce.tot},'pending');
           return out_({ok:true,total:ce.tot});}
@@ -623,8 +666,8 @@ function doPost_(e){
         chAdd_(cid_,cname,ph,'cancel',{reason:'العميل ألغى الطلب بنفسه خلال المدة',before:cit,oldTot:+cv[12]||0},'pending');
         return out_({ok:true});}
       var rk=b.kind==='cancel'?'cancel':'edit',rd={note:String(b.note||'').replace(/\s+/g,' ').trim().slice(0,300)};
-      if(rk==='edit'){var cq=edCalc_(cv,b,true);if(cq.err)return out_({ok:false,error:cq.err});
-        rd.inp={items:b.items.map(function(x){return {i:+x.i,q:Math.round(+x.q)};}),notes:b.notes==null?null:String(b.notes).slice(0,400)};rd.diff=cq.diff;rd.before=cq.old;rd.after=cq.items;rd.oldTot=cq.oldTot;rd.newTot=cq.tot;}
+      if(rk==='edit'){var cq=edCalc_(cv,b,true);if(cq.err)return out_({ok:false,error:cq.err,items:cq.items});
+        rd.inp={items:b.items.map(function(x){return {i:+x.i,q:Math.round(+x.q)};}),add:cq.adds,notes:b.notes==null?null:String(b.notes).slice(0,400)};rd.diff=cq.diff;rd.before=cq.old;rd.after=cq.items;rd.oldTot=cq.oldTot;rd.newTot=cq.tot;}
       else{var rit=[];try{rit=JSON.parse(cv[7]||'[]').map(itN_);}catch(_){}rd.before=rit;rd.oldTot=+cv[12]||0;}
       var rcid=chAdd_(cid_,cname,ph,'req_'+rk,rd,'pending'),rlg=String(cv[19]||'');
       setChg_(ct,cr,{k:rk,s:'pending',t:Date.now(),c:rcid});ct.getRange(cr,20).setValue((rlg?rlg+';':'')+'creq@customer@'+Date.now());

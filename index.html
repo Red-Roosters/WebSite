@@ -4081,6 +4081,7 @@ html[lang="en"] .rr-so-badge::before{content:"Sold out"}
     /* ═══ السلة ═══ */
     function addItem(o) {
         if (soBlocked(o)) return;
+        if (window.RR_EDIT_HOOK && window.RR_EDIT_HOOK(o)) return;   // وضع «إضافة صنف لطلب بيتعدّل» — الصنف بيروح للتعديل مش للسلة
         rrEv('cart');
         const full = o.label ? `${o.name} (${o.label})` : o.name;
         const opts = o.opts || [];
@@ -5912,18 +5913,19 @@ new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:tru
         else m.map.panTo([d.lat,d.lon]); },60); }); }); }
 
   /* ── تعديل / إلغاء الطلب: مباشر خلال المدة، وبعدها بيتبعت «طلب» للمطعم وبنستنى رده ── */
-  var EDIT={}, ERR={expired:'عدّت مدة التعديل المباشر — ابعت طلب للمطعم.',locked:'الطلب اتجهّز أو خرج — ابعت طلب للمطعم.',closed:'الطلب خلص أو اتلغى.',pending:'عندك طلب لسه مستني رد المطعم.',busy:'محاولات كتير، جرّب بعد شوية.',nochange:'ماغيّرتش حاجة في الطلب.',bad_items:'في مشكلة في الأصناف، جرّب تاني.',empty:'لو عايز تلغي الطلب كله استخدم «إلغاء الطلب».',coupon_min:'التعديل ده هيخلّي الكوبون ميتطبّقش (الحد الأدنى). ابعت طلب للمطعم.',not_found:'مش لاقيين الطلب ده.'};
-  function postJ(o){return fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(o)}).then(function(r){return r.json()});}
+  var EDIT={}, ERR={expired:'عدّت مدة التعديل المباشر — ابعت طلب للمطعم.',locked:'الطلب اتجهّز أو خرج — ابعت طلب للمطعم.',closed:'الطلب خلص أو اتلغى.',pending:'عندك طلب لسه مستني رد المطعم.',busy:'محاولات كتير، جرّب بعد شوية.',nochange:'ماغيّرتش حاجة في الطلب.',bad_items:'في مشكلة في الأصناف، جرّب تاني.',empty:'لو عايز تلغي الطلب كله استخدم «إلغاء الطلب».',coupon_min:'التعديل ده هيخلّي الكوبون ميتطبّقش (الحد الأدنى). ابعت طلب للمطعم.',not_found:'مش لاقيين الطلب ده.',soldout:'في صنف مش متاح دلوقتي.',bad_price:'سعر صنف مش مظبوط — حدّث الصفحة وجرّب تاني.',bad_item:'في صنف مش معروف — حدّث الصفحة وجرّب تاني.'};
+  function postJ(o){ var ctl=window.AbortController?new AbortController():null, to=ctl?setTimeout(function(){ctl.abort()},30000):0;
+    return fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(o),signal:ctl?ctl.signal:undefined}).then(function(r){return r.json()}).then(function(j){clearTimeout(to);return j},function(e){clearTimeout(to);throw e}); }
   function direct(o){return !!(o&&o.canEdit&&o._exp>Date.now());}
   function mmss(ms){var s=Math.max(0,Math.ceil(ms/1000)),m=Math.floor(s/60);return m+':'+('0'+(s%60)).slice(-2);}
-  function sumQ(o,ed){var s=0;(o.items||[]).forEach(function(i,k){s+=i.p*(ed.q[k]|0);});return s;}
+  function sumQ(o,ed){var s=0;(o.items||[]).forEach(function(i,k){s+=i.p*(ed.q[k]|0);});(ed.adds||[]).forEach(function(a){s+=a.p*a.q;});return s;}
   function actHtml(e,o,st){
     if(!o||st==='delivered'||st==='cancelled') return '';
     var ch=o.chg, ed=EDIT[e.id], dr=direct(o), h='', id=esc(e.id);
     if(ch&&ch.s==='pending') return '<div class="tk-chg wait">⏳ طلب '+(ch.k==='cancel'?'الإلغاء':'التعديل')+' وصل المطعم — مستني تأكيدهم، وهنبلّغك أول ما يردّوا.</div>';
     if(ch&&ch.s==='no') h+='<div class="tk-chg no">❌ المطعم مقدرش ينفّذ طلبك '+(ch.k==='cancel'?'للإلغاء':'للتعديل')+(ch.r?'<br>السبب: '+esc(ch.r):'')+'</div>';
     if(ch&&ch.s==='ok'&&ch.k==='edit'&&Date.now()-ch.t<36e5) h+='<div class="tk-chg ok">✅ المطعم وافق ونفّذ التعديل على طلبك.</div>';
-    if(ed&&ed.mode==='edit'&&!dr){ delete EDIT[e.id]; ed=null; }
+    if(ed&&ed.mode==='edit'&&!dr){ ed.mode='reqedit'; ed.note=ed.note||''; }   // خلصت مدة التعديل المباشر: نحوّل التعديل لطلب للمطعم ونحافظ على اللي اختاره
     if(!ed){
       if(dr) return h+'<div class="tk-act"><div class="tk-win">⏱️ تقدر تعدّل أو تلغي طلبك بنفسك لمدة <b data-cd data-exp="'+o._exp+'">'+mmss(o._exp-Date.now())+'</b></div><div class="row"><button type="button" data-ed="edit" data-id="'+id+'">✏️ تعديل الأصناف</button><button type="button" class="neg" data-ed="cancel" data-id="'+id+'">❌ إلغاء الطلب</button></div></div>';
       return h+'<div class="tk-act"><div class="tk-win late">عدّت مدة التعديل المباشر. لو لسه محتاج تعدّل أو تلغي ابعت طلب للمطعم وهيراجعوه ويردّوا عليك.</div><div class="row"><button type="button" data-ed="reqedit" data-id="'+id+'">📨 طلب تعديل</button><button type="button" class="neg" data-ed="reqcancel" data-id="'+id+'">📨 طلب إلغاء</button></div></div>';
@@ -5931,6 +5933,8 @@ new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:tru
     var isReq=ed.mode!=='edit', body='<h5>'+(ed.mode==='edit'?'✏️ عدّل طلبك':ed.mode==='reqedit'?'📨 طلب تعديل للمطعم':'📨 طلب إلغاء للمطعم')+'</h5>';
     if(ed.mode!=='reqcancel'){
       body+=(o.items||[]).map(function(i,k){var q=ed.q[k]|0;return '<div class="tk-ed-r'+(q?'':' z')+'"><span>'+esc(i.n)+(i.o&&i.o.length?'<small>'+esc(i.o.join('، '))+'</small>':'')+'<small>'+i.p+' ج للواحد</small></span><span class="tk-stp"><button type="button" data-ed="q" data-id="'+id+'" data-k="'+k+'" data-d="-1" aria-label="أقل">−</button><b>'+q+'</b><button type="button" data-ed="q" data-id="'+id+'" data-k="'+k+'" data-d="1" aria-label="أكتر">+</button></span></div>';}).join('');
+      body+=(ed.adds||[]).map(function(a,k){return '<div class="tk-ed-r"><span>➕ '+esc(a.n)+(a.o&&a.o.length?'<small>'+esc(a.o.join('، '))+'</small>':'')+(a.t?'<small>📝 '+esc(a.t)+'</small>':'')+'<small>'+a.p+' ج للواحد — صنف جديد</small></span><span class="tk-stp"><button type="button" data-ed="aq" data-id="'+id+'" data-k="'+k+'" data-d="-1" aria-label="أقل">−</button><b>'+a.q+'</b><button type="button" data-ed="aq" data-id="'+id+'" data-k="'+k+'" data-d="1" aria-label="أكتر">+</button></span></div>';}).join('');
+      body+='<div class="row" style="margin-top:8px"><button type="button" data-ed="addmenu" data-id="'+id+'">➕ إضافة صنف من المنيو</button></div>';
       body+='<div class="tk-meta">المجموع الجديد (قبل الخصم والتوصيل): <b>'+sumQ(o,ed)+'</b> ج.م — الإجمالي النهائي بيتحسب تلقائي. ('+'الكمية 0 = شيل الصنف)</div>';
       body+='<textarea class="tk-ed" data-f="notes" maxlength="400" placeholder="ملاحظات على الطلب (اختياري)">'+esc(ed.notes)+'</textarea>';
     }
@@ -5941,30 +5945,51 @@ new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:tru
   function edClick(b){
     var id=b.getAttribute('data-id'), act=b.getAttribute('data-ed'), o=cache[id], ent=get(KEY).filter(function(x){return x.id===id})[0], ed=EDIT[id];
     if(!o||!ent) return;
-    if(act==='edit'||act==='reqedit'||act==='reqcancel'){ EDIT[id]={mode:act,q:(o.items||[]).map(function(i){return i.q}),notes:o.notes||'',note:''}; render(true); return; }
+    if(act==='edit'||act==='reqedit'||act==='reqcancel'){ EDIT[id]={mode:act,q:(o.items||[]).map(function(i){return i.q}),notes:o.notes||'',note:'',adds:[]}; render(true); return; }
     if(act==='close'){ delete EDIT[id]; render(true); return; }
     var box=b.closest('.tk-act'), m=box&&box.querySelector('[data-m]'), say=function(t){ if(m) m.textContent=t||''; };
     function done(msg){ delete EDIT[id]; if(window.toast) toast(msg,4500); refresh(true).then(function(){ render(true); }); }
-    function fail(j){ b.disabled=false; say(ERR[j&&j.error]||'⚠️ تعذّر الإرسال، جرّب تاني'); if(j&&(j.error==='expired'||j.error==='locked'||j.error==='pending'||j.error==='closed')) refresh(true).then(function(){ render(true); }); }
+    function fail(j){ b.disabled=false; say(j&&j.error==='soldout'&&j.items&&j.items.length?'الصنف ده مش متاح دلوقتي: '+j.items.map(String).join('، ')+' — شيله وكمّل.':(j?(ERR[j.error]||'⚠️ تعذّر الإرسال، جرّب تاني'):'⚠️ النت بطيء أو الاتصال فصل — اتأكد من حالة طلبك قبل ما تحاول تاني.')); if(j&&(j.error==='expired'||j.error==='locked'||j.error==='pending'||j.error==='closed')) refresh(true).then(function(){ render(true); }); }
     if(act==='q'){ if(!ed) return; var k=+b.getAttribute('data-k'), d=+b.getAttribute('data-d'); ed.q[k]=Math.max(0,Math.min(30,(ed.q[k]|0)+d)); render(true); return; }
+    if(act==='aq'){ if(!ed||!ed.adds) return; var ak=+b.getAttribute('data-k'), ad=+b.getAttribute('data-d'), a=ed.adds[ak]; if(!a) return; a.q=Math.min(30,a.q+ad); if(a.q<=0) ed.adds.splice(ak,1); render(true); return; }
+    if(act==='addmenu'){ if(!ed) return; ADD=id; close(); try{ closeAll&&closeAll(); }catch(x){} addBar(); if(window.toast) toast('🍽️ اختار الصنف من المنيو وهيتضاف لتعديل طلبك',3500); return; }
     if(act==='cancel'){
       if(!confirm('متأكد إنك عايز تلغي الطلب #'+id+'؟ مينفعش ترجع فيها بعد كده.')) return;
       b.disabled=true; postJ({action:'custCancel',id:id,phone:ent.phone}).then(function(j){ if(j&&j.ok) done('❌ اتلغى طلبك #'+id); else fail(j); },function(){ fail(null); }); return; }
     if(!ed) return;
-    var items=ed.q.map(function(q,i){return {i:i,q:q};}), any=ed.q.some(function(q){return q>0;});
+    var items=ed.q.map(function(q,i){return {i:i,q:q};}), any=ed.q.some(function(q){return q>0;})||(ed.adds&&ed.adds.length>0), adds=(ed.adds||[]).map(function(a){return {n:a.n,q:a.q,p:a.p,o:a.o,t:a.t};});
     if(act==='save'){
       if(!any){ say(ERR.empty); return; }
       b.disabled=true; say('⏳ بنحفظ...');
-      postJ({action:'custEdit',id:id,phone:ent.phone,items:items,notes:ed.notes}).then(function(j){ if(j&&j.ok) done('✅ اتعدّل طلبك — الإجمالي الجديد '+j.total+' ج.م'); else fail(j); },function(){ fail(null); }); return; }
+      postJ({action:'custEdit',id:id,phone:ent.phone,items:items,add:adds,notes:ed.notes}).then(function(j){ if(j&&j.ok) done('✅ اتعدّل طلبك — الإجمالي الجديد '+j.total+' ج.م'); else fail(j); },function(){ fail(null); }); return; }
     if(act==='sendreq'){
       var kind=ed.mode==='reqcancel'?'cancel':'edit';
       if(kind==='edit'&&!any){ say(ERR.empty); return; }
       b.disabled=true; say('⏳ بنبعت...');
-      postJ({action:'custReq',id:id,phone:ent.phone,kind:kind,items:kind==='edit'?items:undefined,notes:kind==='edit'?ed.notes:undefined,note:ed.note||''}).then(function(j){ if(j&&j.ok) done('📨 طلبك وصل المطعم — مستني تأكيدهم'); else fail(j); },function(){ fail(null); }); return; }
+      postJ({action:'custReq',id:id,phone:ent.phone,kind:kind,items:kind==='edit'?items:undefined,add:kind==='edit'?adds:undefined,notes:kind==='edit'?ed.notes:undefined,note:ed.note||''}).then(function(j){ if(j&&j.ok) done('📨 طلبك وصل المطعم — مستني تأكيدهم'); else fail(j); },function(){ fail(null); }); return; }
   }
   setInterval(function(){ var els=document.querySelectorAll('[data-cd]'); if(!els.length) return; var again=false;
     [].forEach.call(els,function(el){ var l=(+el.getAttribute('data-exp'))-Date.now(); if(l<=0) again=true; else el.textContent=mmss(l); });
     if(again&&$('rrTkSheet').classList.contains('open')) render(); },1000);
+
+  /* ── وضع «إضافة صنف من المنيو لطلب بيتعدّل»: الصنف بيتضاف لمسودة التعديل بدل السلة ── */
+  var ADD=null;
+  function addBar(){
+    var b=$('rrAddBar');
+    if(!ADD){ if(b) b.style.display='none'; return; }
+    if(!b){ b=document.createElement('div'); b.id='rrAddBar';
+      b.style.cssText='position:fixed;left:10px;right:10px;bottom:max(12px,env(safe-area-inset-bottom));z-index:99999;background:#1E1411;color:#fff;border-radius:16px;padding:10px 12px;display:flex;gap:10px;align-items:center;box-shadow:0 6px 24px rgba(0,0,0,.4);font:700 .9rem Cairo,sans-serif';
+      b.addEventListener('click',function(ev){ if(!ev.target.closest('[data-ab]')) return; var id=ADD; ADD=null; addBar(); if(id) open(id); });
+      document.body.appendChild(b); }
+    var n=(EDIT[ADD]&&EDIT[ADD].adds||[]).length;
+    b.innerHTML='<span style="flex:1;line-height:1.5">✏️ بتضيف أصناف لطلب <b dir="ltr">#'+esc(ADD)+'</b>'+(n?' — ضفت '+n:'')+'</span><button type="button" data-ab="1" style="border:0;border-radius:12px;padding:10px 14px;background:#D92B2B;color:#fff;font:800 .9rem Cairo,sans-serif;cursor:pointer">✅ تم — ارجع للتعديل</button>';
+    b.style.display='flex'; }
+  window.RR_EDIT_HOOK=function(o){
+    if(!ADD) return false; var ed=EDIT[ADD]; if(!ed){ ADD=null; addBar(); return false; }
+    var n=o.label?o.name+' ('+o.label+')':o.name, opts=(o.opts||[]).slice(), t=o.note||'', hit=null;
+    ed.adds=ed.adds||[]; ed.adds.forEach(function(a){ if(a.n===n&&a.p===o.price&&a.t===t&&a.o.join('|')===opts.join('|')) hit=a; });
+    if(hit) hit.q=Math.min(30,hit.q+(o.qty||1)); else ed.adds.push({n:n,p:o.price,q:Math.min(30,o.qty||1),o:opts,t:t});
+    addBar(); if(window.toast) toast('✅ اتضاف لتعديل طلبك: '+n,2500); return true; };
 
   /* ── الرسم ── */
   var LBL=['','سيئ 😞','مش كويس 😕','عادي 🙂','حلو 😋','ممتاز 🤩'], draft={},
