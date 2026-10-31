@@ -5807,6 +5807,20 @@ new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:tru
 #rrRe{display:none;align-items:center;justify-content:space-between;gap:10px;margin:10px 12px;padding:10px 14px;border-radius:16px;background:#FFF3CD;border:1.5px solid #F5A623;color:#5c4300;font-weight:800;font-size:.9rem}
 #rrRe small{display:block;font-weight:600;color:#7A5800}#rrRe .a{display:flex;gap:6px;flex:0 0 auto}
 #rrRe button{border:0;border-radius:12px;padding:9px 14px;font:800 .85rem "Cairo",sans-serif;cursor:pointer}#rrRe .go{background:#D92B2B;color:#fff}#rrRe .x{background:transparent;color:#7A5800;padding:9px 8px}
+.tk-act{margin:10px 0;padding:11px 12px;border:1.5px dashed #eadfd8;border-radius:14px;background:#fffdfb}
+.tk-act h5{margin:0 0 6px;font:900 .92rem "Cairo",sans-serif}
+.tk-win{font-size:.86rem;font-weight:800;color:#1d3f8f;margin-bottom:8px;line-height:1.7}.tk-win b{font-variant-numeric:tabular-nums;color:#D92B2B}.tk-win.late{color:#7A5800}
+.tk-act .row{display:flex;gap:8px;flex-wrap:wrap}
+.tk-act .row button{flex:1;min-width:120px;border:1.5px solid #eadfd8;background:#fff;border-radius:12px;padding:10px;font:800 .86rem "Cairo",sans-serif;cursor:pointer;color:#1E1411}
+.tk-act .row button.neg{color:#D92B2B;border-color:#f0b9b9}.tk-act .row button.pri{background:#D92B2B;border-color:#D92B2B;color:#fff}.tk-act .row button:disabled{opacity:.55}
+.tk-ed-r{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 0;border-bottom:1px solid #f1e8e2;font-size:.88rem;font-weight:700}
+.tk-ed-r.z{opacity:.5}.tk-ed-r.z>span:first-child{text-decoration:line-through}
+.tk-ed-r small{display:block;color:#6B6B6B;font-weight:600}
+.tk-stp{display:flex;align-items:center;gap:6px;flex:0 0 auto}.tk-stp button{width:34px;height:34px;padding:0;border-radius:50%;border:1.5px solid #eadfd8;background:#fff;font:800 1.1rem "Cairo",sans-serif;cursor:pointer;color:#1E1411}.tk-stp b{min-width:22px;text-align:center}
+.tk-act textarea{width:100%;margin-top:8px;padding:9px 11px;border:1.5px solid #eadfd8;border-radius:12px;font:600 .88rem "Cairo",sans-serif;min-height:56px;resize:vertical;box-sizing:border-box}
+.tk-chg{margin:8px 0;padding:9px 12px;border-radius:12px;font-size:.86rem;font-weight:800;line-height:1.6}
+.tk-chg.wait{background:#FFF3CD;color:#7A5800;border:1px solid #F5A623}.tk-chg.no{background:#FDECEC;color:#9E1B1B;border:1px solid #f0b9b9}.tk-chg.ok{background:#E3F6EC;color:#0B6E4F;border:1px solid #b6e2cb}
+.tk-ed-m{font-size:.8rem;color:#9E1B1B;font-weight:700;margin-top:6px;min-height:1em}
 </style>
 <div id="rrTkOv"></div>
 <div id="rrTkSheet" role="dialog" aria-label="تتبع الطلب"><div class="tk-h"><span>📦 تتبع طلبي</span><button id="rrTkX" aria-label="إغلاق">✕</button></div>
@@ -5856,7 +5870,7 @@ new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:tru
 
   /* ── جلب الحالة ── */
   function track(e){return fetch(url('action=track&id='+encodeURIComponent(e.id)+'&phone='+e.phone)).then(function(r){return r.json()})
-    .then(function(j){ if(!j||!j.ok) throw 0; return j.found?j.order:null; });}
+    .then(function(j){ if(!j||!j.ok) throw 0; if(j.found&&j.order) j.order._exp=Date.now()+(+j.order.winLeft||0); return j.found?j.order:null; });}
   function refresh(force){
     var a=get(KEY), jobs=a.filter(function(e){return force||!FINAL[e.status]}).slice(0,5).map(function(e){
       return track(e).then(function(o){ if(o){ cache[e.id]=o; e.status=o.status; e.type=o.type; } else if(cache[e.id]===undefined) cache[e.id]=null; }).catch(function(){}); });
@@ -5897,6 +5911,61 @@ new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:tru
           m.map.fitBounds([[d.lat,d.lon],[d.dlat,d.dlon]],{padding:[40,40],maxZoom:17}); drvRoute(m,d); }
         else m.map.panTo([d.lat,d.lon]); },60); }); }); }
 
+  /* ── تعديل / إلغاء الطلب: مباشر خلال المدة، وبعدها بيتبعت «طلب» للمطعم وبنستنى رده ── */
+  var EDIT={}, ERR={expired:'عدّت مدة التعديل المباشر — ابعت طلب للمطعم.',locked:'الطلب اتجهّز أو خرج — ابعت طلب للمطعم.',closed:'الطلب خلص أو اتلغى.',pending:'عندك طلب لسه مستني رد المطعم.',busy:'محاولات كتير، جرّب بعد شوية.',nochange:'ماغيّرتش حاجة في الطلب.',bad_items:'في مشكلة في الأصناف، جرّب تاني.',empty:'لو عايز تلغي الطلب كله استخدم «إلغاء الطلب».',coupon_min:'التعديل ده هيخلّي الكوبون ميتطبّقش (الحد الأدنى). ابعت طلب للمطعم.',not_found:'مش لاقيين الطلب ده.'};
+  function postJ(o){return fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(o)}).then(function(r){return r.json()});}
+  function direct(o){return !!(o&&o.canEdit&&o._exp>Date.now());}
+  function mmss(ms){var s=Math.max(0,Math.ceil(ms/1000)),m=Math.floor(s/60);return m+':'+('0'+(s%60)).slice(-2);}
+  function sumQ(o,ed){var s=0;(o.items||[]).forEach(function(i,k){s+=i.p*(ed.q[k]|0);});return s;}
+  function actHtml(e,o,st){
+    if(!o||st==='delivered'||st==='cancelled') return '';
+    var ch=o.chg, ed=EDIT[e.id], dr=direct(o), h='', id=esc(e.id);
+    if(ch&&ch.s==='pending') return '<div class="tk-chg wait">⏳ طلب '+(ch.k==='cancel'?'الإلغاء':'التعديل')+' وصل المطعم — مستني تأكيدهم، وهنبلّغك أول ما يردّوا.</div>';
+    if(ch&&ch.s==='no') h+='<div class="tk-chg no">❌ المطعم مقدرش ينفّذ طلبك '+(ch.k==='cancel'?'للإلغاء':'للتعديل')+(ch.r?'<br>السبب: '+esc(ch.r):'')+'</div>';
+    if(ch&&ch.s==='ok'&&ch.k==='edit'&&Date.now()-ch.t<36e5) h+='<div class="tk-chg ok">✅ المطعم وافق ونفّذ التعديل على طلبك.</div>';
+    if(ed&&ed.mode==='edit'&&!dr){ delete EDIT[e.id]; ed=null; }
+    if(!ed){
+      if(dr) return h+'<div class="tk-act"><div class="tk-win">⏱️ تقدر تعدّل أو تلغي طلبك بنفسك لمدة <b data-cd data-exp="'+o._exp+'">'+mmss(o._exp-Date.now())+'</b></div><div class="row"><button type="button" data-ed="edit" data-id="'+id+'">✏️ تعديل الأصناف</button><button type="button" class="neg" data-ed="cancel" data-id="'+id+'">❌ إلغاء الطلب</button></div></div>';
+      return h+'<div class="tk-act"><div class="tk-win late">عدّت مدة التعديل المباشر. لو لسه محتاج تعدّل أو تلغي ابعت طلب للمطعم وهيراجعوه ويردّوا عليك.</div><div class="row"><button type="button" data-ed="reqedit" data-id="'+id+'">📨 طلب تعديل</button><button type="button" class="neg" data-ed="reqcancel" data-id="'+id+'">📨 طلب إلغاء</button></div></div>';
+    }
+    var isReq=ed.mode!=='edit', body='<h5>'+(ed.mode==='edit'?'✏️ عدّل طلبك':ed.mode==='reqedit'?'📨 طلب تعديل للمطعم':'📨 طلب إلغاء للمطعم')+'</h5>';
+    if(ed.mode!=='reqcancel'){
+      body+=(o.items||[]).map(function(i,k){var q=ed.q[k]|0;return '<div class="tk-ed-r'+(q?'':' z')+'"><span>'+esc(i.n)+(i.o&&i.o.length?'<small>'+esc(i.o.join('، '))+'</small>':'')+'<small>'+i.p+' ج للواحد</small></span><span class="tk-stp"><button type="button" data-ed="q" data-id="'+id+'" data-k="'+k+'" data-d="-1" aria-label="أقل">−</button><b>'+q+'</b><button type="button" data-ed="q" data-id="'+id+'" data-k="'+k+'" data-d="1" aria-label="أكتر">+</button></span></div>';}).join('');
+      body+='<div class="tk-meta">المجموع الجديد (قبل الخصم والتوصيل): <b>'+sumQ(o,ed)+'</b> ج.م — الإجمالي النهائي بيتحسب تلقائي. ('+'الكمية 0 = شيل الصنف)</div>';
+      body+='<textarea class="tk-ed" data-f="notes" maxlength="400" placeholder="ملاحظات على الطلب (اختياري)">'+esc(ed.notes)+'</textarea>';
+    }
+    if(isReq) body+='<textarea class="tk-ed" data-f="note" maxlength="300" placeholder="'+(ed.mode==='reqcancel'?'سبب الإلغاء (اختياري)':'قولنا محتاج تعدّل إيه (اختياري)')+'">'+esc(ed.note||'')+'</textarea>';
+    body+='<div class="row" style="margin-top:8px"><button type="button" class="pri" data-ed="'+(isReq?'sendreq':'save')+'" data-id="'+id+'">'+(isReq?'📨 ابعت الطلب للمطعم':'💾 حفظ التعديل')+'</button><button type="button" data-ed="close" data-id="'+id+'">رجوع</button></div><div class="tk-ed-m" data-m></div>';
+    return h+'<div class="tk-act" data-edbox="'+id+'">'+body+(dr&&!isReq?'<div class="tk-win" style="margin:8px 0 0">⏱️ باقي <b data-cd data-exp="'+o._exp+'">'+mmss(o._exp-Date.now())+'</b></div>':'')+'</div>';
+  }
+  function edClick(b){
+    var id=b.getAttribute('data-id'), act=b.getAttribute('data-ed'), o=cache[id], ent=get(KEY).filter(function(x){return x.id===id})[0], ed=EDIT[id];
+    if(!o||!ent) return;
+    if(act==='edit'||act==='reqedit'||act==='reqcancel'){ EDIT[id]={mode:act,q:(o.items||[]).map(function(i){return i.q}),notes:o.notes||'',note:''}; render(true); return; }
+    if(act==='close'){ delete EDIT[id]; render(true); return; }
+    var box=b.closest('.tk-act'), m=box&&box.querySelector('[data-m]'), say=function(t){ if(m) m.textContent=t||''; };
+    function done(msg){ delete EDIT[id]; if(window.toast) toast(msg,4500); refresh(true).then(function(){ render(true); }); }
+    function fail(j){ b.disabled=false; say(ERR[j&&j.error]||'⚠️ تعذّر الإرسال، جرّب تاني'); if(j&&(j.error==='expired'||j.error==='locked'||j.error==='pending'||j.error==='closed')) refresh(true).then(function(){ render(true); }); }
+    if(act==='q'){ if(!ed) return; var k=+b.getAttribute('data-k'), d=+b.getAttribute('data-d'); ed.q[k]=Math.max(0,Math.min(30,(ed.q[k]|0)+d)); render(true); return; }
+    if(act==='cancel'){
+      if(!confirm('متأكد إنك عايز تلغي الطلب #'+id+'؟ مينفعش ترجع فيها بعد كده.')) return;
+      b.disabled=true; postJ({action:'custCancel',id:id,phone:ent.phone}).then(function(j){ if(j&&j.ok) done('❌ اتلغى طلبك #'+id); else fail(j); },function(){ fail(null); }); return; }
+    if(!ed) return;
+    var items=ed.q.map(function(q,i){return {i:i,q:q};}), any=ed.q.some(function(q){return q>0;});
+    if(act==='save'){
+      if(!any){ say(ERR.empty); return; }
+      b.disabled=true; say('⏳ بنحفظ...');
+      postJ({action:'custEdit',id:id,phone:ent.phone,items:items,notes:ed.notes}).then(function(j){ if(j&&j.ok) done('✅ اتعدّل طلبك — الإجمالي الجديد '+j.total+' ج.م'); else fail(j); },function(){ fail(null); }); return; }
+    if(act==='sendreq'){
+      var kind=ed.mode==='reqcancel'?'cancel':'edit';
+      if(kind==='edit'&&!any){ say(ERR.empty); return; }
+      b.disabled=true; say('⏳ بنبعت...');
+      postJ({action:'custReq',id:id,phone:ent.phone,kind:kind,items:kind==='edit'?items:undefined,notes:kind==='edit'?ed.notes:undefined,note:ed.note||''}).then(function(j){ if(j&&j.ok) done('📨 طلبك وصل المطعم — مستني تأكيدهم'); else fail(j); },function(){ fail(null); }); return; }
+  }
+  setInterval(function(){ var els=document.querySelectorAll('[data-cd]'); if(!els.length) return; var again=false;
+    [].forEach.call(els,function(el){ var l=(+el.getAttribute('data-exp'))-Date.now(); if(l<=0) again=true; else el.textContent=mmss(l); });
+    if(again&&$('rrTkSheet').classList.contains('open')) render(); },1000);
+
   /* ── الرسم ── */
   var LBL=['','سيئ 😞','مش كويس 😕','عادي 🙂','حلو 😋','ممتاز 🤩'], draft={},
       STAR='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.8l2.9 6 6.5.9-4.7 4.6 1.1 6.5L12 17.7l-5.8 3.1 1.1-6.5L2.6 9.7l6.5-.9z"/></svg>';
@@ -5934,11 +6003,12 @@ new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:tru
         +'<div class="ln"><span>'+(type==='pickup'?'استلام':'التوصيل')+'</span><span>'+(o.fee?o.fee:'بدون رسوم')+'</span></div>'
         +'<div class="ln sum"><span>الإجمالي</span><span>'+o.total+' ج.م</span></div><div class="ln"><span>الدفع</span><span>'+esc(PAY[o.payment]||o.payment)+'</span></div></details>';
     }
+    h+=actHtml(e,o,st);
     if(st==='delivered'&&o&&e.phone){ h+=rateHTML(e); }
     if(o&&o.items&&o.items.length) h+='<button type="button" class="tk-re" data-re="'+esc(e.id)+'">🔁 اطلب نفس الطلب تاني</button>';
     return h+'</div>';
   }
-  function render(force){ var ae=document.activeElement; if(!force&&ae&&ae.classList&&ae.classList.contains('tk-cm')&&$('tkList').contains(ae)) return; var a=get(KEY), ch=false; a.forEach(function(e){ if(e.status==='cancelled'&&!e.seen){ e.seen=true; ch=true; } }); $('tkList').innerHTML=a.length?a.map(card).join(''):'<div class="tk-empty">مفيش طلبات على الجهاز ده لسه 🍗<br>اطلب دلوقتي، أو تتبّع طلب برقمه من تحت.</div>'; if(ch){ put(KEY,a); updatePill(); } try{ drvPaint(); }catch(x){} }
+  function render(force){ var ae=document.activeElement; if(!force&&ae&&ae.classList&&(ae.classList.contains('tk-cm')||ae.classList.contains('tk-ed'))&&$('tkList').contains(ae)) return; var a=get(KEY), ch=false; a.forEach(function(e){ if(e.status==='cancelled'&&!e.seen){ e.seen=true; ch=true; } }); $('tkList').innerHTML=a.length?a.map(card).join(''):'<div class="tk-empty">مفيش طلبات على الجهاز ده لسه 🍗<br>اطلب دلوقتي، أو تتبّع طلب برقمه من تحت.</div>'; if(ch){ put(KEY,a); updatePill(); } try{ drvPaint(); }catch(x){} }
 
   /* ── زرار التتبع في الهيدر: بيبان أوضح لما يكون فيه طلب شغال ── */
   function updatePill(){ try{ window.rrPushSync&&rrPushSync(); }catch(x){}
@@ -5962,7 +6032,7 @@ new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:tru
   }
   function close(){ $('rrTkOv').classList.remove('open'); $('rrTkSheet').classList.remove('open'); clearInterval(timer); clearInterval(drvT); }
   window.rrTrackOpen=open;
-  $('tkList').addEventListener('click',function(ev){var s=ev.target.closest('[data-star]'), box=ev.target.closest('[data-rbox]');
+  $('tkList').addEventListener('click',function(ev){var eb=ev.target.closest('[data-ed]'); if(eb){ edClick(eb); return; } var s=ev.target.closest('[data-star]'), box=ev.target.closest('[data-rbox]');
     if(s&&box){ var id=box.dataset.rbox, d=draft[id]||(draft[id]={s:0,c:''}); d.s=+s.dataset.star;
       [].forEach.call(box.querySelectorAll('[data-star]'),function(x){ x.classList.toggle('on',+x.dataset.star<=d.s); x.setAttribute('aria-checked',String(+x.dataset.star===d.s)); });
       var l=box.querySelector('.rt-lbl'); l.textContent=LBL[d.s]; l.classList.add('set'); box.classList.add('open');
@@ -5973,7 +6043,7 @@ new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:tru
         .then(function(j){ if(j&&j.ok){ var a=get('rr_rated'); a.push(id2); put('rr_rated',a.slice(-30)); delete draft[id2]; render(true); } else throw 0; })
         .catch(function(){ sd.disabled=false; sd.textContent='إرسال التقييم'; msg.textContent='⚠️ تعذّر الإرسال، جرّب تاني'; }); return; }
     var b=ev.target.closest('[data-re]');if(!b)return;var o=cache[b.dataset.re];if(!o||!o.items||!window.rrReorder)return;window.rrReorder(o.items);close();var f=document.querySelector('.cart-fab')||document.querySelector('#rrTabs [data-t=cart]');if(f)setTimeout(function(){f.click()},350);});
-  $('tkList').addEventListener('input',function(ev){ var t=ev.target; if(!t.classList||!t.classList.contains('tk-cm')) return; var bx=t.closest('[data-rbox]'); if(!bx) return;
+  $('tkList').addEventListener('input',function(ev){ var t=ev.target; if(t.classList&&t.classList.contains('tk-ed')){ var ab=t.closest('[data-edbox]'), eid=ab&&ab.getAttribute('data-edbox'); if(eid&&EDIT[eid]) EDIT[eid][t.getAttribute('data-f')]=t.value; return; } if(!t.classList||!t.classList.contains('tk-cm')) return; var bx=t.closest('[data-rbox]'); if(!bx) return;
     var d=draft[bx.dataset.rbox]||(draft[bx.dataset.rbox]={s:0,c:''}); d.c=t.value; var n=bx.querySelector('.rt-n'); if(n) n.textContent=t.value.length; });
   $('rrTkOv').onclick=close; $('rrTkX').onclick=close;
   document.addEventListener('keydown',function(e){ if(e.key==='Escape') close(); });

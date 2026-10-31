@@ -147,8 +147,15 @@ main.wide{max-width:none}
 .card.saving [data-act]{pointer-events:none;opacity:.5}
 .card.saving .top::after{content:"⏳ بيتحفظ…";font-size:.72rem;font-weight:800;color:#7A5800;background:#FFF3CD;border-radius:999px;padding:2px 9px;margin-inline-start:6px}
 @keyframes mv{0%{box-shadow:0 0 0 0 rgba(11,110,79,.7);transform:scale(1.03)}100%{box-shadow:0 0 0 14px rgba(11,110,79,0);transform:none}}
-#alertBar{position:sticky;top:54px;z-index:19;background:var(--red);color:#fff;text-align:center;font-weight:900;padding:11px 14px;cursor:pointer;animation:fl 1s steps(2) infinite}
+#bars{position:sticky;top:54px;z-index:19}#alertBar,#chBar{background:var(--red);color:#fff;text-align:center;font-weight:900;padding:11px 14px;cursor:pointer;animation:fl 1s steps(2) infinite}
 @keyframes fl{50%{background:#a81d1d}}
+#chBar{background:#C98200;color:#fff;text-align:center;font-weight:900;padding:11px 14px;cursor:pointer;animation:fl2 1s steps(2) infinite}@keyframes fl2{50%{background:#8f5c00}}
+.chc{border:2px solid var(--line);border-radius:16px;padding:12px;margin:0 0 10px;background:#fff}.chc.req{border-color:var(--amber);background:#FFF8E8}.chc.cn{border-color:#e0a1a1;background:#FFF1F1}
+.chc h4{margin:0 0 6px;font:900 1rem "Tajawal",sans-serif;display:flex;justify-content:space-between;gap:8px;align-items:center}.chc h4 small{font:700 .76rem "Cairo",sans-serif;color:var(--mute)}
+.chc .ln{display:flex;justify-content:space-between;gap:8px;font-size:.88rem;padding:2px 0}.chc .df{font-size:.84rem;margin:6px 0;padding:8px 10px;border-radius:10px;background:#f6f1ee;line-height:1.8}.chc .df .n{color:var(--green)}
+.chc .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.chc .acts .btn{min-width:90px}.chc .acts a.btn{text-decoration:none;text-align:center}
+.ed{display:inline-block;background:#FFF3CD;color:#7A5800;border-radius:999px;padding:2px 9px;font-size:.74rem;font-weight:900}
+.dvt{font-size:.78rem;color:var(--mute)}
 #unlock{position:fixed;inset:0;z-index:80;background:rgba(20,12,10,.85);color:#fff;display:grid;place-items:center;text-align:center;padding:24px;font:900 1.4rem "Tajawal",sans-serif;cursor:pointer}
 #unlock small{display:block;margin-top:8px;font:600 .95rem "Cairo",sans-serif;color:#e6dcd6}
 #kot{display:none}
@@ -240,7 +247,7 @@ main.wide{max-width:none}
     <button class="ib" id="rf">🔄 تحديث</button>
     <button class="ib" id="out">خروج</button>
   </div>
-  <div id="alertBar" class="hide"></div>
+  <div id="bars"><div id="alertBar" class="hide"></div><div id="chBar" class="hide"></div></div>
   <main id="mainEl">
     <div class="stats" id="stats"></div>
     <div id="drvBar" class="hide"></div>
@@ -301,6 +308,9 @@ main.wide{max-width:none}
         <label class="ck"><input type="checkbox" id="seHours"> مواعيد العمل شغّالة (لو مقفولة الموقع بيقبل طلبات في أي وقت)</label>
         <label class="ck"><input type="checkbox" id="sePause"> ⏸️ وقف التوصيل مؤقتًا (الاستلام من الفرع شغال)</label>
         <button class="btn main" id="seSave" type="button">💾 حفظ</button></div>
+      <h2 style="margin-top:18px">✏️ تعديل/إلغاء العميل لطلبه</h2>
+      <div class="cpf" style="margin-top:8px"><label>المدة اللي العميل يقدر فيها يعدّل أو يلغي بنفسه (بالدقايق — 0 = مقفول)<input type="number" id="seEditMin" min="0" max="60" placeholder="5"></label></div>
+      <div class="hint">خلال المدة العميل بيعدّل الكميات أو يلغي والتعديل بيتنفّذ فورًا وبيجيلك تنبيه. بعد المدة بيبعت «طلب» بيظهرلك popup (رقم الطلب + اسمه + رقمه) وبتقبله أو ترفضه والعميل بيتبلّغ. بيتحفظ بزرار «💾 حفظ» اللي فوق (جنب مواعيد العمل).</div>
       <h2 style="margin-top:18px">💳 طرق الدفع</h2>
       <div class="frm" style="margin-top:8px;align-items:center">
         <label class="ck"><input type="checkbox" id="sePayCash"> 💵 كاش عند الاستلام</label>
@@ -308,11 +318,15 @@ main.wide{max-width:none}
         <label class="ck"><input type="checkbox" id="sePayInsta"> 🏦 إنستا باي</label></div>
       <div class="cpf" style="margin-top:8px"><label>رسالة تظهر للعميل على الطريقة المقفولة (اختياري)<input id="sePayMsg" maxlength="60" placeholder="مثلاً: متوقفة مؤقتًا"></label></div>
       <div class="hint">شيل العلامة من أي طريقة وبعدين اضغط حفظ عشان توقفها، وحطها تاني عشان تشغّلها. لازم طريقة واحدة شغّالة على الأقل. السيرفر بيرفض أي طلب بطريقة مقفولة حتى لو الصفحة عند العميل لسه قديمة.</div>
-      <h2 style="margin-top:18px">🛵 تتبع الطيارين (OwnTracks)</h2>
+      <h2 style="margin-top:18px">🛵 الطيارين</h2>
+      <div class="frm" style="margin-top:8px"><input id="dvN" maxlength="30" placeholder="اسم الطيار (مثلاً: أحمد)"><input id="dvP" type="tel" inputmode="numeric" dir="ltr" maxlength="13" placeholder="رقم الواتساب (اختياري)"><button class="btn main" id="dvAdd" type="button">➕ إضافة طيار</button></div>
+      <div id="dvList" style="margin-top:10px"></div>
+      <div class="hint">بعد ما تضيف الطيار دوس «📲 ابعت اللينك» (واتساب) أو «🔗 نسخ» — ده لينك صفحته (طلباته + زرار تم التسليم)، بيتبعت له مرة واحدة. الكود بتاعه (Tracker ID) هو اللي بيتكتب في تطبيق OwnTracks عشان العميل يشوف مكانه على الخريطة.</div>
+      <details style="margin-top:8px"><summary style="cursor:pointer;font-weight:800">⚙️ إعدادات متقدمة (OwnTracks)</summary>
       <div class="cpf" style="margin-top:8px">
-        <label>مفتاح سري (حروف وأرقام بس)<input id="seOtKey" dir="ltr" maxlength="40" autocomplete="off" placeholder="مثلاً: rr2026secret"></label>
-        <label>الطيارين (كود:اسم:رقم واتساب — الرقم اختياري، مفصولين بفاصلة)<input id="seDrivers" maxlength="300" placeholder="AH:أحمد:01012345678, MO:محمد"></label></div>
-      <div class="hint">رابط OwnTracks (Mode: HTTP): <b id="seOtUrl" dir="ltr" style="user-select:all;word-break:break-all"></b><br>الكود (Tracker ID) في تطبيق كل طيار لازم يطابق الكود هنا (حرفين). عند الضغط على «خرج للتوصيل» هتختار الطيار، والعميل يشوف مكانه على الخريطة.</div>
+        <label>مفتاح سري (بيتعمل تلقائي مع أول طيار)<input id="seOtKey" dir="ltr" maxlength="40" autocomplete="off" placeholder="مثلاً: rr2026secret"></label>
+        <label>قايمة الطيارين (نص — بتتعدّل تلقائي من فوق، متلمسهاش إلا لو عارف بتعمل إيه)<input id="seDrivers" maxlength="600" placeholder="AH:أحمد:01012345678, MO:محمد"></label></div>
+      <div class="hint">رابط OwnTracks (Mode: HTTP): <b id="seOtUrl" dir="ltr" style="user-select:all;word-break:break-all"></b></div></details>
       <div class="hint">التغيير بيظهر على الموقع خلال دقيقة تقريبًا، والسيرفر هو اللي بيطبّقه. وقت الزحمة: الرقم اللي هنا بيتضاف على الوقت المتوقع اللي العميل بيشوفه. السيرفر بيدّي ٥ دقايق سماح بعد ميعاد القفل.</div></div>
     <div class="panel"><h2>🗺️ مناطق التوصيل والرسوم</h2><div id="seAreas">⏳...</div></div>
     <div class="panel"><h2>🎁 دعوة صديق</h2>
@@ -351,6 +365,7 @@ main.wide{max-width:none}
   </div>
 </div>
 <div id="lr" class="cx hide" role="dialog" aria-modal="true" aria-label="تقييمات منخفضة"><div class="cxb"><h2>⭐ تقييمات منخفضة (آخر ٣ أيام)</h2><p>كلّم العميل بسرعة — الرقم والطلب في كارت الطلب أو تبويب العملاء.</p><div id="lrList"></div><div class="cxa"><button class="btn ghost" id="lrX" type="button">إغلاق</button></div></div></div>
+<div id="chMo" class="cx hide"><div class="cxb"><h2>🔔 تعديلات وطلبات العملاء</h2><p>تعديل/إلغاء العميل اتنفّذ فعلًا (تأكد بـ«تم الاطلاع»). الطلبات اللي جاية بعد المدة محتاجة قرارك — العميل مستني.</p><div id="chList"></div><div class="cxa"><button type="button" class="btn ghost" id="chClose">إغلاق</button></div></div></div>
 <div id="toast"></div>
 
 <script>
@@ -378,7 +393,7 @@ const AUTH_ERR = {locked:'اتقفل الدخول مؤقتًا (محاولات �
 function bizStart(ts){ const d = new Date(ts == null ? Date.now() : ts); const t = d.getTime(); d.setHours(DAY_START_HOUR, 0, 0, 0); if (t < d.getTime()) d.setDate(d.getDate() - 1); return d.getTime(); }
 let flags = {}, lowData = null;
 const pend = new Map();   // تغييرات لسه ماتأكدتش من السيرفر: id → {st, reason, upd, paid, busy, t}
-let orders = [], tab = 'board', query = '', known = null, sound = true, lastBeep = 0, timer = null, ac = null, ringT = null, wl = null, flip = false;
+let changes = [], chKnown = null, orders = [], tab = 'board', query = '', known = null, sound = true, lastBeep = 0, timer = null, ac = null, ringT = null, wl = null, flip = false;
 
 /* ═══ API ═══ */
 const post = b => { if (token && b.action !== 'login') { b = Object.assign({}, b, {token}); delete b.pass; }   // التوكن بس بيتبعت — كلمة السر مابتتخزنش ولا بتتبعت تاني
@@ -401,10 +416,10 @@ function beep(){
 }
 const newOrders = () => orders.filter(o => o.status === 'new');
 function ringTick(){
-  const n = newOrders().length;
+  const n = newOrders().length, m = changes.length;
   syncAlert();
-  if (!n) return;
-  flip = !flip; document.title = (flip ? '🔔 ' : '(' + n + ') ') + 'طلب جديد!';
+  if (!n && !m) return;
+  flip = !flip; document.title = (flip ? (n ? '🔔 ' : '✏️ ') : '(' + (n + m) + ') ') + (n ? 'طلب جديد!' : 'تعديل من عميل!');
   if (sound) {
     if (!audioOk()) $('unlock').classList.remove('hide'); else $('unlock').classList.add('hide');
     if (Date.now() - lastBeep > 1500) beep();
@@ -412,10 +427,12 @@ function ringTick(){
   }
 }
 function syncAlert(){
-  const n = newOrders().length, bar = $('alertBar');
+  const n = newOrders().length, m = changes.length, bar = $('alertBar'), cb = $('chBar');
   bar.classList.toggle('hide', !n);
   if (n) bar.textContent = '🔔 ' + n + ' طلب جديد مستني تأكيدك — اضغط هنا';
-  else { document.title = 'لوحة طلبات ريد روستر'; $('unlock').classList.add('hide'); }
+  cb.classList.toggle('hide', !m);
+  if (m) cb.textContent = '✏️ ' + m + ' تعديل / طلب من العملاء مستني — اضغط هنا';
+  if (!n && !m) { document.title = 'لوحة طلبات ريد روستر'; $('unlock').classList.add('hide'); }
 }
 $('alertBar').onclick = () => { tab = 'board'; setView('orders'); const c = document.querySelector('.c-new'); if (c) c.scrollIntoView({behavior:'smooth', inline:'center', block:'nearest'}); };
 $('unlock').onclick = () => { audioOk(); $('unlock').classList.add('hide'); beep(); };
@@ -448,7 +465,10 @@ async function loadNow(){
     const fresh = j.orders.filter(o => known && !known.has(o.id) && o.status === 'new');
     known = new Set(j.orders.map(o => o.id)); orders = j.orders; flags = j.flags || {}; drivers = j.drivers || []; dseen = j.dseen || {}; dpos = j.dpos || {}; dasg = j.dasg || {}; chips(j);
     if (Array.isArray(j.soldout) && !soBusy && Date.now() - soLast > 4000) { soList = j.soldout; mnRender(); }
-    render(); drvBarRender(); updateDrvMap();
+    changes = j.changes || [];
+    const freshCh = changes.filter(c => chKnown && !chKnown.has(c.cid)); chKnown = new Set(changes.map(c => c.cid));
+    render(); drvBarRender(); updateDrvMap(); dvRender(); chRender();
+    if (freshCh.length) { toast('✏️ ' + freshCh.map(c => (CHK_S[c.kind] || '') + ' #' + c.id + ' — ' + c.name).join('، ')); pushNotify('✏️ تعديل من عميل — ريد روستر', freshCh.map(c => (CHK_S[c.kind] || '') + ' #' + c.id + ' · ' + c.name).join('\n')); chOpen(); ringTick(); }
     if (fresh.length) { toast('🔔 طلب جديد: ' + fresh.map(o => o.name).join('، ')); pushNotify('🔔 طلب جديد — ريد روستر', fresh.map(o => o.name + ' · ' + o.total + ' ج').join('\n')); ringTick(); }
     return true;
   } catch (e) { setLive(false); }
@@ -456,7 +476,8 @@ async function loadNow(){
 function setLive(on){ $('live').classList.toggle('off', !on); $('liveT').textContent = on ? 'متصل' : 'مفيش اتصال.. بنحاول تاني'; }
 
 /* ═══ مساعدات ═══ */
-function lastBy(o){ const l = String(o.log || '').split(';').filter(Boolean).pop(); if (!l) return ''; const u = l.split('@')[1]; return u ? '<span>👤 ' + esc(staffNames[u] || u) + '</span>' : ''; }
+function lastBy(o){ const l = String(o.log || '').split(';').filter(x => x && !/^(cedit|creq)@/.test(x)).pop(); if (!l) return ''; const u = l.split('@')[1]; return u ? '<span>👤 ' + esc(u === 'customer' ? 'العميل' : (staffNames[u] || u)) + '</span>' : ''; }
+const edBadge = o => (changes.some(c => c.id === o.id) ? '<span class="ed">🔔 فيه تعديل/طلب مستني</span>' : '') + (/(^|;)cedit@/.test(String(o.log || '')) ? '<span class="ed">✏️ اتعدّل</span>' : '');
 const ago = t => { const m = Math.max(0, Math.round((Date.now() - t) / 60000)); return m < 1 ? 'دلوقتي' : m < 60 ? 'من ' + m + ' د' : 'من ' + Math.floor(m / 60) + ' س ' + (m % 60) + ' د'; };
 const clock = t => new Date(t).toLocaleTimeString('ar-EG', {hour:'numeric', minute:'2-digit'});
 const lbl = o => o.status === 'out' && o.type === 'pickup' ? 'جاهز للاستلام' : LABEL[o.status];
@@ -507,7 +528,7 @@ function cardHtml(o){
   const mins = (Date.now() - o.time) / 60000, late = ACTIVE.includes(o.status) && mins > LATE_MIN, ns = nextStep(o);
   return '<article class="card ' + o.status + (late ? ' late' : '') + ((pend.get(o.id) || {}).busy ? ' saving' : '') + '" data-id="' + esc(o.id) + '">' +
     '<div class="top"><span class="oid">#' + esc(o.id) + '</span><span class="chip ' + o.status + '">' + esc(lbl(o)) + '</span></div>' +
-    '<div class="sub"><span>🕒 ' + clock(o.time) + ' · ' + ago(o.time) + '</span><span>' + (o.type === 'pickup' ? '🏪 استلام من الفرع' : '🛵 دليفري') + '</span>' + lastBy(o) + (late ? '<span class="late">⏰ عدّى ' + LATE_MIN + ' دقيقة</span>' : '') + '</div>' +
+    '<div class="sub"><span>🕒 ' + clock(o.time) + ' · ' + ago(o.time) + '</span><span>' + (o.type === 'pickup' ? '🏪 استلام من الفرع' : '🛵 دليفري') + '</span>' + lastBy(o) + edBadge(o) + (late ? '<span class="late">⏰ عدّى ' + LATE_MIN + ' دقيقة</span>' : '') + '</div>' +
     '<div class="who">' + esc(o.name) + '</div>' + flagHtml(o) +
     '<div class="ph"><a class="n" href="#" data-copy="' + esc(o.phone) + '" title="اضغط للنسخ">📋 ' + esc(o.phone) + '</a><a class="cl2" href="tel:' + esc(o.phone) + '" title="اتصال">📞</a>' + (o.phone2 ? '<a class="n" href="#" data-copy="' + esc(o.phone2) + '" title="اضغط للنسخ">📋 ' + esc(o.phone2) + '</a><a class="cl2" href="tel:' + esc(o.phone2) + '" title="اتصال">📞</a>' : '') + '<a class="wa" target="_blank" rel="noopener" href="' + waLink(o) + '">💬 ابعت تحديث للعميل</a></div>' +
     '<div class="addr">📍 ' + esc(o.address) + '</div>' +
@@ -817,7 +838,7 @@ function anSetInputs(r){ $('anFrom').value = ymd(r[0]); $('anTo').value = ymd(ad
 function anInit(){ $('anPresets').innerHTML = PRESETS.map(p => '<button class="tab" data-p="' + p[0] + '">' + p[1] + '</button>').join(''); if (!$('anFrom').value) { anSetInputs(presetRange('7')); anRun(); } }
 $('anPresets').addEventListener('click', e => { const b = e.target.closest('[data-p]'); if (b) { anSetInputs(presetRange(b.dataset.p)); anRun(); } });
 $('anGo').onclick = () => anRun();
-const AUD_L = {setStatus:'تغيير حالة', setPaid:'تأكيد دفع', settingsSave:'إعدادات', couponSave:'كوبون', couponDelete:'حذف كوبون', staffSave:'موظف', setSoldout:'إيقاف/إرجاع صنف', soldoutClear:'إرجاع كل الأصناف', areasSave:'مناطق', backupNow:'نسخة احتياطية', custFlag:'حظر/تنبيه عميل'};
+const AUD_L = {setStatus:'تغيير حالة', setPaid:'تأكيد دفع', settingsSave:'إعدادات', couponSave:'كوبون', couponDelete:'حذف كوبون', staffSave:'موظف', drvSave:'طيار', drvDelete:'حذف طيار', chResolve:'طلب/تعديل عميل', setSoldout:'إيقاف/إرجاع صنف', soldoutClear:'إرجاع كل الأصناف', areasSave:'مناطق', backupNow:'نسخة احتياطية', custFlag:'حظر/تنبيه عميل'};
 $('anAud').onclick = async () => {
   const j = await post({action:'auditList', user}).catch(() => null);
   if (!j || !j.ok) return toast('⚠️ مقدرناش نحمّل السجل (حدّث Code.gs واعمل Deploy ▸ New version)');
@@ -1217,7 +1238,7 @@ async function seLoad(){
     const c = j.settings; $('seOpen').value = c.open_at; $('seClose').value = c.close_at; $('seBusy').value = c.busy_extra || 0; $('seBusyMsg').value = c.busy_msg || ''; $('sePauseMsg').value = c.pause_msg || '';
     $('seHours').checked = c.hours_on === 'true'; $('sePause').checked = c.pause_on === 'true';
     $('seRefOn').checked = c.ref_on !== 'false'; $('seRefPts').value = c.ref_points || 500; $('seRefCap').value = c.ref_cap || 20;
-    $('sePayCash').checked = c.pay_cash !== 'false'; $('sePayWallet').checked = c.pay_wallet !== 'false'; $('sePayInsta').checked = c.pay_instapay !== 'false'; $('sePayMsg').value = c.pay_msg || ''; $('seOtKey').value = c.ot_key || ''; $('seDrivers').value = c.drivers || ''; updOtUrl();
+    $('sePayCash').checked = c.pay_cash !== 'false'; $('sePayWallet').checked = c.pay_wallet !== 'false'; $('sePayInsta').checked = c.pay_instapay !== 'false'; $('sePayMsg').value = c.pay_msg || ''; $('seOtKey').value = c.ot_key || ''; $('seDrivers').value = c.drivers || ''; $('seEditMin').value = (c.edit_min === undefined || c.edit_min === '') ? 5 : c.edit_min; updOtUrl(); dvRender();
     seAreas = j.areas.map(a => Object.assign({}, a)); seBuiltin = !!j.builtin; seAreaRender();
   } catch (e) { $('seAreas').innerHTML = '<div class="empty">⚠️ مفيش اتصال</div>'; }
   bkLoad(); bellLoad(); blLoad();
@@ -1226,7 +1247,7 @@ function updOtUrl(){ $('seOtUrl').textContent = $('seOtKey').value.trim() ? API 
 $('seOtKey').oninput = updOtUrl;
 $('seSave').onclick = async () => {
   try {
-    const j = await post({action:'settingsSave', user, settings:{hours_on:$('seHours').checked, open_at:$('seOpen').value, close_at:$('seClose').value, busy_extra:+$('seBusy').value || 0, busy_msg:$('seBusyMsg').value.trim(), pause_on:$('sePause').checked, pause_msg:$('sePauseMsg').value.trim(), ref_on:$('seRefOn').checked, ref_points:+$('seRefPts').value || 0, ref_cap:+$('seRefCap').value || 20, pay_cash:$('sePayCash').checked, pay_wallet:$('sePayWallet').checked, pay_instapay:$('sePayInsta').checked, pay_msg:$('sePayMsg').value.trim(), ot_key:$('seOtKey').value.trim(), drivers:$('seDrivers').value.trim()}});
+    const j = await post({action:'settingsSave', user, settings:{hours_on:$('seHours').checked, open_at:$('seOpen').value, close_at:$('seClose').value, busy_extra:+$('seBusy').value || 0, busy_msg:$('seBusyMsg').value.trim(), pause_on:$('sePause').checked, pause_msg:$('sePauseMsg').value.trim(), ref_on:$('seRefOn').checked, ref_points:+$('seRefPts').value || 0, ref_cap:+$('seRefCap').value || 20, pay_cash:$('sePayCash').checked, pay_wallet:$('sePayWallet').checked, pay_instapay:$('sePayInsta').checked, pay_msg:$('sePayMsg').value.trim(), ot_key:$('seOtKey').value.trim(), drivers:$('seDrivers').value.trim(), edit_min:$('seEditMin').value === '' ? 5 : +$('seEditMin').value}});
     toast(j.ok ? '✅ اتحفظت الإعدادات' : (j.error === 'bad_time' ? 'المواعيد غير صحيحة' : j.error === 'no_pay' ? '⚠️ لازم طريقة دفع واحدة شغّالة على الأقل' : '⚠️ حصل خطأ'));
   } catch (e) { toast('⚠️ مفيش اتصال'); }
 };
@@ -1373,7 +1394,7 @@ $('grid').addEventListener('click', e => {
   if (b.dataset.act === 'set') { (async () => { const oo = orders.find(x => x.id === id); let dv; if (b.dataset.st === 'out' && oo && oo.type !== 'pickup') { dv = await pickDriver(); if (dv === null) return; } setStatus(id, b.dataset.st, undefined, dv); })(); }
   if (b.dataset.act === 'drv') { (async () => { const dv = await pickDriver(); if (dv == null) return; try { const j = await post({action:'setStatus', user, id, status:'out', deferPush:true, driver:dv}); if (j.ok) { if (dv) dasg[id] = dv; else delete dasg[id]; render(); drvBarRender(); toast(dv ? '✅ اتغيّر الطيار' : '✅ اتشال الطيار (من غير تتبع)'); } else toast('⚠️ حصل خطأ'); } catch (e) { toast('⚠️ مفيش اتصال'); } })(); }
   if (b.dataset.act === 'drvmap') openDrvMap(id);
-  if (b.dataset.act === 'drvwa') { const o = orders.find(x => x.id === id), dv = o && drivers.find(x => x.id === dasg[id]); if (!dv) toast('⚠️ اختار الطيار الأول'); else if (!dv.phone) toast('⚠️ ضيف رقم واتساب الطيار في الإعدادات: كود:اسم:رقم'); else window.open(drvWa(o, dv), '_blank'); }
+  if (b.dataset.act === 'drvwa') { const o = orders.find(x => x.id === id), dv = o && drivers.find(x => x.id === dasg[id]); if (!dv) toast('⚠️ اختار الطيار الأول'); else if (!dv.phone) toast('⚠️ ضيف رقم واتساب الطيار من الإعدادات ▸ الطيارين'); else window.open(drvWa(o, dv), '_blank'); }
   if (b.dataset.act === 'paid') setPaid(id, b.dataset.p === '1');
   if (b.dataset.act === 'flag') { const oo = orders.find(x => x.id === id); if (oo) custFlag(oo.phone, b.dataset.op, false, oo.name); }
   if (b.dataset.act === 'print') { const o = orders.find(x => x.id === id); if (o) kotPrint(o); }
@@ -1386,11 +1407,99 @@ $('snd').onclick = () => { askNotify(); sound = !sound; $('snd').textContent = '
 $('out').onclick = () => logout('');
 setInterval(render, 60000);   // يحدّث "من كام دقيقة" والتأخير
 
+
+/* ═══ إدارة الطيارين (إضافة/تعديل/حذف + لينك الطيار) ═══ */
+const drvLink = x => new URL('driver.html', location.href).href + '?d=' + x.id + '&t=' + x.tok;
+function dvRender(){
+  const box = $('dvList'); if (!box) return;
+  if (!drivers.length) { box.innerHTML = '<div class="empty">مفيش طيارين لسه — اكتب اسم الطيار فوق واضغط «إضافة» 👆</div>'; return; }
+  box.innerHTML = tbl(['الطيار', 'الكود', 'واتساب', ''], drivers.map(x => [
+    '<b>' + esc(x.name) + '</b> ' + dDot(x.id),
+    '<span dir="ltr"><b>' + esc(x.id) + '</b></span>',
+    x.phone ? '<span dir="ltr">' + esc(x.phone) + '</span>' : '<span class="dvt">—</span>',
+    (x.tok ? '<button type="button" class="btn ghost tiny" data-dv="wa" data-id="' + esc(x.id) + '">📲 ابعت اللينك</button> <button type="button" class="btn ghost tiny" data-dv="copy" data-id="' + esc(x.id) + '">🔗 نسخ</button> ' : '<span class="dvt">اللينك بيظهر بعد الحفظ</span> ')
+      + '<button type="button" class="btn ghost tiny" data-dv="edit" data-id="' + esc(x.id) + '">✏️</button> <button type="button" class="btn ghost tiny" data-dv="del" data-id="' + esc(x.id) + '">🗑️</button>']));
+}
+async function dvSend(body, okMsg){
+  try {
+    const j = await post(Object.assign({action:'drvSave', user}, body));
+    if (!j.ok) { toast(({bad_name:'اكتب اسم الطيار', bad_phone:'رقم الواتساب غلط (١٠–١٣ رقم)', too_many:'عدد الطيارين وصل للحد الأقصى', forbidden:'⛔ للمدير بس', bad_id:'الكود مستخدم'})[j.error] || '⚠️ حصل خطأ (اتأكد إنك حدّثت Code.gs وعملت Deploy ▸ New version)'); return false; }
+    drivers = j.drivers || drivers; $('seOtKey').value = j.ot_key || ''; $('seDrivers').value = j.raw || ''; updOtUrl(); dvRender(); drvBarRender();
+    toast(okMsg); return j;
+  } catch (e) { toast('⚠️ مفيش اتصال'); return false; }
+}
+$('dvAdd').onclick = async () => {
+  const n = $('dvN').value.trim(), p = $('dvP').value.trim();
+  if (!n) return toast('اكتب اسم الطيار');
+  const j = await dvSend({name:n, phone:p}, '✅ اتضاف الطيار — دوس «📲 ابعت اللينك» عشان توصّله صفحته');
+  if (j) { $('dvN').value = $('dvP').value = ''; }
+};
+$('dvList').addEventListener('click', async e => {
+  const b = e.target.closest('[data-dv]'); if (!b) return; const x = drivers.find(v => v.id === b.dataset.id); if (!x) return;
+  if (b.dataset.dv === 'copy') { if (!x.tok) return toast('⚠️ احفظ الأول'); copyText(drvLink(x)); toast('✅ اتنسخ لينك صفحة ' + x.name); }
+  else if (b.dataset.dv === 'wa') {
+    if (!x.tok) return toast('⚠️ احفظ الأول');
+    const txt = 'أهلاً ' + x.name + ' 👋\nده لينك صفحتك في ريد روستر (طلباتك + زرار تم التسليم) — احفظه عندك:\n' + drvLink(x) + '\n\nكود التتبع في تطبيق OwnTracks: ' + x.id;
+    if (x.phone) window.open('https://wa.me/20' + String(x.phone).replace(/^0/, '') + '?text=' + encodeURIComponent(txt), '_blank');
+    else { copyText(drvLink(x)); toast('ℹ️ مفيش رقم واتساب للطيار — اتنسخ اللينك، ابعته له بنفسك'); }
+  }
+  else if (b.dataset.dv === 'edit') {
+    const n = prompt('اسم الطيار:', x.name); if (n === null) return; const p = prompt('رقم الواتساب (سيبه فاضي لو مفيش):', x.phone || ''); if (p === null) return;
+    dvSend({id:x.id, name:n.trim() || x.name, phone:p.trim()}, '✅ اتحفظ');
+  }
+  else if (b.dataset.dv === 'del' && confirm('مسح الطيار ' + x.name + '؟ (الطلبات اللي اتسلّمت بيه هتفضل في التقارير)')) {
+    try { const j = await post({action:'drvDelete', user, id:x.id}); if (!j.ok) throw 0; drivers = j.drivers || []; $('seDrivers').value = j.raw || ''; dvRender(); drvBarRender(); toast('🗑️ اتمسح الطيار'); } catch (err) { toast('⚠️ معرفناش نمسحه'); }
+  }
+});
+
+/* ═══ تعديلات وطلبات العملاء (popup + تنبيه صوتي زي الطلب الجديد) ═══ */
+const CHK = {edit:'✏️ العميل عدّل طلبه (خلال المدة)', cancel:'❌ العميل ألغى طلبه (خلال المدة)', req_edit:'📨 طلب تعديل (بعد المدة)', req_cancel:'📨 طلب إلغاء (بعد المدة)'};
+const CHK_S = {edit:'تعديل', cancel:'إلغاء', req_edit:'طلب تعديل', req_cancel:'طلب إلغاء'};
+function chCard(c){
+  const d = c.d || {}, o = orders.find(x => x.id === c.id), isReq = c.kind.indexOf('req_') === 0, cancel = /cancel$/.test(c.kind);
+  const ln = (a, b) => '<div class="ln"><span>' + a + '</span><b>' + b + '</b></div>';
+  return '<div class="chc ' + (isReq ? 'req ' : '') + (cancel ? 'cn' : '') + '" data-cid="' + esc(c.cid) + '">'
+    + '<h4><span>' + (CHK[c.kind] || esc(c.kind)) + '</span><small>' + ago(c.t) + '</small></h4>'
+    + ln('🔢 رقم الطلب', '#' + esc(c.id)) + ln('👤 العميل', esc(c.name)) + ln('📞 الموبايل', '<span dir="ltr">' + esc(c.phone) + '</span>')
+    + (o ? ln('الحالة دلوقتي', esc(lbl(o))) : '')
+    + ((d.diff && d.diff.length) ? '<div class="df">' + d.diff.map(esc).join('<br>') + (d.newTot != null ? '<br><b>الإجمالي: ' + esc(d.oldTot) + ' ← <span class="n">' + esc(d.newTot) + ' ج.م</span></b>' : '') + '</div>' : '')
+    + (cancel && d.oldTot != null ? '<div class="df">قيمة الطلب: <b>' + esc(d.oldTot) + ' ج.م</b>' + (d.reason ? '<br>' + esc(d.reason) : '') + '</div>' : '')
+    + (d.note ? '<div class="df">📝 ' + esc(d.note) + '</div>' : '')
+    + '<div class="acts">'
+    + (isReq ? '<button type="button" class="btn main" data-ch="approve">' + (cancel ? '✅ قبول وإلغاء الطلب' : '✅ قبول وتنفيذ التعديل') + '</button><button type="button" class="btn danger" data-ch="reject">❌ رفض</button>'
+              : '<button type="button" class="btn main" data-ch="ack">👍 تم الاطلاع</button>')
+    + '<a class="btn ghost" href="tel:' + esc(c.phone) + '">📞 اتصال</a></div></div>';
+}
+function chRender(){
+  const mo = $('chMo'); if (!mo || mo.classList.contains('hide')) return;
+  if (!changes.length) { mo.classList.add('hide'); return; }
+  $('chList').innerHTML = changes.map(chCard).join('');
+}
+function chOpen(){ if (!changes.length) return; $('chMo').classList.remove('hide'); chRender(); }
+$('chBar').onclick = chOpen;
+$('chClose').onclick = () => $('chMo').classList.add('hide');
+async function chAct(cid, op, reason){
+  const c = changes.find(x => x.cid === cid); if (!c) return;
+  changes = changes.filter(x => x.cid !== cid); syncAlert(); chRender(); render();
+  try {
+    const j = await post({action:'chResolve', user, cid, op, reason});
+    if (!j.ok) toast(({stale:'⚠️ الطلب اتغيّر بعد ما العميل بعت — ارفض الطلب أو اتصل بالعميل', closed:'ℹ️ الطلب اتقفل قبل ما نرد', not_found:'⚠️ الطلب مش موجود', coupon_min:'⚠️ الكوبون مش هيتطبّق بعد التعديل'})[j.error] || '⚠️ حصل خطأ');
+    else toast(op === 'ack' ? '👍 تمام' : op === 'approve' ? '✅ اتنفّذ — والعميل هيتبلّغ' : '↩︎ اترفض — والعميل هيتبلّغ');
+  } catch (e) { toast('⚠️ مفيش اتصال — جرّب تاني'); }
+  load();
+}
+$('chList').addEventListener('click', e => {
+  const b = e.target.closest('[data-ch]'); if (!b) return; const cid = b.closest('[data-cid]').dataset.cid, c = changes.find(x => x.cid === cid); if (!c) return;
+  if (b.dataset.ch === 'reject') { const r = prompt('سبب الرفض (هيوصل للعميل):', 'مقدرناش ننفّذ الطلب ده'); if (r === null) return; chAct(cid, 'reject', r.trim()); }
+  else if (b.dataset.ch === 'approve') { if (/cancel$/.test(c.kind) && !confirm('تأكيد إلغاء الطلب #' + c.id + '؟')) return; chAct(cid, 'approve'); }
+  else chAct(cid, 'ack');
+});
+
 /* ═══ دخول / خروج ═══ */
 function showApp(on){ $('login').classList.toggle('hide', on); $('app').classList.toggle('hide', !on); }
 function logout(msg){
   if (token) post({action:'logout', user}).catch(() => {});   // بنلغي التوكن على السيرفر
-  clearInterval(timer); clearInterval(ringT); document.title = 'لوحة طلبات ريد روستر'; user = pass = token = ''; role = 'staff'; view = 'orders'; lastA = null; known = null; orders = []; soList = []; sessionStorage.removeItem('rr_admin_cred'); localStorage.removeItem('rr_admin_cred');
+  clearInterval(timer); clearInterval(ringT); document.title = 'لوحة طلبات ريد روستر'; user = pass = token = ''; role = 'staff'; view = 'orders'; lastA = null; known = null; chKnown = null; changes = []; orders = []; soList = []; sessionStorage.removeItem('rr_admin_cred'); localStorage.removeItem('rr_admin_cred');
   showApp(false); $('lgErr').textContent = msg || ''; $('pin').value = ''; $('usr').focus();
 }
 async function start(){

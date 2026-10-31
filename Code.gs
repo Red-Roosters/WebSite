@@ -1,3 +1,5 @@
+/** (v7) تعديل/إلغاء العميل لطلبه بنفسه خلال مدة (افتراضي ٥ دقايق — من الإعدادات) + طلبات التعديل/الإلغاء بعد المدة بتوصل الداشبورد كـ popup وتستنى القبول/الرفض + تنبيه للداشبورد على أي تعديل (ورقة Changes + عمود chg في Tickets) · إضافة/تعديل/حذف الطيارين من الداشبورد بسهولة (drvSave / drvDelete).
+ *  بعد اللصق: Deploy ▸ Manage deployments ▸ Edit ▸ New version، وارفع index.html و dashboard.html الجداد مع بعض. */
 /** (v6) ربط النقاط بجهاز العميل (did) · مراقبة فشل إشعارات OneSignal (PushLog + حالة في الداشبورد + إيميل) · حظر وتنبيه الأرقام المزعجة (Blocklist) · إيميل فوري لتقييم ١-٢ نجمة · أرشفة الطلبات الأقدم من ١٨٠ يوم (ورقة Archive) + أداء أسرع للنقاط والكوبونات · برنامج دعوة صديق (كوبون FRIEND + نقاط للي دعا).
  *  بعد اللصق: شغّل setupBackup مرة تانية من المحرر (بيركّب أرشفة شهرية كمان)، بعدين Deploy ▸ New version، وارفع index.html و dashboard.html الجداد مع بعض. */
 /** (v5) إعدادات من شيت (Settings: مواعيد/وضع الزحمة/إيقاف التوصيل · Areas: رسوم وقفل المناطق) · ETA لكل منطقة · اقتراحات السلة من الطلبات الفعلية (action=suggest) · مراقبة النسخ الاحتياطي + إيميل لو فشل · تقرير إقفال يومي بالإيميل (dailyReport) · حدود المحاولات بالرقم.
@@ -17,12 +19,12 @@ var EARN_PER_EGP = 0.5;     // 50% من إجمالي الطلب نقاط (طلب
 var POINTS_PER_EGP = 10;   // 10 نقطة = 1 جنيه خصم
 var STEP = 2000;            // التبديل بمضاعفات 2000 نقطة (2000 = 200 ج)
 var STATUSES = ['new','confirmed','preparing','out','delivered','cancelled'];
-var TK_HEAD = ['orderId','time','name','phone','phone2','type','address','items','subtotal','discount','coupon','fee','total','payment','notes','status','updated','history','reason','log','payref','paid','did','area','lat','lon','drv'];
+var TK_HEAD = ['orderId','time','name','phone','phone2','type','address','items','subtotal','discount','coupon','fee','total','payment','notes','status','updated','history','reason','log','payref','paid','did','area','lat','lon','drv','chg'];
 
 var HOURS_ON=true;   // ⚠️ false = وقف مواعيد العمل (للتجربة). رجّعه true بعد التجربة
 var OPEN_AT='11:00', CLOSE_AT='05:05';   // مواعيد العمل بتوقيت القاهرة (الإغلاق 5:00 + 5 دقايق سماح)
 /* ── الإعدادات (ورقة Settings) والمناطق (ورقة Areas): بتتدار من الداشبورد ── */
-var SET_KEYS=['hours_on','open_at','close_at','busy_extra','busy_msg','pause_on','pause_msg','ref_on','ref_points','ref_cap','pay_cash','pay_wallet','pay_instapay','pay_msg','ot_key','drivers'];
+var SET_KEYS=['hours_on','open_at','close_at','busy_extra','busy_msg','pause_on','pause_msg','ref_on','ref_points','ref_cap','pay_cash','pay_wallet','pay_instapay','pay_msg','ot_key','drivers','edit_min'];
 function tv_(v){if(Object.prototype.toString.call(v)==='[object Date]')return Utilities.formatDate(v,'Africa/Cairo','HH:mm');return String(v==null?'':v);}
 /* ===== تتبع الطيارين (OwnTracks) ===== */
 function drv_(){var o=[],seen={},ok=/^[A-Za-z0-9]{1,8}$/;String(cfg_().drivers||'').split(/[,،\n]/).forEach(function(x){var p=x.split(':'),l=(p[0]||'').trim(),r=(p[1]||'').trim(),ph=String(p[2]||'').replace(/[٠-٩]/g,function(d){return '٠١٢٣٤٥٦٧٨٩'.indexOf(d)}).replace(/\D/g,'');
@@ -33,10 +35,10 @@ function nt_(v,def){var m=/^\s*(\d{1,2}):(\d{2})(?::\d{2})?\s*([AaPp][Mm])?\s*$/
 function setSh_(){var ss=SpreadsheetApp.getActiveSpreadsheet(),s=ss.getSheetByName('Settings');
   if(s)s.getRange('A:B').setNumberFormat('@');   // ✅ دايمًا نص: عشان جوجل شيت ميحوّلش 11:00 لوقت ويبوّظ الدقايق
   if(!s){s=ss.insertSheet('Settings');s.getRange('A:B').setNumberFormat('@');s.appendRow(['key','value']);
-    [['hours_on',String(HOURS_ON)],['open_at',OPEN_AT],['close_at','05:00'],['busy_extra','0'],['busy_msg',''],['pause_on','false'],['pause_msg',''],['ref_on','true'],['ref_points','500'],['ref_cap','20'],['pay_cash','true'],['pay_wallet','true'],['pay_instapay','true'],['pay_msg',''],['ot_key',''],['drivers','']].forEach(function(r){s.appendRow(r);});}
+    [['hours_on',String(HOURS_ON)],['open_at',OPEN_AT],['close_at','05:00'],['busy_extra','0'],['busy_msg',''],['pause_on','false'],['pause_msg',''],['ref_on','true'],['ref_points','500'],['ref_cap','20'],['pay_cash','true'],['pay_wallet','true'],['pay_instapay','true'],['pay_msg',''],['ot_key',''],['drivers',''],['edit_min','5']].forEach(function(r){s.appendRow(r);});}
   return s;}
 function cfg_(){var c=CacheService.getScriptCache(),j=c.get('set_v1');if(j){try{return JSON.parse(j);}catch(_){}}
-  var m={hours_on:String(HOURS_ON),open_at:OPEN_AT,close_at:'05:00',busy_extra:'0',busy_msg:'',pause_on:'false',pause_msg:'',ref_on:'true',ref_points:'500',ref_cap:'20',pay_cash:'true',pay_wallet:'true',pay_instapay:'true',pay_msg:'',ot_key:'',drivers:''};
+  var m={hours_on:String(HOURS_ON),open_at:OPEN_AT,close_at:'05:00',busy_extra:'0',busy_msg:'',pause_on:'false',pause_msg:'',ref_on:'true',ref_points:'500',ref_cap:'20',pay_cash:'true',pay_wallet:'true',pay_instapay:'true',pay_msg:'',ot_key:'',drivers:'',edit_min:'5'};
   setSh_().getDataRange().getDisplayValues().slice(1).forEach(function(r){var k=String(r[0]);if(SET_KEYS.indexOf(k)>=0)m[k]=(k==='open_at'||k==='close_at')?nt_(r[1],m[k]):String(r[1]);});
   c.put('set_v1',JSON.stringify(m),60);return m;}
 function mins_(t){var a=String(t||'').split(':');return (+a[0]||0)*60+(+a[1]||0);}
@@ -77,12 +79,12 @@ function balance_(phone,fresh){
 }
 
 /* ── الأوردرات (Tickets) ── */
-function tk_(){var s=sh_('Tickets',TK_HEAD),cc_=CacheService.getScriptCache();if(cc_.get('tkh_ok'))return s;if(s.getLastColumn()<24||s.getRange(1,24).getValue()!=='area'||s.getRange(1,19).getValue()!=='reason'||s.getRange(1,20).getValue()!=='log'||s.getRange(1,21).getValue()!=='payref'||s.getRange(1,22).getValue()!=='paid'||s.getRange(1,23).getValue()!=='did')s.getRange(1,19,1,6).setValues([['reason','log','payref','paid','did','area']]);if(s.getMaxColumns()<27)s.insertColumnsAfter(s.getMaxColumns(),27-s.getMaxColumns());if(s.getRange(1,27).getValue()!=='drv')s.getRange(1,25,1,3).setValues([['lat','lon','drv']]);cc_.put('tkh_ok','1',3600);return s;}
+function tk_(){var s=sh_('Tickets',TK_HEAD),cc_=CacheService.getScriptCache();if(cc_.get('tkh_v3'))return s;if(s.getLastColumn()<24||s.getRange(1,24).getValue()!=='area'||s.getRange(1,19).getValue()!=='reason'||s.getRange(1,20).getValue()!=='log'||s.getRange(1,21).getValue()!=='payref'||s.getRange(1,22).getValue()!=='paid'||s.getRange(1,23).getValue()!=='did')s.getRange(1,19,1,6).setValues([['reason','log','payref','paid','did','area']]);if(s.getMaxColumns()<28)s.insertColumnsAfter(s.getMaxColumns(),28-s.getMaxColumns());if(s.getRange(1,27).getValue()!=='drv')s.getRange(1,25,1,3).setValues([['lat','lon','drv']]);if(s.getRange(1,28).getValue()!=='chg')s.getRange(1,28).setValue('chg');cc_.put('tkh_v3','1',3600);return s;}
 function safe_(v,n){v=String(v==null?'':v).slice(0,n||300);return /^[=+\-@]/.test(v)?"'"+v:v;}   // يمنع حقن المعادلات من بيانات العميل
 function tkObj_(r){var it=[];try{it=JSON.parse(r[7]||'[]');}catch(_){}
   return {id:String(r[0]),time:new Date(r[1]).getTime(),name:String(r[2]),phone:norm_(r[3]),phone2:r[4]?norm_(r[4]):'',type:String(r[5]),address:String(r[6]),items:it,
     subtotal:+r[8]||0,discount:+r[9]||0,coupon:String(r[10]||''),fee:+r[11]||0,total:+r[12]||0,payment:String(r[13]),notes:String(r[14]||''),
-    status:String(r[15]),updated:new Date(r[16]).getTime(),history:String(r[17]||''),reason:String(r[18]||''),log:String(r[19]||''),payref:String(r[20]||''),paid:r[21]===true||String(r[21]).toLowerCase()==='true',area:String(r[23]||''),lat:(r[24]===''||r[24]==null)?null:+r[24],lon:(r[25]===''||r[25]==null)?null:+r[25],drv:String(r[26]||'')};}
+    status:String(r[15]),updated:new Date(r[16]).getTime(),history:String(r[17]||''),reason:String(r[18]||''),log:String(r[19]||''),payref:String(r[20]||''),paid:r[21]===true||String(r[21]).toLowerCase()==='true',area:String(r[23]||''),lat:(r[24]===''||r[24]==null)?null:+r[24],lon:(r[25]===''||r[25]==null)?null:+r[25],drv:String(r[26]||''),chg:chgParse_(r[27])};}
 /* ── الحسابات: المدير (من الكود) + موظفين (ورقة Staff) ── */
 function hash_(salt,pass){return Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256,salt+'|'+pass).map(function(x){return ('0'+(x&255).toString(16)).slice(-2);}).join('');}
 function staffSh_(){var ss=SpreadsheetApp.getActiveSpreadsheet(),s=ss.getSheetByName('Staff');
@@ -202,7 +204,8 @@ function push_(did,id,st,type,reason){   // did = معرّف الجهاز الع
       preparing:['بنجهّز طلبك 👨‍🍳','طلبك '+tag+' بيتحضّر طازج'],
       out:pk?['طلبك جاهز 🏪','طلبك '+tag+' جاهز تستلمه من الفرع']:['طلبك في الطريق 🛵','الطيار خرج بطلبك '+tag+' وهيوصلك قريب'],
       delivered:['تم التسليم 🎉','بالهنا والشفا! قيّم تجربتك مع طلبك '+tag+' ⭐'],
-      cancelled:['طلبك اتلغى ❌',reason?('السبب: '+reason):'كلمنا لو محتاج مساعدة']};
+      cancelled:['طلبك اتلغى ❌',reason?('السبب: '+reason):'كلمنا لو محتاج مساعدة'],
+      reqok:['اتنفّذ طلبك ✅','المطعم وافق على طلبك للتعديل في '+tag],reqno:['المطعم مقدرش ينفّذ طلبك',reason?('السبب: '+reason):'كلمنا لو محتاج مساعدة']};
     var m=M[st];if(!m)return;
     var body={app_id:app,target_channel:'push',include_aliases:{external_id:[did]},headings:{en:m[0],ar:m[0]},contents:{en:m[1],ar:m[1]},
       ttl:43200,priority:10,web_push_topic:'rr'+String(id).replace(/[^A-Za-z0-9]/g,''),collapse_id:'rr'+String(id).replace(/[^A-Za-z0-9]/g,'')};
@@ -276,7 +279,7 @@ function archiveOld(){var P=PropertiesService.getScriptProperties(),lock=LockSer
     var cut=Date.now()-ARCHIVE_DAYS*864e5,T=t.getRange(2,2,n-1,1).getValues(),S=t.getRange(2,16,n-1,1).getValues(),k=0;
     while(k<T.length&&new Date(T[k][0]).getTime()<cut&&(String(S[k][0])==='delivered'||String(S[k][0])==='cancelled'))k++;   // بنوقف عند أول طلب لسه شغّال أو أحدث من الحد
     if(k<50){var r0={ok:true,moved:0,t:Date.now()};P.setProperty('LAST_ARCHIVE',JSON.stringify(r0));return r0;}
-    var cols=t.getLastColumn(),ar=sh_('Archive',TK_HEAD),before=ar.getLastRow();ar.getRange('D:E').setNumberFormat('@');ar.getRange('U:U').setNumberFormat('@');ar.getRange('W:W').setNumberFormat('@');
+    var cols=t.getLastColumn(),ar=sh_('Archive',TK_HEAD),before=ar.getLastRow();if(ar.getMaxColumns()<cols)ar.insertColumnsAfter(ar.getMaxColumns(),cols-ar.getMaxColumns());if(ar.getRange(1,28).getValue()!=='chg')ar.getRange(1,28).setValue('chg');ar.getRange('D:E').setNumberFormat('@');ar.getRange('U:U').setNumberFormat('@');ar.getRange('W:W').setNumberFormat('@');
     for(var f=0;f<k;f+=2000){var m=Math.min(2000,k-f),rows=t.getRange(2+f,1,m,cols).getValues().map(function(r){return r.map(arcVal_);});ar.getRange(ar.getLastRow()+1,1,m,cols).setValues(rows);}
     if(ar.getLastRow()-before!==k)throw new Error('عدد الصفوف في الأرشيف مش مطابق — الأرشفة اتوقفت من غير مسح');
     t.deleteRows(2,k);CacheService.getScriptCache().removeAll(['cc_v1']);
@@ -309,6 +312,64 @@ function after_(row,old,st){
   }
 }
 
+/* ═══ تعديل/إلغاء العميل لطلبه + طلبات بعد المدة (ورقة Changes) ═══
+ *  - خلال المدة (إعداد edit_min، افتراضي ٥ دقايق): العميل يعدّل الكميات/الملاحظات أو يلغي بنفسه، والتعديل بيتطبّق فورًا + تنبيه للداشبورد (status=pending لحد ما حد يضغط «تم الاطلاع»).
+ *  - بعد المدة: العميل بيبعت «طلب» (req_edit / req_cancel) والداشبورد تعرضه popup وتقبله (بيتنفّذ) أو ترفضه (بسبب) والعميل بيستنى ويتبلّغ.
+ *  - السيرفر هو المرجع: العميل مايقدرش يغيّر سعر ولا يضيف صنف — بس يعدّل كمية/يشيل صنف/ملاحظة، والأسعار بتتاخد من الطلب المسجّل. */
+var CH_HEAD=['cid','time','orderId','name','phone','kind','detail','status','by','handled','reason'];
+var EDITABLE=['new','confirmed','preparing'];
+function chgParse_(v){if(!v)return null;try{var o=JSON.parse(String(v));return o&&o.k?o:null;}catch(_){return null;}}
+function editMs_(){var m=cfg_().edit_min;m=(m===''||m==null||isNaN(+m))?5:+m;return (m>0?Math.min(m,60):0)*60000;}
+function chSh_(){var ss=SpreadsheetApp.getActiveSpreadsheet(),s=ss.getSheetByName('Changes');if(!s){s=ss.insertSheet('Changes');s.getRange('A:A').setNumberFormat('@');s.getRange('E:E').setNumberFormat('@');s.appendRow(CH_HEAD);}return s;}
+function chAdd_(id,name,ph,kind,detail,status){var cid='c'+Utilities.getUuid().replace(/-/g,'').slice(0,9),d=JSON.stringify(detail||{});
+  if(d.length>40000)d=JSON.stringify({note:String(detail&&detail.note||'').slice(0,500),diff:(detail&&detail.diff||[]).slice(0,40),big:true});
+  chSh_().appendRow([cid,new Date(),safe_(id,20),safe_(name,80),"'"+ph,kind,d,status,'','','']);CacheService.getScriptCache().remove('ch_v1');return cid;}
+function chFind_(cid){var s=chSh_(),n=s.getLastRow();if(n<2)return null;var v=s.getRange(2,1,n-1,1).getValues();
+  for(var i=v.length-1;i>=0;i--)if(String(v[i][0])===cid){var r=i+2;return {s:s,r:r,v:s.getRange(r,1,1,11).getValues()[0]};}return null;}
+function chObj_(r){var d={};try{d=JSON.parse(r[6]||'{}');}catch(_){}return {cid:String(r[0]),t:new Date(r[1]).getTime(),id:String(r[2]),name:String(r[3]),phone:norm_(r[4]),kind:String(r[5]),d:d,status:String(r[7]),by:String(r[8]||''),reason:String(r[10]||'')};}
+function chPending_(){var c=CacheService.getScriptCache(),j=c.get('ch_v1');if(j){try{return JSON.parse(j);}catch(_){}}
+  var lim=Date.now()-12*36e5,l=lastRows_(chSh_(),150).map(chObj_).filter(function(x){return x.status==='pending'&&x.t>lim;}).sort(function(a,b){return a.t-b.t;}).slice(0,40);
+  var js=JSON.stringify(l);if(js.length<90000)c.put('ch_v1',js,30);return l;}
+function setChg_(t,r,o){t.getRange(r,28).setValue(o?JSON.stringify(o):'');}
+function itN_(i){return {n:String(i.n||''),q:+i.q||0,p:+i.p||0,o:(i.o||[]).map(String),t:String(i.t||'')};}
+/* بيحسب الطلب بعد التعديل: inp = {items:[{i:رقم الصنف في الطلب, q:الكمية الجديدة (0 = شيله), }], notes} */
+function edCalc_(v,inp,force){
+  var old=[];try{old=JSON.parse(v[7]||'[]').map(itN_);}catch(_){}
+  if(!old.length||!inp||!inp.items||!inp.items.length||inp.items.length>old.length)return {err:'bad_items'};
+  var by={};
+  for(var k=0;k<inp.items.length;k++){var x=inp.items[k]||{},ix=+x.i,q=Math.round(+x.q);
+    if(!(ix>=0&&ix<old.length)||ix!==Math.floor(ix)||by[ix]!==undefined||!(q>=0&&q<=30))return {err:'bad_items'};by[ix]=q;}
+  var out=[],diff=[];
+  for(var m=0;m<old.length;m++){var o=old[m],nq=by[m]===undefined?o.q:by[m];
+    if(nq!==o.q)diff.push(nq?(o.n+': من '+o.q+' لـ '+nq):(o.n+': اتشال'));
+    if(nq)out.push({n:o.n,q:nq,p:o.p,o:o.o,t:o.t});}
+  if(!out.length)return {err:'empty'};
+  var oldN=String(v[14]||'').trim(),nn=inp.notes==null?oldN:String(inp.notes).replace(/\s+/g,' ').trim().slice(0,400),nch=nn!==oldN;
+  if(nch)diff.push('الملاحظات: '+(nn||'اتمسحت'));
+  if(!diff.length)return {err:'nochange'};
+  var sub=0;out.forEach(function(i){sub+=i.p*i.q;});
+  var fee=+v[11]||0,od=+v[9]||0,cp=String(v[10]||''),nd=0;
+  if(od>0){nd=Math.min(od,sub);
+    if(cp&&!/^RR-/.test(cp)){var d=cdMap_()[cp];
+      if(d&&d.min&&sub<d.min){if(!force)return {err:'coupon_min',min:d.min};}
+      else if(d)nd=Math.min(sub,cdDisc_(d,sub));}}
+  return {old:old,items:out,diff:diff,sub:sub,nd:nd,fee:fee,tot:sub-nd+fee,oldTot:+v[12]||0,notes:nn,nch:nch};}
+function edWrite_(t,r,v,c,id,ph,who){
+  var lg=String(v[19]||'');
+  t.getRange(r,8,1,6).setValues([[JSON.stringify(c.items),c.sub,c.nd,v[10],c.fee,c.tot]]);   // الأصناف + المجموع + الخصم + الكوبون + التوصيل + الإجمالي
+  if(c.nch)t.getRange(r,15).setValue(safe_(c.notes,400));
+  t.getRange(r,20).setValue((lg?lg+';':'')+'cedit@'+who+'@'+Date.now());
+  var o=sh_('Orders',['time','orderId','phone','total','points','confirmed']),ov=o.getDataRange().getValues(),base=Math.max(0,c.sub-c.nd);
+  for(var i=ov.length-1;i>=1;i--)if(String(ov[i][1])===id){o.getRange(i+1,4,1,2).setValues([[base,Math.round(base*EARN_PER_EGP)]]);break;}   // النقاط تتحسب على المجموع الجديد
+  balDrop_(ph);}
+function tkCancel_(t,r,v,reason,who){var n=new Date(),old=String(v[15]),hist=String(v[17]||''),lg=String(v[19]||'');
+  t.getRange(r,16,1,5).setValues([['cancelled',n,(hist?hist+';':'')+'cancelled@'+n.getTime(),safe_(reason,150),(lg?lg+';':'')+'cancelled@'+who+'@'+n.getTime()]]);after_(v,old,'cancelled');}
+/* ═══ إدارة الطيارين من الداشبورد (بدل كتابة النص يدويًا) ═══ */
+function drvRaw_(l){return l.map(function(d){return d.id+':'+d.name+(d.phone?':'+d.phone:'');}).join(', ');}
+function cfgSet_(k,v){var s=setSh_(),d=s.getDataRange().getValues(),ix=0;for(var i=1;i<d.length;i++)if(String(d[i][0])===k){ix=i+1;break;}
+  if(ix)s.getRange(ix,2).setValue(String(v));else s.appendRow([k,String(v)]);CacheService.getScriptCache().remove('set_v1');}
+function drvOut_(){var c=cfg_();return {ok:true,ot_key:c.ot_key,raw:c.drivers,drivers:drv_().map(function(d){d.tok=drvTok_(d.id);return d;})};}
+
 function doGet(e){
   var p=(e&&e.parameter)||{}, a=p.action;
   if(a==='check'){var c=String(p.code||'').toUpperCase().trim(),ph=norm_(p.phone);if(!c||ph.length!==11)return out_({ok:false});return out_({ok:true,used:used_(c+'|'+ph)});}
@@ -320,13 +381,14 @@ function doGet(e){
   if(a==='track'){var tid=String(p.id||'').toUpperCase().trim(),tph=norm_(p.phone);if(!tid||tph.length!==11)return out_({ok:false});
     var hit=null;lastRows_(tk_(),1500).forEach(function(r){if(String(r[0]).toUpperCase()===tid&&norm_(r[3])===tph)hit=r;});
     if(!hit)return out_({ok:true,found:false});var t=tkObj_(hit);
-    return out_({ok:true,found:true,order:{id:t.id,time:t.time,type:t.type,status:t.status,updated:t.updated,history:t.history,items:t.items,subtotal:t.subtotal,discount:t.discount,fee:t.fee,total:t.total,payment:t.payment,paid:t.paid,hasRef:!!t.payref,eta:(function(){var ea=eta_(),bs=t.type==='pickup'?ea.pickup:((ea.areas||{})[t.area]||ea.delivery);return bs?bs+(t.type==='pickup'?0:(+cfg_().busy_extra||0)):null;})(),reason:t.status==='cancelled'?t.reason:''}});}
+    return out_({ok:true,found:true,order:{id:t.id,time:t.time,type:t.type,status:t.status,updated:t.updated,history:t.history,items:t.items,subtotal:t.subtotal,discount:t.discount,fee:t.fee,total:t.total,payment:t.payment,paid:t.paid,hasRef:!!t.payref,eta:(function(){var ea=eta_(),bs=t.type==='pickup'?ea.pickup:((ea.areas||{})[t.area]||ea.delivery);return bs?bs+(t.type==='pickup'?0:(+cfg_().busy_extra||0)):null;})(),reason:t.status==='cancelled'?t.reason:'',notes:t.notes,chg:t.chg?{k:t.chg.k,s:t.chg.s,r:t.chg.r||'',t:t.chg.t||0}:null,canEdit:(EDITABLE.indexOf(t.status)>=0&&editMs_()>0&&!(t.chg&&t.chg.s==='pending')&&Date.now()-t.time<=editMs_()),winLeft:Math.max(0,t.time+editMs_()-Date.now()),editMin:Math.round(editMs_()/60000)}});}
   if(a==='drvpos'){var dpi=String(p.id||'').toUpperCase().trim(),dph=norm_(p.phone);if(!dpi||dph.length!==11)return out_({ok:false});if(!rl_('dp_'+dph,200,600))return out_({ok:false,error:'busy'});
     var dh=null;lastRows_(tk_(),1500).forEach(function(r){if(String(r[0]).toUpperCase()===dpi&&norm_(r[3])===dph)dh=r;});
     if(!dh||String(dh[15])!=='out'||String(dh[5])==='pickup')return out_({ok:true,on:false});
     var dcc=CacheService.getScriptCache(),ddv=dcc.get('odrv_'+dpi);if(!ddv)return out_({ok:true,on:false});
     var dl=dcc.get('otl_'+ddv);if(!dl)return out_({ok:true,on:true,name:drvName_(ddv),lat:null});
     var dj=JSON.parse(dl);return out_({ok:true,on:true,name:drvName_(ddv),lat:dj.lat,lon:dj.lon,age:Math.max(0,Math.round((Date.now()-dj.t)/1000)),dlat:(dh[24]===''||dh[24]==null)?null:+dh[24],dlon:(dh[25]===''||dh[25]==null)?null:+dh[25]});}
+  if(a==='menuov'){var mo=movList_();return out_({ok:true,ver:mo.ver,items:mo.items});}   // تعديلات المنيو (عامة: أسعار/صور/وصف/أصناف جديدة)
   if(a==='drvorders'){var ddr=drvChk_(p.d,p.t);if(!ddr)return out_({ok:false});if(!rl_('do_'+ddr,900,600))return out_({ok:false,error:'busy'});   // صفحة الطيار: طلباته بس
     var dds=dayStart_(Date.now()),ddo=lastRows_(tk_(),300).map(tkObj_).filter(function(o){return o.drv===ddr;}),
       dsl=function(o){return {id:o.id,time:o.time,name:o.name,phone:o.phone,address:o.address,area:o.area,items:o.items,total:o.total,payment:o.payment,paid:o.paid,notes:o.notes,lat:o.lat,lon:o.lon};},
@@ -346,6 +408,30 @@ function doGet(e){
     var top=Object.keys(cnt).sort(function(x,y){return cnt[y]-cnt[x];}).slice(0,8),res={ok:true,top:top};c.put('top_v1',JSON.stringify(res),3600);return out_(res);}
   return out_({ok:true,service:'rr'});
 }
+/* ===== إدارة المنيو من الداشبورد: تعديل سعر/وصف/صورة، إخفاء، وأصناف جديدة (ورقة MenuOv) ===== */
+function movSh_(){return sh_('MenuOv',['key','name','prices','hidden','img','desc','sec','added','by','updated']);}
+function movList_(){var c=CacheService.getScriptCache(),j=c.get('mov_v1');if(j){try{return JSON.parse(j);}catch(_){}}
+  var items=[],mx=0;rows_(movSh_()).forEach(function(r){if(!r[0])return;var p=String(r[2]==null?'':r[2]).split('/').map(Number).filter(function(x){return x>0;}),u=+r[9]||0;if(u>mx)mx=u;
+    items.push({k:String(r[0]),n:String(r[1]),p:p,h:String(r[3])==='true',i:String(r[4]||''),d:String(r[5]||''),s:String(r[6]||''),a:String(r[7])==='true'});});
+  var o={ver:items.length?mx+'-'+items.length:'',items:items};c.put('mov_v1',JSON.stringify(o),300);return o;}
+function menuSet_(b){var ma=authAny_(b);if(ma.err)return out_({ok:false,error:ma.err});if(ma.role!=='manager')return out_({ok:false,error:'forbidden'});
+  var nm=String(b.name||'').replace(/\s+/g,' ').trim().slice(0,120);if(!nm)return out_({ok:false,error:'bad_name'});var key=nm_(nm);
+  var ps=[],raw=String(b.prices==null?'':b.prices).trim();
+  if(raw){ps=raw.split('/').map(function(x){return +String(x).trim();}).filter(function(x){return x>0&&x<=5000;});if(!ps.length||ps.length>4)return out_({ok:false,error:'bad_price'});}
+  if(b.added&&ps.length!==1)return out_({ok:false,error:'bad_price'});
+  var img=String(b.img||'').trim();if(img&&!/^https:\/\/[^\s"'<>\\]{4,290}$/.test(img))return out_({ok:false,error:'bad_img'});
+  var lk=LockService.getScriptLock();try{lk.waitLock(5000);}catch(_){return out_({ok:false,error:'busy'});}
+  try{var sh=movSh_();if(sh.getLastRow()<2)sh.getRange('A:H').setNumberFormat('@');
+    var v=sh.getDataRange().getValues(),ri=0;for(var i=1;i<v.length;i++)if(String(v[i][0])===key){ri=i+1;break;}
+    if(b.remove){if(ri)sh.deleteRow(ri);}
+    else{var row=[key,safe_(nm,120),ps.join('/'),b.hidden?'true':'',img,safe_(String(b.desc||'').replace(/\s+/g,' ').trim(),200),safe_(String(b.sec||''),60),b.added?'true':'',ma.user,Date.now()];
+      if(ri)sh.getRange(ri,1,1,10).setValues([row]);else sh.appendRow(row);
+      if(ps.length){var mp=sh_('MenuPrices',['name','price','updated']),mv=mp.getDataRange().getValues(),mi=0,mn=Math.min.apply(null,ps);   // السعر المعتمد لتحقق السيرفر من الطلبات
+        for(var z=1;z<mv.length;z++)if(nm_(mv[z][0])===key){mi=z+1;break;}if(mi)mp.getRange(mi,2,1,2).setValues([[mn,new Date()]]);else mp.appendRow([safe_(nm,120),mn,new Date()]);}}
+  }finally{lk.releaseLock();}
+  var cc=CacheService.getScriptCache();cc.remove('mov_v1');cc.remove('mp_v1');
+  audit_({action:'menuSet',user:ma.user,name:nm,prices:raw,hidden:b.hidden,img:img,desc:b.desc,added:b.added,remove:b.remove},{},{});
+  return out_({ok:true,menu:movList_()});}
 /* ===== صفحة الطيار + سجل المراجعة + مسار الطلب ===== */
 var DRV_AUTH_='';
 function authAny_(b){if(DRV_AUTH_&&b&&b.user===DRV_AUTH_&&b.action==='setStatus'&&b.status==='delivered')return {role:'staff',user:DRV_AUTH_,name:DRV_AUTH_};return authAny0_(b);}   // الطيار يقدر «يسلّم» طلباته بس
@@ -363,6 +449,9 @@ function audit_(b,pre,j){try{var A=b.action,t='',d='';
   else if(A==='soldoutClear'){t='كل الأصناف';d='رجّع الكل';}
   else if(A==='areasSave'){t='المناطق';d=(b.areas||[]).length+' منطقة';}
   else if(A==='custFlag'){t=String(b.phone||'');d=String(b.op||'')+(b.reason?' · '+String(b.reason).slice(0,60):'');}
+  else if(A==='menuSet'){t=String(b.name||'');d=b.remove?'رجّع الأصلي / حذف':(b.added?'صنف جديد · ':'')+(b.prices?'سعر '+b.prices:'')+(b.hidden?' · مخفي':'')+(b.img?' · صورة':'')+(b.desc?' · وصف':'');}
+  else if(A==='drvSave'||A==='drvDelete'){t=String(b.id||b.name||'');d=A==='drvDelete'?'حذف طيار':'حفظ طيار '+String(b.name||'');}
+  else if(A==='chResolve'){t=String(b.id||b.cid||'');d=String(b.op||'')+(b.reason?' · '+String(b.reason).slice(0,60):'');}
   else if(A==='backupNow'){t='نسخة احتياطية';}
   var s=sh_('Audit',['time','user','action','target','detail']);s.appendRow([new Date(),String(b.user||''),A,safe_(t,80),safe_(d,300)]);
   if(s.getLastRow()>6000)s.deleteRows(2,1000);}catch(_){}}
@@ -384,6 +473,7 @@ function doPost(e){
   var A=b&&b.action;
   if(A==='ev')return evRec_(b);
   if(A==='drvDeliver')return drvDeliver_(b);
+  if(A==='menuSet')return menuSet_(b);
   if(A==='auditList'){var au=authAny_(b);if(au.err)return out_({ok:false,error:au.err});if(au.role!=='manager')return out_({ok:false,error:'forbidden'});
     return out_({ok:true,rows:lastRows_(sh_('Audit',['time','user','action','target','detail']),300).reverse().map(function(r){return {t:new Date(r[0]).getTime(),u:String(r[1]),a:String(r[2]),id:String(r[3]),d:String(r[4])};})});}
   if(A==='funnel'){var fa=authAny_(b);if(fa.err)return out_({ok:false,error:fa.err});if(fa.role!=='manager')return out_({ok:false,error:'forbidden'});
@@ -409,7 +499,7 @@ function doPost_(e){
       ks=ds.map(function(d){return 'otl_'+d.id;}).concat(outs.map(function(o){return 'odrv_'+String(o.id).toUpperCase();})),g=ks.length?cc.getAll(ks):{};
       ds.forEach(function(d){var v=g['otl_'+d.id];if(v){try{var j=JSON.parse(v);seen[d.id]=Math.round((Date.now()-j.t)/1000);pos[d.id]=[j.lat,j.lon];}catch(_){}}});
       outs.forEach(function(o){var v=g['odrv_'+String(o.id).toUpperCase()];if(v)asg[o.id]=v;});return {seen:seen,pos:pos,asg:asg};})();   // مين الطيارين لايف وكل طيار معاه أنهي طلبات
-    var exl={ok:true,orders:all,soldout:soRows_(),now:Date.now(),role:au.role,name:au.name,user:au.user,flags:flags_(all),drivers:drv_(),dseen:dl_.seen,dpos:dl_.pos,dasg:dl_.asg};
+    var exl={ok:true,orders:all,soldout:soRows_(),now:Date.now(),role:au.role,name:au.name,user:au.user,flags:flags_(all),drivers:drv_(),dseen:dl_.seen,dpos:dl_.pos,dasg:dl_.asg,changes:chPending_()};
     if(au.role==='manager'){exl.drivers=drv_().map(function(d){d.tok=drvTok_(d.id);return d;});exl.low=lowRate_();exl.pushBad=pushHealth_().state==='bad';}
     return out_(exl);}
   /* تقرير الفترة (المدير بس) */
@@ -504,6 +594,60 @@ function doPost_(e){
       if(refPhone){var cfR=cfg_(),ptsR=Math.max(0,Math.round(+cfR.ref_points||0)),capR=Math.max(1,+cfR.ref_cap||20);   // مكافأة الداعي (قيد التأكيد لحد ما الطلب يتسلّم) بحد أقصى في الـ٣٠ يوم
         if(ptsR>0&&refRewards_(refPhone).n30<capR){var oR=sh_('Orders',['time','orderId','phone','total','points','confirmed']);oR.appendRow([now,'REF-'+id,"'"+refPhone,0,ptsR,false]);oR.getRange(oR.getLastRow(),6).insertCheckboxes();balDrop_(refPhone);}}
       return out_({ok:true});}
+    if(b.action==='custEdit'||b.action==='custCancel'||b.action==='custReq'){
+      var cid_=String(b.id||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,20);if(!cid_||ph.length!==11)return out_({ok:false,error:'bad_req'});
+      if(!rl_('ce_'+ph,15,600))return out_({ok:false,error:'busy'});
+      var ct=tk_(),cr=findRow_(ct,cid_);if(!cr)return out_({ok:false,error:'not_found'});
+      var cv=ct.getRange(cr,1,1,28).getValues()[0];if(norm_(cv[3])!==ph)return out_({ok:false,error:'not_found'});
+      var cst=String(cv[15]),cage=Date.now()-new Date(cv[1]).getTime(),cwin=editMs_(),cname=String(cv[2]),cch=chgParse_(cv[27]);
+      if(cst==='delivered'||cst==='cancelled')return out_({ok:false,error:'closed'});
+      if(cch&&cch.s==='pending')return out_({ok:false,error:'pending'});   // في طلب لسه مستني رد المطعم
+      if(b.action!=='custReq'){
+        if(EDITABLE.indexOf(cst)<0)return out_({ok:false,error:'locked'});
+        if(!(cwin>0&&cage<=cwin+3000))return out_({ok:false,error:'expired'});   // ٣ ثواني سماح للنت
+        if(b.action==='custEdit'){var ce=edCalc_(cv,b,false);if(ce.err)return out_({ok:false,error:ce.err,min:ce.min});
+          edWrite_(ct,cr,cv,ce,cid_,ph,'customer');
+          chAdd_(cid_,cname,ph,'edit',{diff:ce.diff,before:ce.old,after:ce.items,oldTot:ce.oldTot,newTot:ce.tot},'pending');
+          return out_({ok:true,total:ce.tot});}
+        var cit=[];try{cit=JSON.parse(cv[7]||'[]').map(itN_);}catch(_){}
+        tkCancel_(ct,cr,cv,'العميل ألغى الطلب بنفسه','customer');
+        chAdd_(cid_,cname,ph,'cancel',{reason:'العميل ألغى الطلب بنفسه خلال المدة',before:cit,oldTot:+cv[12]||0},'pending');
+        return out_({ok:true});}
+      var rk=b.kind==='cancel'?'cancel':'edit',rd={note:String(b.note||'').replace(/\s+/g,' ').trim().slice(0,300)};
+      if(rk==='edit'){var cq=edCalc_(cv,b,true);if(cq.err)return out_({ok:false,error:cq.err});
+        rd.inp={items:b.items.map(function(x){return {i:+x.i,q:Math.round(+x.q)};}),notes:b.notes==null?null:String(b.notes).slice(0,400)};rd.diff=cq.diff;rd.before=cq.old;rd.after=cq.items;rd.oldTot=cq.oldTot;rd.newTot=cq.tot;}
+      else{var rit=[];try{rit=JSON.parse(cv[7]||'[]').map(itN_);}catch(_){}rd.before=rit;rd.oldTot=+cv[12]||0;}
+      var rcid=chAdd_(cid_,cname,ph,'req_'+rk,rd,'pending'),rlg=String(cv[19]||'');
+      setChg_(ct,cr,{k:rk,s:'pending',t:Date.now(),c:rcid});ct.getRange(cr,20).setValue((rlg?rlg+';':'')+'creq@customer@'+Date.now());
+      return out_({ok:true});}
+    if(b.action==='chResolve'){var cu=authAny_(b);if(cu.err)return out_({ok:false,error:cu.err});
+      var qc=String(b.cid||'');if(!/^c[a-f0-9]{9}$/.test(qc))return out_({ok:false,error:'bad_cid'});
+      var ch=chFind_(qc);if(!ch)return out_({ok:false,error:'not_found'});var co=chObj_(ch.v);if(co.status!=='pending')return out_({ok:true,same:true,status:co.status});
+      var qop=String(b.op||''),qnow=new Date(),qrs=safe_(String(b.reason||'').replace(/\s+/g,' ').trim(),150);
+      var fin=function(st2,rs2){ch.s.getRange(ch.r,8,1,4).setValues([[st2,cu.user,qnow,rs2||'']]);CacheService.getScriptCache().remove('ch_v1');audit_({action:'chResolve',user:cu.user,id:co.id,cid:qc,op:qop,reason:rs2},{},{});};
+      if(co.kind==='edit'||co.kind==='cancel'){if(qop!=='ack')return out_({ok:false,error:'bad_op'});fin('ack','');return out_({ok:true});}
+      var qt=tk_(),qr=findRow_(qt,co.id);if(!qr){fin('void','الطلب مش موجود');return out_({ok:false,error:'not_found'});}
+      var qv=qt.getRange(qr,1,1,28).getValues()[0],qst=String(qv[15]),qk=co.kind==='req_cancel'?'cancel':'edit',qdid=String(qv[22]||''),qtype=String(qv[5]);
+      if(qop==='reject'){var rj=qrs||'مقدرناش ننفّذ الطلب ده';fin('rejected',rj);setChg_(qt,qr,{k:qk,s:'no',t:Date.now(),r:rj});push_(qdid,co.id,'reqno',qtype,rj);return out_({ok:true});}
+      if(qop!=='approve')return out_({ok:false,error:'bad_op'});
+      if(qst==='delivered'||qst==='cancelled'){fin('void','الطلب اتقفل قبل الرد');setChg_(qt,qr,null);return out_({ok:false,error:'closed'});}
+      if(co.kind==='req_cancel'){tkCancel_(qt,qr,qv,'بطلب العميل'+(co.d&&co.d.note?': '+co.d.note:''),cu.user);fin('approved','');setChg_(qt,qr,{k:'cancel',s:'ok',t:Date.now()});push_(qdid,co.id,'cancelled',qtype,'اتلغى بناءً على طلبك');return out_({ok:true,status:'cancelled'});}
+      var qcur=[];try{qcur=JSON.parse(qv[7]||'[]').map(itN_);}catch(_){}
+      if(JSON.stringify(qcur)!==JSON.stringify((co.d&&co.d.before)||[]))return out_({ok:false,error:'stale'});   // الطلب اتغيّر من ساعة ما العميل بعت الطلب — ارفضه أو اتواصل مع العميل
+      var qe=edCalc_(qv,co.d.inp,true);if(qe.err)return out_({ok:false,error:qe.err});
+      edWrite_(qt,qr,qv,qe,co.id,norm_(qv[3]),cu.user);fin('approved','');setChg_(qt,qr,{k:'edit',s:'ok',t:Date.now()});push_(qdid,co.id,'reqok',qtype,'');return out_({ok:true,total:qe.tot});}
+    if(b.action==='drvSave'||b.action==='drvDelete'){var dm=authAny_(b);if(dm.err)return out_({ok:false,error:dm.err});if(dm.role!=='manager')return out_({ok:false,error:'forbidden'});
+      var dl=drv_(),did2=String(b.id||'').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,8);
+      if(b.action==='drvDelete'){dl=dl.filter(function(d){return d.id!==did2;});cfgSet_('drivers',drvRaw_(dl));CacheService.getScriptCache().remove('otl_'+did2);audit_({action:'drvDelete',user:dm.user,id:did2},{},{});return out_(drvOut_());}
+      var dn=String(b.name||'').replace(/[:,،\n\r]/g,' ').replace(/\s+/g,' ').trim().slice(0,30);if(!dn)return out_({ok:false,error:'bad_name'});
+      var dp=String(b.phone||'').replace(/[٠-٩]/g,function(d){return '٠١٢٣٤٥٦٧٨٩'.indexOf(d)}).replace(/\D/g,'');if(dp&&!(dp.length>=10&&dp.length<=13))return out_({ok:false,error:'bad_phone'});
+      var dx=null;dl.forEach(function(d){if(d.id===did2)dx=d;});
+      if(dx){dx.name=dn;dx.phone=dp;}
+      else{if(!did2){var tries=0;do{did2='d'+Math.random().toString(36).slice(2,5);tries++;}while(tries<30&&(did2.length!==4||dl.some(function(d){return d.id===did2;})));}
+        if(!did2||dl.some(function(d){return d.id===did2;}))return out_({ok:false,error:'bad_id'});dl.push({id:did2,name:dn,phone:dp});}
+      var raw=drvRaw_(dl);if(raw.length>580||dl.length>15)return out_({ok:false,error:'too_many'});
+      if(!cfg_().ot_key)cfgSet_('ot_key',Utilities.getUuid().replace(/-/g,'').slice(0,12));   // أول طيار: بنعمل المفتاح السري تلقائي (لازم عشان لينك صفحة الطيار)
+      cfgSet_('drivers',raw);audit_({action:'drvSave',user:dm.user,id:did2,name:dn},{},{});var ro=drvOut_();ro.id=did2;return out_(ro);}
     if(b.action==='rate'){var rid=String(b.id||'').toUpperCase().trim(),stars=Math.round(+b.stars),hit=null;
       if(!rid||ph.length!==11||!(stars>=1&&stars<=5))return out_({ok:false});
       lastRows_(tk_(),1500).forEach(function(r){if(String(r[0]).toUpperCase()===rid&&norm_(r[3])===ph)hit=r;});
@@ -576,6 +720,7 @@ function doPost_(e){
     if(b.action==='menuSync'){var ms=authAny_(b);if(ms.err)return out_({ok:false,error:ms.err});if(ms.role!=='manager')return out_({ok:false,error:'forbidden'});
       var seenM={},listM=[];(b.items||[]).slice(0,800).forEach(function(x){var mn_=String(x&&x.name||'').trim().slice(0,120),mv_=+(x&&x.price);if(!mn_||!(mv_>0)||mv_>5000)return;var mk_=nm_(mn_);
         if(seenM[mk_]){if(mv_<seenM[mk_].p)seenM[mk_].p=mv_;return;}seenM[mk_]={n:mn_,p:mv_};listM.push(seenM[mk_]);});
+      movList_().items.forEach(function(it){if(!it.p.length)return;var mn_=Math.min.apply(null,it.p),e_=seenM[it.k];if(e_)e_.p=mn_;else{seenM[it.k]={n:it.n,p:mn_};listM.push(seenM[it.k]);}});   // أسعار الداشبورد تكسب على أسعار ملف الموقع
       var oldM=Object.keys(mpMap_()).length;if(listM.length<10||(oldM&&listM.length<oldM*0.5&&!b.force))return out_({ok:false,error:'sync_small',n:listM.length,old:oldM});   // حماية من قراءة ناقصة تمسح الأسعار
       var msh=sh_('MenuPrices',['name','price','updated']),ml=msh.getLastRow();if(ml>1)msh.getRange(2,1,ml-1,3).clearContent();
       msh.getRange(2,1,listM.length,3).setValues(listM.map(function(o){return [safe_(o.n,120),o.p,new Date()];}));
@@ -587,7 +732,7 @@ function doPost_(e){
       var oa=tm(in_.open_at),ca=tm(in_.close_at);if(!oa||!ca)return out_({ok:false,error:'bad_time'});
       var be=Math.max(0,Math.min(180,Math.round(+in_.busy_extra||0)));
       var nv={hours_on:String(in_.hours_on!==false&&in_.hours_on!=='false'),open_at:oa,close_at:ca,busy_extra:String(be),busy_msg:safe_(in_.busy_msg,120),pause_on:String(in_.pause_on===true||in_.pause_on==='true'),pause_msg:safe_(in_.pause_msg,120),
-        ref_on:in_.ref_on===undefined?cfg_().ref_on:String(in_.ref_on!==false&&in_.ref_on!=='false'),ref_points:in_.ref_points===undefined?cfg_().ref_points:String(Math.max(0,Math.min(5000,Math.round(+in_.ref_points||0)))),ref_cap:in_.ref_cap===undefined?cfg_().ref_cap:String(Math.max(1,Math.min(100,Math.round(+in_.ref_cap||20)))),pay_cash:String(in_.pay_cash!==false&&in_.pay_cash!=='false'),pay_wallet:String(in_.pay_wallet!==false&&in_.pay_wallet!=='false'),pay_instapay:String(in_.pay_instapay!==false&&in_.pay_instapay!=='false'),pay_msg:safe_(in_.pay_msg,60),ot_key:String(in_.ot_key||'').replace(/[^A-Za-z0-9_-]/g,'').slice(0,40),drivers:safe_(in_.drivers,300)};
+        ref_on:in_.ref_on===undefined?cfg_().ref_on:String(in_.ref_on!==false&&in_.ref_on!=='false'),ref_points:in_.ref_points===undefined?cfg_().ref_points:String(Math.max(0,Math.min(5000,Math.round(+in_.ref_points||0)))),ref_cap:in_.ref_cap===undefined?cfg_().ref_cap:String(Math.max(1,Math.min(100,Math.round(+in_.ref_cap||20)))),pay_cash:String(in_.pay_cash!==false&&in_.pay_cash!=='false'),pay_wallet:String(in_.pay_wallet!==false&&in_.pay_wallet!=='false'),pay_instapay:String(in_.pay_instapay!==false&&in_.pay_instapay!=='false'),pay_msg:safe_(in_.pay_msg,60),ot_key:String(in_.ot_key||'').replace(/[^A-Za-z0-9_-]/g,'').slice(0,40),drivers:safe_(in_.drivers,600),edit_min:in_.edit_min===undefined?cfg_().edit_min:String(Math.max(0,Math.min(60,Math.round(+in_.edit_min||0))))};
       if(nv.pay_cash!=='true'&&nv.pay_wallet!=='true'&&nv.pay_instapay!=='true')return out_({ok:false,error:'no_pay'});   // لازم طريقة دفع واحدة شغّالة على الأقل
       var sst=setSh_(),sl_=sst.getLastRow();if(sl_>1)sst.getRange(2,1,sl_-1,2).clearContent();
       sst.getRange(2,1,SET_KEYS.length,2).setNumberFormat('@').setValues(SET_KEYS.map(function(k){return [k,nv[k]];}));
