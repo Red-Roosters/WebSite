@@ -323,13 +323,14 @@ function editMs_(){var m=cfg_().edit_min;m=(m===''||m==null||isNaN(+m))?5:+m;ret
 function chSh_(){var ss=SpreadsheetApp.getActiveSpreadsheet(),s=ss.getSheetByName('Changes');if(!s){s=ss.insertSheet('Changes');s.getRange('A:A').setNumberFormat('@');s.getRange('E:E').setNumberFormat('@');s.appendRow(CH_HEAD);}return s;}
 function chAdd_(id,name,ph,kind,detail,status){var cid='c'+Utilities.getUuid().replace(/-/g,'').slice(0,9),d=JSON.stringify(detail||{});
   if(d.length>40000)d=JSON.stringify({note:String(detail&&detail.note||'').slice(0,500),diff:(detail&&detail.diff||[]).slice(0,40),big:true});
-  chSh_().appendRow([cid,new Date(),safe_(id,20),safe_(name,80),"'"+ph,kind,d,status,'','','']);CacheService.getScriptCache().remove('ch_v1');return cid;}
+  chSh_().appendRow([cid,new Date(),safe_(id,20),safe_(name,80),"'"+ph,kind,d,status,'','','']);CacheService.getScriptCache().put('ch_ver',String(Date.now())+Math.random(),21600);return cid;}
 function chFind_(cid){var s=chSh_(),n=s.getLastRow();if(n<2)return null;var v=s.getRange(2,1,n-1,1).getValues();
   for(var i=v.length-1;i>=0;i--)if(String(v[i][0])===cid){var r=i+2;return {s:s,r:r,v:s.getRange(r,1,1,11).getValues()[0]};}return null;}
 function chObj_(r){var d={};try{d=JSON.parse(r[6]||'{}');}catch(_){}return {cid:String(r[0]),t:new Date(r[1]).getTime(),id:String(r[2]),name:String(r[3]),phone:norm_(r[4]),kind:String(r[5]),d:d,status:String(r[7]),by:String(r[8]||''),reason:String(r[10]||'')};}
-function chPending_(){var c=CacheService.getScriptCache(),j=c.get('ch_v1');if(j){try{return JSON.parse(j);}catch(_){}}
+function chPending_(){var c=CacheService.getScriptCache(),ver=c.get('ch_ver')||'0',j=c.get('ch_v2');
+  if(j){try{var o=JSON.parse(j);if(o.v===ver)return o.l;}catch(_){}}
   var lim=Date.now()-12*36e5,l=lastRows_(chSh_(),150).map(chObj_).filter(function(x){return x.status==='pending'&&x.t>lim;}).sort(function(a,b){return a.t-b.t;}).slice(0,40);
-  var js=JSON.stringify(l);if(js.length<90000)c.put('ch_v1',js,30);return l;}
+  var js=JSON.stringify({v:ver,l:l});if(js.length<90000)c.put('ch_v2',js,20);return l;}   // الكاش مربوط بنسخة: أي كتابة بتبوّظه فورًا (حتى لو قراءة كانت شغالة وقتها)
 function setChg_(t,r,o){t.getRange(r,28).setValue(o?JSON.stringify(o):'');}
 function itN_(i){return {n:String(i.n||''),q:+i.q||0,p:+i.p||0,o:(i.o||[]).map(String),t:String(i.t||'')};}
 /* بيحسب الطلب بعد التعديل: inp = {items:[{i:رقم الصنف في الطلب, q:الكمية الجديدة (0 = شيله), }], notes} */
@@ -514,6 +515,14 @@ function doPost_(e){
   if(b.action==='couponList'){var cL=authAny_(b);if(cL.err)return out_({ok:false,error:cL.err});if(cL.role!=='manager')return out_({ok:false,error:'forbidden'});
     var cmL=cdMap_(),cuL=cdUsesAll_(true),csL=cdStats_();
     return out_({ok:true,defs:Object.keys(cmL).map(function(k){var d=cmL[k];return {code:d.code,type:d.type,value:d.value,min:d.min,firstOrderOnly:d.first,active:d.active,expires:d.exp,maxUses:d.maxUses,hidden:d.hidden,label:d.label,uses:cuL[k]||0};}),stats:csL.stats,aovPlain:csL.aovPlain});}
+  if(b.action==='pushChange'){var pu=authAny_(b);if(pu.err)return out_({ok:false,error:pu.err});
+    var pq=String(b.cid||'');if(!/^c[a-f0-9]{9}$/.test(pq))return out_({ok:false,error:'bad_cid'});
+    var pf=chFind_(pq);if(!pf)return out_({ok:false,error:'not_found'});var po=chObj_(pf.v);
+    if(!/^(approved|rejected)$/.test(po.status)||Date.now()-new Date(pf.v[9]).getTime()>180000)return out_({ok:false,error:'stale'});
+    var pk=CacheService.getScriptCache();if(pk.get('pc_'+pq))return out_({ok:true,same:true});pk.put('pc_'+pq,'1',600);
+    var pt=tk_(),pr=findRow_(pt,po.id);if(!pr)return out_({ok:false,error:'not_found'});var pv=pt.getRange(pr,1,1,28).getValues()[0],pd=String(pv[22]||''),py=String(pv[5]);
+    if(po.status==='rejected')push_(pd,po.id,'reqno',py,po.reason);else if(po.kind==='req_cancel')push_(pd,po.id,'cancelled',py,'اتلغى بناءً على طلبك');else push_(pd,po.id,'reqok',py,'');
+    return out_({ok:true});}
   if(b.action==='pushStatus'){var aq=authAny_(b);if(aq.err)return out_({ok:false,error:aq.err});
     var qid=String(b.id||''),qst=String(b.status||'');if(STATUSES.indexOf(qst)<0)return out_({ok:false,error:'bad_status'});
     var qk='psh_'+qid.replace(/[^A-Za-z0-9]/g,'')+'_'+qst,qc=CacheService.getScriptCache();if(qc.get(qk))return out_({ok:true,dup:true});
@@ -624,18 +633,18 @@ function doPost_(e){
       var qc=String(b.cid||'');if(!/^c[a-f0-9]{9}$/.test(qc))return out_({ok:false,error:'bad_cid'});
       var ch=chFind_(qc);if(!ch)return out_({ok:false,error:'not_found'});var co=chObj_(ch.v);if(co.status!=='pending')return out_({ok:true,same:true,status:co.status});
       var qop=String(b.op||''),qnow=new Date(),qrs=safe_(String(b.reason||'').replace(/\s+/g,' ').trim(),150);
-      var fin=function(st2,rs2){ch.s.getRange(ch.r,8,1,4).setValues([[st2,cu.user,qnow,rs2||'']]);CacheService.getScriptCache().remove('ch_v1');audit_({action:'chResolve',user:cu.user,id:co.id,cid:qc,op:qop,reason:rs2},{},{});};
+      var fin=function(st2,rs2){ch.s.getRange(ch.r,8,1,4).setValues([[st2,cu.user,qnow,rs2||'']]);CacheService.getScriptCache().put('ch_ver',String(Date.now())+Math.random(),21600);if(qop!=='ack')audit_({action:'chResolve',user:cu.user,id:co.id,cid:qc,op:qop,reason:rs2},{},{});};
       if(co.kind==='edit'||co.kind==='cancel'){if(qop!=='ack')return out_({ok:false,error:'bad_op'});fin('ack','');return out_({ok:true});}
       var qt=tk_(),qr=findRow_(qt,co.id);if(!qr){fin('void','الطلب مش موجود');return out_({ok:false,error:'not_found'});}
       var qv=qt.getRange(qr,1,1,28).getValues()[0],qst=String(qv[15]),qk=co.kind==='req_cancel'?'cancel':'edit',qdid=String(qv[22]||''),qtype=String(qv[5]);
-      if(qop==='reject'){var rj=qrs||'مقدرناش ننفّذ الطلب ده';fin('rejected',rj);setChg_(qt,qr,{k:qk,s:'no',t:Date.now(),r:rj});push_(qdid,co.id,'reqno',qtype,rj);return out_({ok:true});}
+      if(qop==='reject'){var rj=qrs||'مقدرناش ننفّذ الطلب ده';fin('rejected',rj);setChg_(qt,qr,{k:qk,s:'no',t:Date.now(),r:rj});if(!b.deferPush)push_(qdid,co.id,'reqno',qtype,rj);return out_({ok:true});}
       if(qop!=='approve')return out_({ok:false,error:'bad_op'});
       if(qst==='delivered'||qst==='cancelled'){fin('void','الطلب اتقفل قبل الرد');setChg_(qt,qr,null);return out_({ok:false,error:'closed'});}
-      if(co.kind==='req_cancel'){tkCancel_(qt,qr,qv,'بطلب العميل'+(co.d&&co.d.note?': '+co.d.note:''),cu.user);fin('approved','');setChg_(qt,qr,{k:'cancel',s:'ok',t:Date.now()});push_(qdid,co.id,'cancelled',qtype,'اتلغى بناءً على طلبك');return out_({ok:true,status:'cancelled'});}
+      if(co.kind==='req_cancel'){tkCancel_(qt,qr,qv,'بطلب العميل'+(co.d&&co.d.note?': '+co.d.note:''),cu.user);fin('approved','');setChg_(qt,qr,{k:'cancel',s:'ok',t:Date.now()});if(!b.deferPush)push_(qdid,co.id,'cancelled',qtype,'اتلغى بناءً على طلبك');return out_({ok:true,status:'cancelled'});}
       var qcur=[];try{qcur=JSON.parse(qv[7]||'[]').map(itN_);}catch(_){}
       if(JSON.stringify(qcur)!==JSON.stringify((co.d&&co.d.before)||[]))return out_({ok:false,error:'stale'});   // الطلب اتغيّر من ساعة ما العميل بعت الطلب — ارفضه أو اتواصل مع العميل
       var qe=edCalc_(qv,co.d.inp,true);if(qe.err)return out_({ok:false,error:qe.err});
-      edWrite_(qt,qr,qv,qe,co.id,norm_(qv[3]),cu.user);fin('approved','');setChg_(qt,qr,{k:'edit',s:'ok',t:Date.now()});push_(qdid,co.id,'reqok',qtype,'');return out_({ok:true,total:qe.tot});}
+      edWrite_(qt,qr,qv,qe,co.id,norm_(qv[3]),cu.user);fin('approved','');setChg_(qt,qr,{k:'edit',s:'ok',t:Date.now()});if(!b.deferPush)push_(qdid,co.id,'reqok',qtype,'');return out_({ok:true,total:qe.tot});}
     if(b.action==='drvSave'||b.action==='drvDelete'){var dm=authAny_(b);if(dm.err)return out_({ok:false,error:dm.err});if(dm.role!=='manager')return out_({ok:false,error:'forbidden'});
       var dl=drv_(),did2=String(b.id||'').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,8);
       if(b.action==='drvDelete'){dl=dl.filter(function(d){return d.id!==did2;});cfgSet_('drivers',drvRaw_(dl));CacheService.getScriptCache().remove('otl_'+did2);audit_({action:'drvDelete',user:dm.user,id:did2},{},{});return out_(drvOut_());}

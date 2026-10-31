@@ -371,10 +371,11 @@ main.wide{max-width:none}
 <script>
 /* ═══ إعدادات ═══ */
 const API  = 'https://script.google.com/macros/s/AKfycbzoNNPfliuE1Cp87iylF0GtJGxrYSMRfnatHjIBHefLAwIzvv8T4BQzKfFYp_G2OALr/exec';
-const SITE = 'https://red-roosters.github.io/Menu/';   // رابط الموقع (بيتبعت للعميل للتتبع)
+const SITE_OVERRIDE = '';   // اختياري: لو الموقع على لينك مختلف عن مكان الداشبورد اكتبه هنا (مثال: 'https://example.com/')
+const SITE = SITE_OVERRIDE || new URL('./', location.href).href;   // رابط الموقع اللي بيتبعت للعميل للتتبع — بيتاخد تلقائي من مكان الداشبورد (نفس فولدر index.html)
 /* أسباب الإلغاء اللي بتظهر في القايمة (بتظهر للعميل زي ما هي) — عدّل فيها براحتك */
 const CANCEL_REASONS = ['صنف من طلبك غير متوفر دلوقتي', 'عنوانك خارج نطاق التوصيل', 'الطلب جه خارج ساعات العمل', 'المحل مقفول مؤقتًا للصيانة',
-  'ماقدرناش نأكد طريقة الدفع', 'ماقدرناش نوصلّك بالتليفون', 'اتلغى بناءً على طلبك'];
+  'ماقدرناش نأكد طريقة الدفع', 'ماقدرناش نوصلّك بالتليفون', 'اتلغى بناءً على طلبك', 'طلب مكرر (تكرار)', 'تجربة'];
 const POLL_MS = 10000, RING_MS = 3500, LATE_MIN = 60, DAY_START_HOUR = 6;   // اليوم التشغيلي بيبدأ 6 الصبح
 
 const $ = id => document.getElementById(id);
@@ -393,7 +394,7 @@ const AUTH_ERR = {locked:'اتقفل الدخول مؤقتًا (محاولات �
 function bizStart(ts){ const d = new Date(ts == null ? Date.now() : ts); const t = d.getTime(); d.setHours(DAY_START_HOUR, 0, 0, 0); if (t < d.getTime()) d.setDate(d.getDate() - 1); return d.getTime(); }
 let flags = {}, lowData = null;
 const pend = new Map();   // تغييرات لسه ماتأكدتش من السيرفر: id → {st, reason, upd, paid, busy, t}
-let changes = [], chKnown = null, orders = [], tab = 'board', query = '', known = null, sound = true, lastBeep = 0, timer = null, ac = null, ringT = null, wl = null, flip = false;
+let changes = [], chKnown = null, chDone = new Map(), orders = [], tab = 'board', query = '', known = null, sound = true, lastBeep = 0, timer = null, ac = null, ringT = null, wl = null, flip = false;
 
 /* ═══ API ═══ */
 const post = b => { if (token && b.action !== 'login') { b = Object.assign({}, b, {token}); delete b.pass; }   // التوكن بس بيتبعت — كلمة السر مابتتخزنش ولا بتتبعت تاني
@@ -465,7 +466,8 @@ async function loadNow(){
     const fresh = j.orders.filter(o => known && !known.has(o.id) && o.status === 'new');
     known = new Set(j.orders.map(o => o.id)); orders = j.orders; flags = j.flags || {}; drivers = j.drivers || []; dseen = j.dseen || {}; dpos = j.dpos || {}; dasg = j.dasg || {}; chips(j);
     if (Array.isArray(j.soldout) && !soBusy && Date.now() - soLast > 4000) { soList = j.soldout; mnRender(); }
-    changes = j.changes || [];
+    { const nw = Date.now(); chDone.forEach((t, k) => { if (nw - t > 90000) chDone.delete(k); }); }
+    changes = (j.changes || []).filter(c => !chDone.has(c.cid));   // اللي لسه بنرد عليه ماينفعش يرجع من تحديث قديم
     const freshCh = changes.filter(c => chKnown && !chKnown.has(c.cid)); chKnown = new Set(changes.map(c => c.cid));
     render(); drvBarRender(); updateDrvMap(); dvRender(); chRender();
     if (freshCh.length) { toast('✏️ ' + freshCh.map(c => (CHK_S[c.kind] || '') + ' #' + c.id + ' — ' + c.name).join('، ')); pushNotify('✏️ تعديل من عميل — ريد روستر', freshCh.map(c => (CHK_S[c.kind] || '') + ' #' + c.id + ' · ' + c.name).join('\n')); chOpen(); ringTick(); }
@@ -1479,13 +1481,16 @@ function chOpen(){ if (!changes.length) return; $('chMo').classList.remove('hide
 $('chBar').onclick = chOpen;
 $('chClose').onclick = () => $('chMo').classList.add('hide');
 async function chAct(cid, op, reason){
-  const c = changes.find(x => x.cid === cid); if (!c) return;
-  changes = changes.filter(x => x.cid !== cid); syncAlert(); chRender(); render();
+  const c = changes.find(x => x.cid === cid); if (!c || chDone.has(cid)) return;
+  chDone.set(cid, Date.now());
+  changes = changes.filter(x => x.cid !== cid); syncAlert(); chRender(); render();   // بيختفي فورًا ومش هيرجع
+  let okk = false;
   try {
-    const j = await post({action:'chResolve', user, cid, op, reason});
-    if (!j.ok) toast(({stale:'⚠️ الطلب اتغيّر بعد ما العميل بعت — ارفض الطلب أو اتصل بالعميل', closed:'ℹ️ الطلب اتقفل قبل ما نرد', not_found:'⚠️ الطلب مش موجود', coupon_min:'⚠️ الكوبون مش هيتطبّق بعد التعديل'})[j.error] || '⚠️ حصل خطأ');
-    else toast(op === 'ack' ? '👍 تمام' : op === 'approve' ? '✅ اتنفّذ — والعميل هيتبلّغ' : '↩︎ اترفض — والعميل هيتبلّغ');
-  } catch (e) { toast('⚠️ مفيش اتصال — جرّب تاني'); }
+    const j = await post({action:'chResolve', user, cid, op, reason, deferPush:true});
+    if (!j.ok) { chDone.delete(cid); toast(({stale:'⚠️ الطلب اتغيّر بعد ما العميل بعت — ارفض الطلب أو اتصل بالعميل', closed:'ℹ️ الطلب اتقفل قبل ما نرد', not_found:'⚠️ الطلب مش موجود', coupon_min:'⚠️ الكوبون مش هيتطبّق بعد التعديل'})[j.error] || '⚠️ حصل خطأ'); }
+    else { okk = true; toast(op === 'ack' ? '👍 تمام' : op === 'approve' ? '✅ اتنفّذ — والعميل هيتبلّغ' : '↩︎ اترفض — والعميل هيتبلّغ'); }
+  } catch (e) { chDone.delete(cid); toast('⚠️ مفيش اتصال — جرّب تاني'); }
+  if (okk && op !== 'ack') post({action:'pushChange', user, cid}).catch(() => {});   // إشعار العميل في الخلفية من غير ما نعطّل الواجهة
   load();
 }
 $('chList').addEventListener('click', e => {
@@ -1499,7 +1504,7 @@ $('chList').addEventListener('click', e => {
 function showApp(on){ $('login').classList.toggle('hide', on); $('app').classList.toggle('hide', !on); }
 function logout(msg){
   if (token) post({action:'logout', user}).catch(() => {});   // بنلغي التوكن على السيرفر
-  clearInterval(timer); clearInterval(ringT); document.title = 'لوحة طلبات ريد روستر'; user = pass = token = ''; role = 'staff'; view = 'orders'; lastA = null; known = null; chKnown = null; changes = []; orders = []; soList = []; sessionStorage.removeItem('rr_admin_cred'); localStorage.removeItem('rr_admin_cred');
+  clearInterval(timer); clearInterval(ringT); document.title = 'لوحة طلبات ريد روستر'; user = pass = token = ''; role = 'staff'; view = 'orders'; lastA = null; known = null; chKnown = null; changes = []; chDone.clear(); orders = []; soList = []; sessionStorage.removeItem('rr_admin_cred'); localStorage.removeItem('rr_admin_cred');
   showApp(false); $('lgErr').textContent = msg || ''; $('pin').value = ''; $('usr').focus();
 }
 async function start(){
