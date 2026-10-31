@@ -3776,6 +3776,46 @@ html[lang="en"] .rr-so-badge::before{content:"Sold out"}
     document.addEventListener('DOMContentLoaded', () => { showSection('home'); });
 </script>
 <script>
+/* تعديلات المنيو من الداشبورد (أسعار / وصف / صور / إخفاء / أصناف جديدة): بتتطبّق على الصفحة قبل ما السلة تجهّز الكروت */
+(function () {
+  var ov = null; try { ov = JSON.parse(localStorage.getItem('rr_menuov') || 'null'); } catch (e) {}
+  window.__ovVer = (ov && ov.ver) || '';
+  window.rrMenuOvSync = function (api) {
+    try { fetch(api + (api.indexOf('?') > -1 ? '&' : '?') + 'action=menuov').then(function (r) { return r.json(); }).then(function (j) {
+      if (!j || !j.ok || (j.ver || '') === window.__ovVer) return;
+      localStorage.setItem('rr_menuov', JSON.stringify({ ver: j.ver || '', items: j.items || [] }));
+      var cart = []; try { cart = JSON.parse(localStorage.getItem('rr_cart') || '[]'); } catch (e) {}
+      if (!cart.length && sessionStorage.getItem('rr_ovr') !== (j.ver || '-')) { sessionStorage.setItem('rr_ovr', j.ver || '-'); location.reload(); }   // السلة فاضية: نحدّث الصفحة مرة واحدة بالأسعار الجديدة
+    }).catch(function () {}); } catch (e) {}
+  };
+  if (!ov || !ov.items || !ov.items.length) return;
+  var nz = s => String(s == null ? '' : s).replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).toLowerCase().replace(/[\u064B-\u065F\u0670\u0640]/g, '').replace(/[أإآ]/g, 'ا').replace(/ى/g, 'ي').replace(/ة/g, 'ه').replace(/\s+/g, ' ').trim();
+  var clean = function (el) { var c = el.cloneNode(true); c.querySelectorAll('span').forEach(function (s) { s.remove(); }); return c.textContent.replace(/[\u{1F300}-\u{1FAFF}\u2600-\u27BF]/gu, '').replace(/\s+/g, ' ').trim(); };
+  var TY = [['.card', '.card-name', '.price-badge'], ['.siniya-card', '.siniya-card-name', '.siniya-price'], ['.siniya-featured', '.siniya-featured-name', '.siniya-price'], ['.school-featured', '.school-featured-name', '.price-badge'], ['.zsb-banner', 'h2', '.zsb-price'], ['.power-deal-banner', 'h2', '.power-deal-price']];
+  var map = {}; ov.items.forEach(function (it) { map[nz(it.n)] = it; });
+  var exists = function (n) { var f = false; TY.forEach(function (t) { document.querySelectorAll(t[0]).forEach(function (b) { var e = b.querySelector(t[1]); if (e && nz(clean(e)) === nz(n)) f = true; }); }); return f; };
+  ov.items.forEach(function (it) {   /* أصناف جديدة: بتتضاف كارت عادي في القسم المحدد */
+    try { if (!it.a || it.h || !it.p.length || exists(it.n)) return; var grid = null;
+      document.querySelectorAll('section').forEach(function (s) { var h = s.querySelector('.section-title,h2'); if (h && nz(clean(h)) === nz(it.s)) grid = grid || s.querySelector('.menu-grid'); });
+      if (!grid) return;
+      var card = document.createElement('div'); card.className = 'card';
+      if (it.i) { var im = document.createElement('img'); im.className = 'card-img'; im.loading = 'lazy'; im.alt = it.n; im.src = it.i; card.appendChild(im); }
+      var body = document.createElement('div'); body.className = 'card-body';
+      var nm = document.createElement('div'); nm.className = 'card-name'; nm.textContent = it.n; body.appendChild(nm);
+      if (it.d) { var ds = document.createElement('p'); ds.className = 'card-desc'; ds.textContent = it.d; body.appendChild(ds); }
+      var ft = document.createElement('div'); ft.className = 'card-footer'; var pb = document.createElement('span'); pb.className = 'price-badge'; pb.textContent = it.p[0] + ' LE'; ft.appendChild(pb); body.appendChild(ft);
+      card.appendChild(body); grid.appendChild(card); } catch (e) {} });
+  TY.forEach(function (t) { document.querySelectorAll(t[0]).forEach(function (box) {
+    try { var ne = box.querySelector(t[1]); if (!ne) return; var it = map[nz(clean(ne))]; if (!it) return;
+      if (it.h) { box.remove(); return; }
+      var pe = box.querySelector(t[2]);
+      if (pe && it.p.length) { var tx = pe.textContent, cnt = (tx.match(/\d+(?:\.\d+)?/g) || []).length; if (cnt === it.p.length) { var i = 0; pe.textContent = tx.replace(/\d+(?:\.\d+)?/g, function () { return it.p[i++]; }); } }
+      if (it.d) { var de = box.querySelector('.card-desc'); if (de) de.textContent = it.d; }
+      if (it.i) { var im = box.querySelector('img'); if (im) { im.removeAttribute('srcset'); im.src = it.i; } }
+    } catch (e) {} }); });
+})();
+</script>
+<script>
 (function () {
     /* ═══ إعدادات: عدّل هنا ═══ */
     const CONFIG = {
@@ -3993,6 +4033,7 @@ html[lang="en"] .rr-so-badge::before{content:"Sold out"}
             fetch(CONFIG.couponApi, { method: 'POST', keepalive: true, body: JSON.stringify({ action: 'ev', sid, e }) }).catch(() => {}); } catch (x) {}
     };
     rrEv('visit');
+    if (window.rrMenuOvSync) rrMenuOvSync(CONFIG.couponApi);
     /* ═══ ساعات العمل ═══ */
     function isOpenNow() {
         const h = CONFIG.hours;

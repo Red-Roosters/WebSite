@@ -332,7 +332,7 @@ main.wide{max-width:none}
   <main id="mnMain" class="hide">
     <div class="panel"><h2>🚫 إيقاف الأصناف اللي نفدت</h2>
       <div class="hint" style="margin:0 0 10px">اضغط "وقّفه" على أي صنف خلص عندك — هيتقفل على الموقع (خلال دقيقة) ومحدش يقدر يطلبه، وأي طلب فيه الصنف ده السيرفر هيرفضه. "رجّعه" بيرجّعه تاني.</div>
-      <div class="rng"><input id="mnQ" type="search" placeholder="🔎 ابحث عن صنف"><button class="btn ghost" id="mnReload" type="button">🔄 تحديث القايمة</button><button class="btn ghost" id="mnClear" type="button">↩︎ رجّع كل الأصناف</button></div>
+      <div class="rng"><input id="mnQ" type="search" placeholder="🔎 ابحث عن صنف"><button class="btn ghost" id="mnReload" type="button">🔄 تحديث القايمة</button><button class="btn main hide" id="mnAdd" type="button">➕ صنف جديد</button><button class="btn ghost" id="mnClear" type="button">↩︎ رجّع كل الأصناف</button></div>
     </div>
     <div class="panel hide" id="mnOffP"><h2>⛔ موقوف دلوقتي (<span id="mnOffN">0</span>)</h2><div id="mnOff"></div></div>
     <div id="mnList"><div class="empty">⏳...</div></div>
@@ -1032,8 +1032,51 @@ async function mnSyncPrices(list, force){
   } catch (e) { mnSyncMsg = '⚠️ تعذّرت مزامنة الأسعار (مفيش اتصال)'; }
   mnRender();
 }
+let mnOv = {ver:'', items:[]};
+const ovFor = n => mnOv.items.find(x => nz(x.n) === nz(n));
+async function mnOvLoad(){ try { const j = await (await fetch(API + '?action=menuov&_=' + Date.now())).json(); if (j && j.ok) mnOv = {ver:j.ver, items:j.items || []}; } catch (e) {} }
+const mnCanEdit = m => role === 'manager' && !/^(➕|🥣)/.test(m.sec);
+const mnFind = name => (menu || []).find(m => nz(m.name) === nz(name)) || (() => { const o = ovFor(name); return o && o.a ? {sec:o.s, name:o.n, en:'', price:(o.p[0] || '') + ' LE', added:true} : null; })();
+function mnForm(title, fields, extra){
+  return new Promise(res => { const ov = document.createElement('div'); ov.className = 'cx';
+    ov.innerHTML = '<div style="background:#fff;color:#222;border-radius:16px;padding:18px;width:min(420px,100%);max-height:90vh;overflow:auto;direction:rtl"><h3 style="margin:0 0 10px">' + esc(title) + '</h3>' +
+      fields.map((f, i) => '<label style="display:block;margin:8px 0;font-weight:700;font-size:.85rem">' + esc(f.label) + (f.type === 'select' ? '<select data-f="' + i + '" style="display:block;width:100%;padding:10px;margin-top:4px;border:1px solid #ddd;border-radius:10px">' + f.options.map(o => '<option>' + esc(o) + '</option>').join('') + '</select>' : f.type === 'check' ? ' <input type="checkbox" data-f="' + i + '">' : '<input data-f="' + i + '" placeholder="' + esc(f.ph || '') + '" style="display:block;width:100%;padding:10px;margin-top:4px;border:1px solid #ddd;border-radius:10px;font:inherit">') + '</label>').join('') +
+      '<div style="display:flex;gap:8px;margin-top:12px"><button type="button" data-ok="1" style="flex:1;padding:12px;border:0;border-radius:12px;background:#9E1B1B;color:#fff;font:800 1rem inherit;cursor:pointer">حفظ</button><button type="button" data-ok="0" style="padding:12px 16px;border:0;border-radius:12px;background:#f1eeee;font:800 1rem inherit;cursor:pointer">إلغاء</button></div>' +
+      (extra ? '<button type="button" data-ok="2" style="display:block;width:100%;margin-top:8px;padding:10px;border:0;background:none;color:#9E1B1B;font:700 .9rem inherit;cursor:pointer">' + esc(extra) + '</button>' : '') + '</div>';
+    fields.forEach((f, i) => { const el = ov.querySelector('[data-f="' + i + '"]'); if (f.type === 'check') el.checked = !!f.value; else if (f.value != null) el.value = f.value; });
+    ov.onclick = e => { const b = e.target.closest('[data-ok]'); if (!b && e.target !== ov) return; const v = fields.map((f, i) => { const el = ov.querySelector('[data-f="' + i + '"]'); return f.type === 'check' ? el.checked : el.value.trim(); }); ov.remove(); res(b && b.dataset.ok !== '0' ? {act:+b.dataset.ok, v} : null); };
+    document.body.appendChild(ov); });
+}
+const mnNums = s => (String(s || '').replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d)).match(/\d+(?:\.\d+)?/g) || []).map(Number);
+async function mnSet(body, msg){
+  try { const j = await post(Object.assign({user, action:'menuSet'}, body)); if (!j.ok) throw new Error(j.error || 'fail'); mnOv = {ver:j.menu.ver, items:j.menu.items}; mnRender(); toast(msg); return true; }
+  catch (e) { const m = String(e.message); toast(m === 'bad_price' ? '⚠️ السعر غير صحيح' : m === 'bad_img' ? '⚠️ رابط الصورة لازم يبدأ بـ https://' : m === 'bad_action' ? '⚠️ حدّث Code.gs واعمل Deploy ▸ New version' : '⚠️ معرفناش نحفظ التعديل'); return false; }
+}
+async function mnEdit(name){
+  const m = mnFind(name); if (!m) return; const o = ovFor(name), orig = mnNums(m.price), cur = o && o.p.length ? o.p : orig;
+  const r = await mnForm((m.added ? '✏️ ' : '✏️ تعديل: ') + name, [
+    {label:'السعر' + (orig.length > 1 ? ' (' + orig.length + ' أحجام، افصل بـ / بنفس الترتيب)' : ''), value:cur.join(' / '), ph:'مثلاً 99'},
+    {label:'الوصف (سيبه فاضي = زي ما هو في الموقع)', value:o ? o.d : '', ph:''},
+    {label:'رابط الصورة (https://… سيبه فاضي = زي ما هي)', value:o ? o.i : '', ph:'https://'},
+    {label:'🙈 إخفاء الصنف من المنيو', type:'check', value:o && o.h}
+  ], m.added ? '🗑️ حذف الصنف' : '↩️ رجّع الأصلي');
+  if (!r) return;
+  if (r.act === 2) { if (await mnSet({name, remove:true}, m.added ? '🗑️ اتحذف: ' + name : '↩️ رجع الأصلي: ' + name) && !m.added && menu) mnSyncPrices(menu, true); return; }
+  const nums = mnNums(r.v[0]); if (!nums.length || nums.length > 4 || (!m.added && nums.length !== orig.length)) return toast('⚠️ السعر لازم يكون ' + (orig.length > 1 ? orig.length + ' أرقام مفصولة بـ /' : 'رقم واحد'));
+  const same = !m.added && nums.join('/') === orig.join('/');
+  mnSet({name, prices:same ? '' : nums.join('/'), desc:r.v[1], img:r.v[2], hidden:r.v[3], sec:m.sec, added:!!m.added}, '✅ اتحفظ — هيظهر للعملاء خلال دقيقة');
+}
+async function mnAddItem(){
+  const secs = [...new Set((menu || []).map(m => m.sec).filter(s => !/^(➕|🥣)/.test(s)))]; if (!secs.length) return toast('⚠️ حمّل قايمة الأصناف الأول');
+  const r = await mnForm('➕ صنف جديد', [{label:'القسم', type:'select', options:secs}, {label:'الاسم', ph:'زي ما هيظهر للعميل'}, {label:'السعر', ph:'مثلاً 99'}, {label:'الوصف (اختياري)'}, {label:'رابط الصورة (اختياري، https://…)', ph:'https://'}]);
+  if (!r) return; const [sec, name, price, desc, img] = r.v, n = mnNums(price);
+  if (!name || n.length !== 1) return toast('⚠️ اكتب الاسم وسعر واحد'); if (mnFind(name)) return toast('⚠️ فيه صنف بنفس الاسم');
+  mnSet({name, prices:String(n[0]), desc, img, sec, added:true}, '✅ اتضاف: ' + name + ' — هيظهر للعملاء خلال دقيقة');
+}
+$('mnAdd').onclick = mnAddItem;
 async function mnLoad(force){
-  if (menu && !force) return mnRender();
+  if (menu && !force) { mnOvLoad().then(mnRender); return mnRender(); }
+  await mnOvLoad();
   $('mnList').innerHTML = '<div class="empty">⏳ بنحمّل قايمة الأصناف...</div>';
   menu = null; menuErr = '';
   for (const u of [new URL('index.html', location.href).href, SITE + 'index.html']) {
@@ -1047,17 +1090,18 @@ function mnRender(){
   const off = soList.filter(x => !x.until || x.until > Date.now()).sort((a, b) => b.time - a.time), q = nz(mnQ);
   $('vMenu').textContent = '🚫 الأصناف' + (off.length ? ' (' + off.length + ')' : '');
   if (view !== 'menu') return;
-  $('mnOffP').classList.toggle('hide', !off.length); $('mnOffN').textContent = off.length;
+  $('mnAdd').classList.toggle('hide', role !== 'manager'); $('mnOffP').classList.toggle('hide', !off.length); $('mnOffN').textContent = off.length;
   mnRows = [];
-  const row = (name, sub, isOff) => { const i = mnRows.push(name) - 1;
+  const row = (name, sub, isOff, edit) => { const i = mnRows.push(name) - 1;
     return '<div class="mnrow' + (isOff ? ' off' : '') + '"><div class="mnn"><b>' + esc(name) + '</b><small>' + esc(sub) + '</small></div>' +
-      (isOff ? '' : '<button type="button" class="btn tiny ghost" data-mnt="' + i + '" title="وقّفه لوقت محدد">⏱</button>') + '<button type="button" class="btn tiny ' + (isOff ? 'main' : 'danger') + '" data-mn="' + i + '" data-off="' + (isOff ? 0 : 1) + '">' + (isOff ? '✅ رجّعه' : '⛔ وقّفه') + '</button></div>'; };
+      (edit ? '<button type="button" class="btn tiny ghost" data-mne="' + i + '" title="تعديل السعر/الوصف/الصورة">✏️</button>' : '') + (isOff ? '' : '<button type="button" class="btn tiny ghost" data-mnt="' + i + '" title="وقّفه لوقت محدد">⏱</button>') + '<button type="button" class="btn tiny ' + (isOff ? 'main' : 'danger') + '" data-mn="' + i + '" data-off="' + (isOff ? 0 : 1) + '">' + (isOff ? '✅ رجّعه' : '⛔ وقّفه') + '</button></div>'; };
   $('mnOff').innerHTML = off.map(x => row(x.name, (x.by ? '👤 ' + (staffNames[x.by] || x.by) : '') + (x.time ? ' · ' + ago(x.time) : '') + (x.until ? ' · يرجع تلقائي ' + new Date(x.until).toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'}) : ''), true)).join('');
   let h = (menuErr ? '<div class="note" style="margin-bottom:12px">' + esc(menuErr) + '</div>' : '') + (role === 'manager' && mnSyncMsg ? '<div class="hint" style="margin:0 0 10px">' + esc(mnSyncMsg) + '</div>' : '');
   if (menu) {
     const groups = new Map();
     menu.forEach(m => { if (q && !nz(m.name + ' ' + m.en + ' ' + m.sec).includes(q)) return; if (!groups.has(m.sec)) groups.set(m.sec, []); groups.get(m.sec).push(m); });
-    groups.forEach((l, s) => { h += '<h3 class="mnsec">' + esc(s) + '</h3><div class="panel" style="padding:4px 14px">' + l.map(m => row(m.name, (m.en ? m.en + ' · ' : '') + m.price, soHas(m.name))).join('') + '</div>'; });
+    mnOv.items.filter(o => o.a).forEach(o => { if (menu.some(m => nz(m.name) === nz(o.n)) || (q && !nz(o.n).includes(q))) return; const g = o.s || 'أخرى'; if (!groups.has(g)) groups.set(g, []); groups.get(g).push({sec:g, name:o.n, en:'', price:(o.p[0] || '') + ' LE', added:true}); });
+    groups.forEach((l, s) => { h += '<h3 class="mnsec">' + esc(s) + '</h3><div class="panel" style="padding:4px 14px">' + l.map(m => { const o = ovFor(m.name); return row(m.name, (m.en ? m.en + ' · ' : '') + (o && o.p.length ? o.p.join(' / ') + ' LE' : m.price) + (m.added ? ' · ➕ جديد' : o && (o.p.length || o.d || o.i) ? ' · ✏️ معدّل' : '') + (o && o.h ? ' · 🙈 مخفي' : ''), soHas(m.name), mnCanEdit(m)); }).join('') + '</div>'; });
     if (!groups.size) h += '<div class="empty">مفيش صنف بالاسم ده</div>';
   }
   $('mnList').innerHTML = h;
@@ -1088,6 +1132,7 @@ async function mnTimed(name){
   mnSend({action:'setSoldout', name, soldout:true, until}, '⛔ اتوقّف ' + L[i] + ': ' + name + ' — هيرجع لوحده');
 }
 $('mnMain').addEventListener('click', e => {
+  const eb = e.target.closest('[data-mne]'); if (eb) { mnEdit(mnRows[+eb.dataset.mne]); return; }
   const tb = e.target.closest('[data-mnt]'); if (tb) { mnTimed(mnRows[+tb.dataset.mnt]); return; }
   const b = e.target.closest('[data-mn]'); if (b) mnToggle(mnRows[+b.dataset.mn], b.dataset.off === '1');
 });
