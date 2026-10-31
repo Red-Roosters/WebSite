@@ -5987,7 +5987,14 @@ new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:tru
     b.innerHTML='<span style="flex:1;line-height:1.5">✏️ بتضيف أصناف لطلب <b dir="ltr">#'+esc(ADD)+'</b>'+(n?' — ضفت '+n:'')+'</span><button type="button" data-ab="1" style="border:0;border-radius:12px;padding:10px 14px;background:#D92B2B;color:#fff;font:800 .9rem Cairo,sans-serif;cursor:pointer">✅ تم — ارجع للتعديل</button>';
     b.style.display='flex';
     document.documentElement.classList.add('rr-adding');
-    var h=(b.offsetHeight||60)+24; document.documentElement.style.setProperty('--rr-addbar-h',h+'px'); }
+    /* على الموبايل: الشريط يقعد فوق القائمة السفلية (المنيو/السلة) مش فوقها */
+    var off=12, t=$('rrTabs');
+    if(t&&getComputedStyle(t).display!=='none'){
+      var top=t.getBoundingClientRect().top;
+      [].forEach.call(t.children,function(c){ top=Math.min(top,c.getBoundingClientRect().top); });
+      off=Math.max(12,Math.round(window.innerHeight-top)+8); }
+    b.style.bottom=off+'px';
+    var h=off+(b.offsetHeight||60)+12; document.documentElement.style.setProperty('--rr-addbar-h',h+'px'); }
   window.addEventListener('resize',function(){ if(ADD) addBar(); });
   window.RR_EDIT_HOOK=function(o){
     if(!ADD) return false; var ed=EDIT[ADD]; if(!ed){ ADD=null; addBar(); return false; }
