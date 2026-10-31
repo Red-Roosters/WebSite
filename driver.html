@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>🛵 صفحة الطيار</title>
+<style>
+:root{--r:#9E1B1B;--bg:#f6f1ee;--c:#fff;--t:#222;--m:#7a6f68;--ok:#0B6E4F}
+@media(prefers-color-scheme:dark){:root{--bg:#161212;--c:#221b1b;--t:#f3ece8;--m:#a99d96}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--t);font:600 16px/1.6 Cairo,system-ui,sans-serif;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+header{position:sticky;top:0;background:var(--r);color:#fff;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;gap:8px;z-index:5}
+header b{font-size:1.05rem}header span{font-size:.85rem;opacity:.95}
+main{padding:12px;max-width:560px;margin:auto}
+.card{background:var(--c);border-radius:16px;padding:14px;margin:0 0 12px;box-shadow:0 1px 6px rgba(0,0,0,.08)}
+.card h3{margin:0 0 4px;font-size:1.02rem;display:flex;justify-content:space-between;gap:8px}.card small{color:var(--m)}
+.row{margin:6px 0}.it{font-size:.9rem;color:var(--m)}
+.pay{padding:8px 10px;border-radius:10px;background:#FFF6E5;font-weight:800;margin:8px 0}.pay.ok{background:#E3F6EC;color:var(--ok)}
+.btns{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
+.btns a,.btns button{flex:1;min-width:90px;text-align:center;padding:12px 8px;border-radius:12px;border:0;font:800 .95rem inherit;text-decoration:none;cursor:pointer}
+.nav{background:#1d3f8f;color:#fff}.call{background:#e8eefc;color:#1d3f8f}.done{background:var(--r);color:#fff}.done:disabled{opacity:.6}
+.empty{text-align:center;color:var(--m);padding:40px 10px}.msg{text-align:center;color:var(--m);font-size:.8rem;padding:6px}
+</style>
+</head>
+<body>
+<header><b id="hn">🛵 صفحة الطيار</b><span id="sum"></span></header>
+<main><div id="list"><div class="empty">⏳ بنحمّل طلباتك...</div></div><div class="msg" id="msg"></div></main>
+<script>
+const API='https://script.google.com/macros/s/AKfycbzoNNPfliuE1Cp87iylF0GtJGxrYSMRfnatHjIBHefLAwIzvv8T4BQzKfFYp_G2OALr/exec',Q=new URLSearchParams(location.search),D=Q.get('d')||'',T=Q.get('t')||'';
+const $=id=>document.getElementById(id),esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+let busy=false,lastN=-1;
+const ago=t=>{const m=Math.max(0,Math.round((Date.now()-t)/60000));return m<1?'دلوقتي':m<60?'من '+m+' د':'من '+Math.floor(m/60)+' س '+(m%60)+' د'};
+function nav(o){return o.lat!=null?'https://www.google.com/maps/dir/?api=1&destination='+o.lat+','+o.lon+'&travelmode=driving':'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent((o.address||'')+' '+(o.area||''))}
+function card(o){
+  const items=(o.items||[]).map(i=>esc(i.q+'× '+i.n)).join('، ');
+  const pay=o.payment==='cash'?'<div class="pay">💵 كاش — حصّل <b>'+o.total+' ج.م</b></div>':o.paid?'<div class="pay ok">✅ مدفوع (تحويل) — مفيش تحصيل</div>':'<div class="pay">⏳ التحويل لسه متأكدش — كلّم الفرع قبل التسليم</div>';
+  return '<div class="card"><h3><span>#'+esc(o.id)+' · '+esc(o.name)+'</span><small>'+ago(o.time)+'</small></h3>'+
+    '<div class="row">📍 '+esc(o.address)+(o.area?' ('+esc(o.area)+')':'')+'</div>'+
+    '<div class="row it">🧾 '+items+'</div>'+(o.notes?'<div class="row it">📝 '+esc(o.notes)+'</div>':'')+pay+
+    '<div class="btns"><a class="nav" target="_blank" rel="noopener" href="'+nav(o)+'">🧭 ملاحة</a><a class="call" href="tel:'+esc(o.phone)+'">📞 اتصال</a>'+
+    '<button class="done" data-id="'+esc(o.id)+'">✅ تم التسليم</button></div></div>';
+}
+async function load(){
+  if(!D||!T){$('list').innerHTML='<div class="empty">⚠️ الرابط ناقص — اطلب الرابط الصحيح من المطعم.</div>';return}
+  try{
+    const r=await fetch(API+'?action=drvorders&d='+encodeURIComponent(D)+'&t='+encodeURIComponent(T)),j=await r.json();
+    if(!j.ok){$('list').innerHTML='<div class="empty">⛔ الرابط غير صالح أو اتغيّر — اطلب رابط جديد من المطعم.</div>';return}
+    $('hn').textContent='🛵 '+j.name;document.title='🛵 '+j.name+(j.orders.length?' ('+j.orders.length+')':'');
+    $('sum').textContent='اتسلّم النهاردة: '+j.today.n+' · كاش: '+j.today.cash+' ج';
+    $('list').innerHTML=j.orders.length?j.orders.map(card).join(''):'<div class="empty">مفيش طلبات معاك دلوقتي 🙌</div>';
+    if(lastN>=0&&j.orders.length>lastN&&navigator.vibrate)navigator.vibrate([200,100,200]);lastN=j.orders.length;
+    $('msg').textContent='آخر تحديث: '+new Date().toLocaleTimeString('ar-EG',{hour:'2-digit',minute:'2-digit'});
+  }catch(e){$('msg').textContent='⚠️ مفيش اتصال — هنحاول تاني'}
+}
+$('list').addEventListener('click',async e=>{
+  const b=e.target.closest('.done');if(!b||busy)return;
+  if(!confirm('تأكيد تسليم الطلب #'+b.dataset.id+'؟'))return;
+  busy=true;b.disabled=true;b.textContent='⏳...';
+  try{const r=await fetch(API,{method:'POST',body:JSON.stringify({action:'drvDeliver',d:D,t:T,id:b.dataset.id})}),j=await r.json();
+    if(!j.ok)alert('⚠️ مقدرناش نسجّل التسليم'+(j.error==='forbidden'?' (الطلب مش على حسابك أو اتسلّم)':'')+' — جرّب تاني');
+  }catch(x){alert('⚠️ مفيش اتصال — جرّب تاني')}
+  busy=false;load();
+});
+load();setInterval(()=>{if(!document.hidden)load()},20000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)load()});
+</script>
+</body>
+</html>

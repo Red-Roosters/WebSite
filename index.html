@@ -3986,6 +3986,13 @@ html[lang="en"] .rr-so-badge::before{content:"Sold out"}
     // مفاتيح مطبّعة عشان الأرقام العربي (١) والإنجليزي (1) يشتغلوا سوا
     const CHOICES = {};
     Object.keys(CHOICES_RAW).forEach(k => CHOICES[norm(k)] = CHOICES_RAW[k]);
+    /* ═══ مسار الطلب (إحصائيات مجهولة: كل جلسة بتتحسب مرة في كل مرحلة) ═══ */
+    window.rrEv = function (e) {
+        try { const s = sessionStorage, k = 'rr_ev_' + e; if (s.getItem(k)) return; s.setItem(k, '1');
+            let sid = s.getItem('rr_sid'); if (!sid) { sid = Array.from(crypto.getRandomValues(new Uint8Array(8)), x => ('0' + x.toString(16)).slice(-2)).join(''); s.setItem('rr_sid', sid); }
+            fetch(CONFIG.couponApi, { method: 'POST', keepalive: true, body: JSON.stringify({ action: 'ev', sid, e }) }).catch(() => {}); } catch (x) {}
+    };
+    rrEv('visit');
     /* ═══ ساعات العمل ═══ */
     function isOpenNow() {
         const h = CONFIG.hours;
@@ -4033,6 +4040,7 @@ html[lang="en"] .rr-so-badge::before{content:"Sold out"}
     /* ═══ السلة ═══ */
     function addItem(o) {
         if (soBlocked(o)) return;
+        rrEv('cart');
         const full = o.label ? `${o.name} (${o.label})` : o.name;
         const opts = o.opts || [];
         const key = [full, o.price, opts.join(','), o.note || ''].join('|');
@@ -4640,7 +4648,7 @@ imChips.previousElementSibling.style.display = noChips ? 'none' : '';
         if (!isOpenNow()) { toast(closedMsg()); return; }
         if (CONFIG.minOrder && subtotal() < CONFIG.minOrder) { toast(`أقل قيمة للطلب ${fmt(CONFIG.minOrder)}`); return; }
         { const so = soInCart(); if (so.length) { toast(soMsg(so), 6500); return; } refreshSoldout(); }
-        closeAll(); renderSummary(); openEl('checkoutModal');
+        closeAll(); renderSummary(); openEl('checkoutModal'); rrEv('checkout');
     });
 
     const phoneOk = v => /^01[0125]\d{8}$/.test(toEn(v).replace(/\D/g, ''));
@@ -4698,6 +4706,7 @@ imChips.previousElementSibling.style.display = noChips ? 'none' : '';
         if (!cart.length) { toast('السلة فاضية'); return; }
         if (!isOpenNow()) { toast(closedMsg()); return; }
         if (!validate()) return;
+        rrEv('submit');
         if (dropUsedCoupon($('f_phone').value)) return;
         hideFail();
         { const so = soInCart(); if (so.length) { showFail('so', so); return; } }
@@ -4732,6 +4741,7 @@ imChips.previousElementSibling.style.display = noChips ? 'none' : '';
                 items: cart.map(i => ({ n: i.name, q: i.qty, p: i.price, o: i.opts || [], t: i.note || '' })), subtotal: sub, discount: d, coupon: d ? coupon.code : '', claim: claim, fee: area.fee, total: total, payment: $('f_pay').value, payref: $('f_pay').value === 'cash' ? '' : v('f_payref'), notes: v('f_notes'), lat: !pickup && RR_LOC ? RR_LOC.lat : undefined, lon: !pickup && RR_LOC ? RR_LOC.lon : undefined });
         } catch (err) {}
         sending = false; if (sbtn) { sbtn.disabled = false; sbtn.textContent = lbl; }
+        if (res === 'ok') rrEv('order');
 
         if (res === 'coupon_used') {
             pendingId = null;

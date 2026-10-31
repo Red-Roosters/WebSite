@@ -251,7 +251,7 @@ main.wide{max-width:none}
     <div class="panel">
       <div class="presets" id="anPresets"></div>
       <div class="rng"><label>من يوم<input type="date" id="anFrom"></label><label>إلى يوم<input type="date" id="anTo"></label>
-        <button class="btn main" id="anGo">عرض التحليل</button><button class="btn ghost" id="anXls" disabled>⬇️ تحميل Excel</button></div>
+        <button class="btn main" id="anGo">عرض التحليل</button><button class="btn ghost" id="anXls" disabled>⬇️ تحميل Excel</button><button class="btn ghost" id="anAud" type="button">📜 سجل المراجعة</button></div>
       <div class="hint">اليوم التشغيلي بيبدأ الساعة ٦ الصبح — الطلبات اللي بعد منتصف الليل بتتحسب على اليوم اللي قبله.</div>
     </div>
     <div class="panel"><h2>⭐ تقييمات العملاء</h2><button class="btn ghost" id="rtGo" type="button">عرض التقييمات</button><div id="rtOut" style="margin-top:12px"></div></div>
@@ -589,6 +589,8 @@ function drvWa(o, dv){
   const txt = '🛵 طلب #' + o.id + '\n👤 ' + o.name + ' · ' + o.phone + '\n📍 ' + (o.address || '') + (o.area ? ' (' + o.area + ')' : '') + '\n🗺️ ' + loc + '\n🧾 ' + items + '\n' + pay + (o.notes ? '\n📝 ' + o.notes : '');
   return 'https://wa.me/20' + String(dv.phone).replace(/^0/, '') + '?text=' + encodeURIComponent(txt);
 }
+const dlBtn = x => role === 'manager' && x.tok ? '<button type="button" class="btn tiny ghost" data-dl="' + esc(x.id) + '" title="نسخ رابط صفحة الطيار">🔗</button>' : '';
+$('drvBar').addEventListener('click', e => { const b = e.target.closest('[data-dl]'); if (!b) return; const x = drivers.find(v => v.id === b.dataset.dl); if (x && x.tok) { copyText(new URL('driver.html', location.href).href + '?d=' + x.id + '&t=' + x.tok); toast('✅ اتنسخ رابط صفحة ' + x.name + ' — ابعته له واتساب (مرة واحدة)'); } });
 function drvBarRender(){
   const bar = $('drvBar'); if (!bar) return;
   if (!drivers.length) { bar.classList.add('hide'); return; }
@@ -598,7 +600,7 @@ function drvBarRender(){
     const n = orders.filter(o => o.status === 'out' && dasg[o.id] === x.id).length, p = dpos[x.id];
     const t = dDot(x.id) + ' ' + esc(x.name) + (n ? ' · ' + n + ' طلب' : '') + (dseen[x.id] != null ? ' · ' + dAge(dseen[x.id]) : '');
     const st = 'padding:6px 12px;border-radius:999px;background:#fff;border:1px solid #ddd;font-weight:700;font-size:.85rem;color:inherit;text-decoration:none';
-    return p ? '<a href="https://www.google.com/maps?q=' + p[0] + ',' + p[1] + '" target="_blank" rel="noopener" style="' + st + '">' + t + ' 📍</a>' : '<span style="' + st + '">' + t + '</span>';
+    return dlBtn(x) + (p ? '<a href="https://www.google.com/maps?q=' + p[0] + ',' + p[1] + '" target="_blank" rel="noopener" style="' + st + '">' + t + ' 📍</a>' : '<span style="' + st + '">' + t + '</span>');
   }).join('') + '</div><div style="font-size:.75rem;opacity:.65;margin-bottom:8px">🟢 لايف (آخر ٢ دقيقة) · 🟠 قديم · ⚪ مفيش إشارة — دوس على الطيار تشوف مكانه على الخريطة</div>';
 }
 function pickDriver(){
@@ -815,6 +817,33 @@ function anSetInputs(r){ $('anFrom').value = ymd(r[0]); $('anTo').value = ymd(ad
 function anInit(){ $('anPresets').innerHTML = PRESETS.map(p => '<button class="tab" data-p="' + p[0] + '">' + p[1] + '</button>').join(''); if (!$('anFrom').value) { anSetInputs(presetRange('7')); anRun(); } }
 $('anPresets').addEventListener('click', e => { const b = e.target.closest('[data-p]'); if (b) { anSetInputs(presetRange(b.dataset.p)); anRun(); } });
 $('anGo').onclick = () => anRun();
+const AUD_L = {setStatus:'تغيير حالة', setPaid:'تأكيد دفع', settingsSave:'إعدادات', couponSave:'كوبون', couponDelete:'حذف كوبون', staffSave:'موظف', setSoldout:'إيقاف/إرجاع صنف', soldoutClear:'إرجاع كل الأصناف', areasSave:'مناطق', backupNow:'نسخة احتياطية', custFlag:'حظر/تنبيه عميل'};
+$('anAud').onclick = async () => {
+  const j = await post({action:'auditList', user}).catch(() => null);
+  if (!j || !j.ok) return toast('⚠️ مقدرناش نحمّل السجل (حدّث Code.gs واعمل Deploy ▸ New version)');
+  const ov = document.createElement('div'); ov.className = 'cx';
+  ov.innerHTML = '<div style="background:#fff;color:#222;border-radius:16px;padding:14px;width:min(780px,100%);max-height:88vh;overflow:auto;direction:rtl"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><b>📜 سجل المراجعة (آخر ' + j.rows.length + ' إجراء)</b><button type="button" id="audX" style="border:0;background:#f1eeee;border-radius:50%;width:34px;height:34px;cursor:pointer">✕</button></div>' +
+    (j.rows.length ? tbl(['الوقت', 'المستخدم', 'الإجراء', 'الهدف', 'التفاصيل'], j.rows.map(r => [new Date(r.t).toLocaleString('ar-EG'), esc(staffNames[r.u] || r.u), esc(AUD_L[r.a] || r.a), esc(r.id), esc(r.d)])) : '<div class="empty">مفيش إجراءات متسجّلة لسه</div>') + '</div>';
+  ov.onclick = e => { if (e.target === ov || e.target.id === 'audX') ov.remove(); }; document.body.appendChild(ov);
+};
+async function anExtra(os, from, to){
+  const out = $('anOut'), nm = id => (drivers.find(x => x.id === id) || {}).name || id, dr = {};
+  os.forEach(o => { if (!o.drv || o.status !== 'delivered') return; const r = dr[o.drv] || (dr[o.drv] = {n:0, cash:0, amt:0, ts:[]}); r.n++; r.amt += o.total; if (o.payment === 'cash') r.cash += o.total;
+    const h = {}; String(o.history || '').split(';').forEach(p => { const a = p.split('@'); if (a[1]) h[a[0]] = +a[1]; }); if (h.out && h.delivered > h.out) r.ts.push((h.delivered - h.out) / 60000); });
+  const ks = Object.keys(dr).sort((a, b) => dr[b].n - dr[a].n);
+  let h = sec('🛵 أداء الطيارين', ks.length ? tbl(['الطيار', 'طلبات اتسلّمت', 'متوسط وقت التوصيل', 'الكاش المحصّل', 'إجمالي المبيعات'], ks.map(k => [esc(nm(k)), num(dr[k].n), mins(dr[k].ts.length ? dr[k].ts.reduce((a, b) => a + b, 0) / dr[k].ts.length : null), money(dr[k].cash), money(dr[k].amt)]))
+    : '<div class="hint">مفيش طلبات متسلّمة بطيار في الفترة دي — الطيار بيتسجّل على الطلب لما تختاره عند «خرج للتوصيل».</div>');
+  const cu = {}; os.forEach(o => { if (o.status === 'cancelled' || !o.phone) return; const c = cu[o.phone] || (cu[o.phone] = {name:o.name, ph:o.phone, n:0, amt:0, last:0}); c.n++; c.amt += o.total; if (o.time > c.last) { c.last = o.time; c.name = o.name; } });
+  const lapsed = Object.values(cu).filter(c => c.n >= 2 && Date.now() - c.last > 30 * 864e5).sort((a, b) => b.amt - a.amt).slice(0, 15);
+  h += sec('💤 عملاء غابوا (طلبوا ٢+ ومن ٣٠ يوم مطلبوش)', (to - from) / 864e5 < 60 ? '<div class="hint">اختار فترة ٦٠ يوم أو أكتر عشان القايمة دي تبقى مفيدة.</div>' : lapsed.length ? tbl(['العميل', 'الموبايل', 'الطلبات', 'الإجمالي', 'آخر طلب', ''], lapsed.map(c => [esc(c.name), '<span dir="ltr">' + esc(c.ph) + '</span>', num(c.n), money(c.amt), Math.round((Date.now() - c.last) / 864e5) + ' يوم', '<a href="https://wa.me/20' + c.ph.replace(/^0/, '') + '?text=' + encodeURIComponent('وحشتنا يا ' + c.name + ' 🐓 ريد روستر مستنيك — ') + '" target="_blank" rel="noopener">📲 واتساب</a>'])) : '<div class="hint">مفيش عملاء غابوا في الفترة دي 👏</div>');
+  out.insertAdjacentHTML('beforeend', h);
+  try {
+    const f = await post({action:'funnel', user, from:ymd(from), to:ymd(to - 1)});
+    if (!f || !f.ok) throw 0;
+    const c = f.counts, st = [['visit', '👀 فتحوا الموقع'], ['cart', '🛒 ضافوا للسلة'], ['checkout', '📝 فتحوا صفحة التأكيد'], ['submit', '👆 دوسوا تأكيد الطلب'], ['order', '✅ الطلب اتسجّل']], v = c.visit || 0;
+    out.insertAdjacentHTML('beforeend', sec('🔻 مسار الطلب (من فتح الموقع للطلب)', v ? tbl(['المرحلة', 'العدد', 'من اللي قبلها', 'من اللي فتحوا الموقع'], st.map((s, i) => [s[1], num(c[s[0]]), i ? pct(c[st[i - 1][0]] ? c[s[0]] / c[st[i - 1][0]] : 0) : '—', pct(c[s[0]] / v)])) + bars(st.map(s => [s[1], c[s[0]]]), num) + '<div class="hint" style="margin-top:8px">كل جلسة بتتحسب مرة واحدة في كل مرحلة. الأرقام بتبدأ من تاريخ رفع index.html الجديد.</div>' : '<div class="hint">لسه مفيش بيانات للفترة دي — الأرقام بتبدأ تتجمّع بعد ما ترفع index.html الجديد.</div>'));
+  } catch (e) { out.insertAdjacentHTML('beforeend', sec('🔻 مسار الطلب', '<div class="hint">⚠️ مقدرناش نحمّل البيانات — تأكد إنك عملت Deploy ▸ New version لـ Code.gs.</div>')); }
+}
 async function anRun(){
   const pf = v => { const a = String(v).split('-').map(Number); return a.length === 3 && a[0] ? new Date(a[0], a[1] - 1, a[2], DAY_START_HOUR).getTime() : NaN; };
   const from = pf($('anFrom').value), to = addDays(pf($('anTo').value), 1);
@@ -825,7 +854,7 @@ async function anRun(){
     const [j, jp, sl] = await Promise.all([post({action:'adminReport', user, from, to}), post({action:'adminReport', user, from:pFrom, to:from}).catch(() => null), post({action:'staffList', user}).catch(() => null)]);
     if (sl && sl.ok) sl.staff.forEach(x => staffNames[x.username] = x.name);
     if (!j.ok) { $('anOut').innerHTML = '<div class="empty">' + (j.error === 'forbidden' ? '⛔ التحليلات للمدير بس' : '⚠️ مقدرناش نحمّل التقرير') + '</div>'; return; }
-    lastA = analyze(j.orders, from, to); lastA.truncated = j.truncated; lastA.prev = jp && jp.ok ? analyze(jp.orders, pFrom, from) : null; anRender(lastA);
+    lastA = analyze(j.orders, from, to); lastA.truncated = j.truncated; lastA.prev = jp && jp.ok ? analyze(jp.orders, pFrom, from) : null; anRender(lastA); anExtra(j.orders, from, to);
   } catch (e) { $('anOut').innerHTML = '<div class="empty">⚠️ مفيش اتصال، جرّب تاني</div>'; }
 }
 
@@ -1015,15 +1044,15 @@ async function mnLoad(force){
   mnRender();
 }
 function mnRender(){
-  const off = soList.slice().sort((a, b) => b.time - a.time), q = nz(mnQ);
+  const off = soList.filter(x => !x.until || x.until > Date.now()).sort((a, b) => b.time - a.time), q = nz(mnQ);
   $('vMenu').textContent = '🚫 الأصناف' + (off.length ? ' (' + off.length + ')' : '');
   if (view !== 'menu') return;
   $('mnOffP').classList.toggle('hide', !off.length); $('mnOffN').textContent = off.length;
   mnRows = [];
   const row = (name, sub, isOff) => { const i = mnRows.push(name) - 1;
     return '<div class="mnrow' + (isOff ? ' off' : '') + '"><div class="mnn"><b>' + esc(name) + '</b><small>' + esc(sub) + '</small></div>' +
-      '<button type="button" class="btn tiny ' + (isOff ? 'main' : 'danger') + '" data-mn="' + i + '" data-off="' + (isOff ? 0 : 1) + '">' + (isOff ? '✅ رجّعه' : '⛔ وقّفه') + '</button></div>'; };
-  $('mnOff').innerHTML = off.map(x => row(x.name, (x.by ? '👤 ' + (staffNames[x.by] || x.by) : '') + (x.time ? ' · ' + ago(x.time) : ''), true)).join('');
+      (isOff ? '' : '<button type="button" class="btn tiny ghost" data-mnt="' + i + '" title="وقّفه لوقت محدد">⏱</button>') + '<button type="button" class="btn tiny ' + (isOff ? 'main' : 'danger') + '" data-mn="' + i + '" data-off="' + (isOff ? 0 : 1) + '">' + (isOff ? '✅ رجّعه' : '⛔ وقّفه') + '</button></div>'; };
+  $('mnOff').innerHTML = off.map(x => row(x.name, (x.by ? '👤 ' + (staffNames[x.by] || x.by) : '') + (x.time ? ' · ' + ago(x.time) : '') + (x.until ? ' · يرجع تلقائي ' + new Date(x.until).toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'}) : ''), true)).join('');
   let h = (menuErr ? '<div class="note" style="margin-bottom:12px">' + esc(menuErr) + '</div>' : '') + (role === 'manager' && mnSyncMsg ? '<div class="hint" style="margin:0 0 10px">' + esc(mnSyncMsg) + '</div>' : '');
   if (menu) {
     const groups = new Map();
@@ -1047,7 +1076,19 @@ function mnToggle(name, off){
   mnRender();
   return mnSend({action:'setSoldout', name, soldout:off}, off ? '⛔ اتوقّف: ' + name + ' — هيختفي من الموقع خلال دقيقة' : '✅ رجع: ' + name);
 }
+function choose(title, labels){
+  return new Promise(res => { const ov = document.createElement('div'); ov.className = 'cx';
+    ov.innerHTML = '<div style="background:#fff;color:#222;border-radius:16px;padding:18px;width:min(340px,100%);direction:rtl"><h3 style="margin:0 0 10px">' + esc(title) + '</h3>' + labels.map((l, i) => '<button type="button" data-i="' + i + '" style="display:block;width:100%;margin:6px 0;padding:12px;border:1px solid #ddd;border-radius:12px;background:#fff;font:700 1rem inherit;cursor:pointer">' + esc(l) + '</button>').join('') + '<button type="button" data-i="-1" style="display:block;width:100%;padding:9px;border:0;background:none;color:#9E1B1B;font:700 .9rem inherit;cursor:pointer">إلغاء</button></div>';
+    ov.onclick = e => { const b = e.target.closest('[data-i]'); if (!b && e.target !== ov) return; ov.remove(); res(b ? +b.dataset.i : -1); }; document.body.appendChild(ov); });
+}
+async function mnTimed(name){
+  const L = ['ساعة', '٣ ساعات', 'لآخر اليوم'], i = await choose('⏱ وقّف «' + name + '» لحد إمتى؟', L); if (i < 0) return;
+  const until = i === 0 ? Date.now() + 36e5 : i === 1 ? Date.now() + 108e5 : bizStart() + 864e5;
+  soList = soList.filter(x => nz(x.name) !== nz(name)); soList.push({name, by:user, time:Date.now(), until}); mnRender();
+  mnSend({action:'setSoldout', name, soldout:true, until}, '⛔ اتوقّف ' + L[i] + ': ' + name + ' — هيرجع لوحده');
+}
 $('mnMain').addEventListener('click', e => {
+  const tb = e.target.closest('[data-mnt]'); if (tb) { mnTimed(mnRows[+tb.dataset.mnt]); return; }
   const b = e.target.closest('[data-mn]'); if (b) mnToggle(mnRows[+b.dataset.mn], b.dataset.off === '1');
 });
 $('mnQ').addEventListener('input', e => { mnQ = e.target.value; mnRender(); });
