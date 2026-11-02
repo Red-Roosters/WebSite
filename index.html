@@ -1774,7 +1774,7 @@ nav button.new-badge:hover,
   box-shadow:0 -20px 60px -10px rgba(30,20,17,.45)!important;display:flex;flex-direction:column}
 .item-modal.open{transform:translate(-50%,0)!important}
 /* شريط «بتضيف أصناف لطلب» ميغطيش زرار الإضافة: الشيت بيقعد فوقه */
-html.rr-adding .item-modal{bottom:var(--rr-addbar-h,84px)!important;max-height:calc(90vh - var(--rr-addbar-h,84px))!important;max-height:calc(90dvh - var(--rr-addbar-h,84px))!important;border-radius:22px!important}
+html.rr-adding .item-modal{bottom:var(--rr-addbar-h,84px)!important;max-height:calc(90vh - var(--rr-addbar-h,84px))!important;max-height:max(50vh,calc(90dvh - var(--rr-addbar-h,84px)))!important;border-radius:22px!important}
 .item-modal.drag{transition:none!important}
 .item-modal::before{display:none!important}
 .im-grip{flex:none;height:26px;position:relative;cursor:grab;touch-action:none}
@@ -5989,12 +5989,16 @@ new MutationObserver(u).observe(b,{childList:true,characterData:true,subtree:tru
     document.documentElement.classList.add('rr-adding');
     /* على الموبايل: الشريط يقعد فوق القائمة السفلية (المنيو/السلة) مش فوقها */
     var off=12, t=$('rrTabs');
-    if(t&&getComputedStyle(t).display!=='none'){
-      var top=t.getBoundingClientRect().top;
-      [].forEach.call(t.children,function(c){ top=Math.min(top,c.getBoundingClientRect().top); });
-      off=Math.max(12,Math.round(window.innerHeight-top)+8); }
+    try{
+      if(t&&getComputedStyle(t).display!=='none'){
+        var r=t.getBoundingClientRect(), vh=window.innerHeight||document.documentElement.clientHeight;
+        if(r.height>0 && r.top>0 && r.top<vh) off=Math.round(vh-r.top)+8+30;   /* +30 = زرار السلة البارز */
+      }
+    }catch(e){}
+    off=Math.min(Math.max(off,12),130);                                         /* حدود آمنة */
     b.style.bottom=off+'px';
-    var h=off+(b.offsetHeight||60)+12; document.documentElement.style.setProperty('--rr-addbar-h',h+'px'); }
+    var h=off+(b.offsetHeight||60)+12; h=Math.min(h,Math.round((window.innerHeight||700)*0.4));
+    document.documentElement.style.setProperty('--rr-addbar-h',h+'px'); }
   window.addEventListener('resize',function(){ if(ADD) addBar(); });
   window.RR_EDIT_HOOK=function(o){
     if(!ADD) return false; var ed=EDIT[ADD]; if(!ed){ ADD=null; addBar(); return false; }
