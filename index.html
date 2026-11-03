@@ -2663,6 +2663,54 @@ footer.pro-foot{background:var(--p-ink)!important;color:#d9cfc9;padding:0!import
 .header-inner>#rrDeliv .dv-ic{width:32px;height:32px;font-size:1.05rem;border-radius:10px}
 .header-inner>#rrDeliv .dv-t b{font-size:.9rem;max-width:200px}
 .header-inner>#rrDeliv .dv-fee{display:none}
+
+/* ═══ زرار تأكيد الطلب المتحرّك: عربية توصيل بتشيل الصندوق وتمشي، وبعدها «تم الطلب ✓» ═══ */
+.rr-btn.rr-truckbtn{position:relative;overflow:hidden;transition:background .35s ease,box-shadow .35s ease}
+.rr-btn.rr-truckbtn:disabled{opacity:1!important;cursor:default;transform:none!important}
+.rr-btn.rr-truckbtn.rr-go{background:#1E1411!important;box-shadow:0 10px 24px -10px rgba(30,20,17,.75)!important}
+.rr-truckbtn .rt-label{display:inline-block;transition:opacity .25s ease,transform .25s ease}
+.rr-truckbtn.rr-go .rt-label{opacity:0;transform:scale(.9)}
+.rr-truckbtn .rt-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.rr-truckbtn .rt-scene{position:absolute;inset:0;direction:ltr;pointer-events:none;opacity:0;transition:opacity .3s ease .1s}
+.rr-truckbtn.rr-go .rt-scene{opacity:1}
+.rr-truckbtn.rr-done .rt-scene{opacity:0;transition:opacity .15s ease}
+/* الطريق: خط متقطع بيجري ناحية الشمال وإحنا ماشيين يمين */
+.rt-road{position:absolute;left:0;right:0;top:50%;height:2px;margin-top:-1px;opacity:0;background:repeating-linear-gradient(90deg,rgba(255,255,255,.92) 0 8px,transparent 8px 16px);transition:opacity .3s ease .85s}
+.rr-go .rt-road{opacity:1;animation:rtRoad .32s linear .85s infinite}
+.rr-exit .rt-road{opacity:0;transition:opacity .25s ease}
+@keyframes rtRoad{to{background-position:-16px 0}}
+/* الصندوق الأصفر بيتسحب لتحت العربية */
+.rt-box{position:absolute;left:50%;top:50%;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:2px;background:#ffc533;box-shadow:0 0 0 1px rgba(0,0,0,.15);opacity:0}
+.rr-go .rt-box{animation:rtBox .75s cubic-bezier(.3,.7,.3,1) .2s both}
+@keyframes rtBox{0%{opacity:0;transform:translateX(-96px)}15%{opacity:1}75%{opacity:1;transform:translateX(-10px)}100%{opacity:0;transform:translateX(-10px) scale(.5)}}
+.rt-truck{position:absolute;left:50%;top:50%;width:62px;height:24px;margin:-12px 0 0 -31px;opacity:0}
+.rr-go .rt-truck{animation:rtIn .45s ease-out .1s both}
+.rr-exit .rt-truck{animation:rtOut .5s cubic-bezier(.55,0,1,.6) forwards}
+@keyframes rtIn{from{opacity:0;transform:translateX(-26px)}to{opacity:1;transform:none}}
+@keyframes rtOut{from{opacity:1;transform:none}to{opacity:1;transform:translateX(280px)}}
+.rt-cargo{position:absolute;left:0;top:0;width:46px;height:24px;border-radius:3px;background:#f5f7fb;box-shadow:inset 0 0 0 1px rgba(0,0,0,.1)}
+.rt-door{position:absolute;left:-1px;width:10px;height:2px;border-radius:1px;background:#fff;opacity:0}
+.rt-door.a{top:0;transform-origin:0 50%}.rt-door.b{bottom:0;transform-origin:0 50%}
+.rr-go .rt-door.a{animation:rtDoorA .9s ease .2s both}.rr-go .rt-door.b{animation:rtDoorB .9s ease .2s both}
+@keyframes rtDoorA{0%{opacity:0;transform:rotate(0)}15%{opacity:1}45%{opacity:1;transform:rotate(-65deg)}85%{opacity:1;transform:rotate(0)}100%{opacity:0}}
+@keyframes rtDoorB{0%{opacity:0;transform:rotate(0)}15%{opacity:1}45%{opacity:1;transform:rotate(65deg)}85%{opacity:1;transform:rotate(0)}100%{opacity:0}}
+.rt-cab{position:absolute;left:46px;top:2px;width:16px;height:20px;border-radius:2px 6px 6px 2px;background:#e53935}
+.rt-cab::after{content:"";position:absolute;right:3px;top:3px;bottom:3px;width:4px;border-radius:2px;background:rgba(20,10,10,.55)}
+/* أنوار العربية */
+.rt-beam{position:absolute;left:62px;top:-4px;width:36px;height:32px;opacity:0;background:linear-gradient(90deg,rgba(255,214,64,.95),rgba(255,214,64,0));clip-path:polygon(0 32%,100% 0,100% 100%,0 68%);transition:opacity .25s ease .85s}
+.rr-go .rt-beam{opacity:1}
+.rr-go .rt-truck{animation:rtIn .45s ease-out .1s both,rtDrive .22s ease-in-out .9s infinite alternate}
+.rr-exit .rt-truck{animation:rtOut .5s cubic-bezier(.55,0,1,.6) forwards}
+@keyframes rtDrive{from{margin-top:-12.6px}to{margin-top:-11.4px}}
+/* تم الطلب ✓ */
+.rr-truckbtn .rt-ok{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:8px;color:#fff;font-weight:900;opacity:0;transform:scale(.92);pointer-events:none;transition:opacity .3s ease,transform .3s ease}
+.rr-truckbtn.rr-done .rt-ok{opacity:1;transform:none}
+.rt-ok svg{width:22px;height:22px}
+.rt-ok path{stroke-dasharray:24;stroke-dashoffset:24}
+.rr-done .rt-ok path{animation:rtCheck .4s ease .15s forwards}
+@keyframes rtCheck{to{stroke-dashoffset:0}}
+/* لو الموبايل مظبوط على تقليل الحركة: من غير عربية، نص بس */
+@media (prefers-reduced-motion:reduce){.rr-truckbtn .rt-scene{display:none}.rr-truckbtn.rr-go .rt-label{opacity:1;transform:none}}
 </style>
 
 <meta name="description" content="ريد روستر – أروق ديك في مصر. اطلب أونلاين: دجاج مقرمش، ناشڤيل، برجر، ساندوتشات، صواني ووجبات عائلية وعروض حصرية. فرع فيصل المريوطية.">
@@ -4744,6 +4792,21 @@ imChips.previousElementSibling.style.display = noChips ? 'none' : '';
     });
 
     let sending = false, pendingId = null, pendingSig = '';
+    /* ═══ أنيميشن زرار تأكيد الطلب (عربية توصيل) — بيشتغل مع الإرسال الحقيقي: بيلف لحد ما السيرفر يرد، وبعدين «تم الطلب ✓» ═══ */
+    function rrTruckStart(btn, lbl) {
+        if (!btn) return { ok: () => Promise.resolve(), reset: () => {} };
+        const rm = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches, T0 = Date.now(), MIN = rm ? 500 : 2300;
+        btn.style.height = btn.offsetHeight + 'px'; btn.disabled = true; btn.classList.add('rr-truckbtn');
+        btn.innerHTML = '<span class="rt-label">' + (rm ? '⏳ بنبعت طلبك...' : esc(lbl)) + '</span><span class="rt-sr" role="status">بنبعت طلبك</span>'
+            + '<span class="rt-scene" aria-hidden="true"><span class="rt-road"></span><span class="rt-box"></span>'
+            + '<span class="rt-truck"><span class="rt-cargo"></span><span class="rt-door a"></span><span class="rt-door b"></span><span class="rt-cab"></span><span class="rt-beam"></span></span></span>'
+            + '<span class="rt-ok" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="#2ee66b" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg><span>تم الطلب</span></span>';
+        requestAnimationFrame(() => requestAnimationFrame(() => btn.classList.add('rr-go')));
+        return {
+            ok: () => new Promise(res => setTimeout(() => { btn.classList.add('rr-exit'); setTimeout(() => { btn.classList.add('rr-done'); setTimeout(res, 1100); }, rm ? 0 : 480); }, Math.max(0, MIN - (Date.now() - T0)))),
+            reset: () => { btn.classList.remove('rr-go', 'rr-exit', 'rr-done', 'rr-truckbtn'); btn.textContent = lbl; btn.style.height = ''; btn.disabled = false; }
+        };
+    }
     $('checkoutForm').addEventListener('submit', async e => {
         e.preventDefault();
         if (sending) return;
@@ -4778,13 +4841,13 @@ imChips.previousElementSibling.style.display = noChips ? 'none' : '';
 
         /* الإرسال المباشر للسيرفر — مفيش واتساب. السلة مابتتمسحش غير بعد ما السيرفر يأكد استلام الطلب */
         const sbtn = $('checkoutForm').querySelector('[type=submit]'), lbl = sbtn ? sbtn.textContent : '';
-        sending = true; if (sbtn) { sbtn.disabled = true; sbtn.textContent = '⏳ بنبعت طلبك...'; }
+        sending = true; const anim = rrTruckStart(sbtn, lbl);
         let res = 'fail';
         try {
             res = await window.rrTrackSave({ id: orderId, name: v('f_name'), phone: num('f_phone'), phone2: pickup ? '' : num('f_phone2'), type: pickup ? 'pickup' : 'delivery', address: addr, area: pickup ? '' : area.name,
                 items: cart.map(i => ({ n: i.name, q: i.qty, p: i.price, o: i.opts || [], t: i.note || '' })), subtotal: sub, discount: d, coupon: d ? coupon.code : '', claim: claim, fee: area.fee, total: total, payment: $('f_pay').value, payref: $('f_pay').value === 'cash' ? '' : v('f_payref'), notes: v('f_notes'), lat: !pickup && RR_LOC ? RR_LOC.lat : undefined, lon: !pickup && RR_LOC ? RR_LOC.lon : undefined });
         } catch (err) {}
-        sending = false; if (sbtn) { sbtn.disabled = false; sbtn.textContent = lbl; }
+        if (res === 'ok') { /* السيرفر أكّد: بنكمّل الأنيميشن لحد «تم الطلب» وبعدين نقفل */ } else { sending = false; anim.reset(); }
         if (res === 'ok') rrEv('order');
 
         if (res === 'coupon_used') {
@@ -4803,6 +4866,8 @@ imChips.previousElementSibling.style.display = noChips ? 'none' : '';
         if (res === 'bad_total') { pendingId = null; toast('⚠️ في اختلاف في حسابات الطلب. حدّث الصفحة وجرّب تاني، أو كلمنا على 0237721525', 8000); return; }
         if (res === 'soldout') { pendingId = null; refreshSoldout(); showFail('so', window.rrSoNames && window.rrSoNames.length ? window.rrSoNames : soInCart()); return; }
         if (res !== 'ok') { showFail('net'); return; }
+        LS.set('rr_cart', []);   /* الطلب وصل: نفضّي السلة المحفوظة فورًا، عشان لو العميل قفل الصفحة في نص الأنيميشن ماينفعش يطلب تاني بالغلط */
+        await anim.ok(); sending = false;
 
         pendingId = null; hideFail();
         if (coupon && coupon.def.firstOrderOnly && d > 0) markCouponUsed(coupon.code, v('f_phone'));
@@ -4812,7 +4877,7 @@ imChips.previousElementSibling.style.display = noChips ? 'none' : '';
         document.dispatchEvent(new Event('rr:ordered'));
         $('f_payref').value = ''; if (RR_LOC) $('locBtn').click();
         cart = []; coupon = null; $('couponInput').value = ''; setCouponMsg('', true);
-        LS.set('rr_cart', cart); render(); closeAll();
+        LS.set('rr_cart', cart); render(); closeAll(); anim.reset();
         toast(pay === 'cash' ? '✅ وصلنا طلبك رقم ' + orderId + ' — هنكلمك نأكده 🐓'
                              : '✅ وصلنا طلبك رقم ' + orderId + ' — ابعت صورة التحويل على واتساب 01023278000 لتأكيده', pay === 'cash' ? 4500 : 8000);
         if (window.rrTrackOpen) setTimeout(() => window.rrTrackOpen(orderId), 1200);
@@ -6412,6 +6477,11 @@ window.RR_GA='';
 .ab-chips{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .ab-chip{border:1.5px solid #eadfd8;background:#fff;border-radius:999px;padding:7px 12px;font:800 .84rem "Cairo",sans-serif;cursor:pointer;color:#1E1411}
 .ab-chip:hover{border-color:#D92B2B;color:#D92B2B}.ab-chip i{font-style:normal;margin-inline-start:8px;opacity:.55}
+.ab-chip.on{border-color:#D92B2B;background:#FFF1F1;color:#D92B2B}.ab-chip.del{border-color:#9E1B1B;background:#FDECEC;color:#9E1B1B}
+.ab-new{background:#fff;border:1.5px dashed #D92B2B;border-radius:14px;padding:10px 12px}.ab-q{font-weight:900;font-size:.9rem;margin-bottom:6px}
+.ab-pick{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}.ab-pick button{border:1.5px solid #eadfd8;background:#fff;border-radius:999px;padding:6px 12px;font:800 .82rem "Cairo",sans-serif;cursor:pointer;color:#1E1411}.ab-pick button.on{border-color:#D92B2B;background:#FFF1F1;color:#D92B2B}
+.ab-new input{width:100%;box-sizing:border-box;padding:9px 11px;border:1.5px solid #eadfd8;border-radius:12px;font:600 .9rem "Cairo",sans-serif}
+.ab-hint{font-size:.76rem;color:#6B6B6B;margin:6px 0 0}.ab-act{display:flex;gap:8px;margin-top:8px}.ab-act button{flex:1;border-radius:12px;padding:9px;font:800 .86rem "Cairo",sans-serif;cursor:pointer;border:1.5px solid #eadfd8;background:#fff;color:#1E1411}.ab-act .ab-ok{background:#D92B2B;border-color:#D92B2B;color:#fff}
 .ab-save{border:1.5px dashed #D92B2B;background:#fff;color:#D92B2B;border-radius:999px;padding:7px 12px;font:800 .84rem "Cairo",sans-serif;cursor:pointer}
 </style>
 <div id="rrRf" role="region" aria-label="دعوة صاحب"><div><span id="rrRfT">🎁 صاحبك بعتلك خصم على أول طلب</span><small id="rrRfS"></small></div><div class="a"><button type="button" class="go" id="rrRfGo">فعّل الخصم</button><button type="button" class="x" id="rrRfX" aria-label="إخفاء">✕</button></div></div>
@@ -6450,44 +6520,241 @@ window.RR_GA='';
     document.addEventListener('rr:ordered',function(){ rf.style.display='none'; });
   }
 
-  /* عناوين محفوظة (لحد ٥) */
-  var AK='rr_addrs', MAX=5, F=['street','station','building','floor','apt','landmark'], title=$('addrTitle');
+  /* عناوين محفوظة (لحد ١٠) — من غير prompt/confirm عشان بيتقفلوا في متصفحات فيسبوك وإنستجرام وواتساب */
+  var AK='rr_addrs', MAX=10, F=['street','station','building','floor','apt','landmark'], title=$('addrTitle');
+  var NAMES={area:'المنطقة',street:'اسم الشارع',building:'رقم العمارة',floor:'الدور',apt:'الشقة',landmark:'علامة مميزة'};
   function book(){ try{ var a=JSON.parse(lsg(AK)||'[]'); return Array.isArray(a)?a:[]; }catch(e){ return []; } }
   function store(a){ lss(AK,JSON.stringify(a.slice(0,MAX))); }
   function cur(){ var ar=window.rrArea, a={}, i=ar?ar.idx():''; F.forEach(function(f){ a[f]=(($('f_'+f)||{}).value||'').trim(); }); a.area=(i!==''&&ar&&ar.areas[+i])?ar.areas[+i].name:''; return a; }
   function same(x,y){ return x.area===y.area&&x.street===y.street&&x.building===y.building&&x.floor===y.floor&&x.apt===y.apt; }
   function complete(a){ return a.area&&a.street&&a.building&&a.floor&&a.apt&&a.landmark; }
+  function missing(a){ return Object.keys(NAMES).filter(function(k){ return !a[k]; }).map(function(k){ return NAMES[k]; }); }
   function esc(t){ return String(t).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]}); }
-  var box=null;
+  var box=null, naming=false, draft='', delIdx=-1, activeIdx=-1, filling=false;
+  function defName(){ var n=book().length; return n===0?'البيت':n===1?'الشغل':'عنوان '+(n+1); }
   function paint(){
-    if(!box) return; var a=book();
-    box.innerHTML='<small>📍 عناويني المحفوظة</small><div class="ab-chips">'+a.map(function(x,i){ return '<button type="button" class="ab-chip" data-use="'+i+'">'+esc(x.label)+'<i data-del="'+i+'" title="مسح" role="button">✕</i></button>'; }).join('')+(a.length<MAX?'<button type="button" class="ab-save" id="abSave">💾 احفظ العنوان ده</button>':'')+'</div>';
-    box.style.display=(title&&title.style.display==='none')?'none':'';
+    if(!box) return; var a=book(), h='<small>📍 عناويني المحفوظة'+(a.length?' ('+a.length+'/'+MAX+')':'')+'</small>';
+    if(naming){
+      h+='<div class="ab-new"><div class="ab-q">اسم العنوان ده إيه؟</div><div class="ab-pick">'+['البيت','الشغل','عند الأهل'].map(function(n){ return '<button type="button" data-nm="'+n+'" class="'+(draft===n?'on':'')+'">'+n+'</button>'; }).join('')+'</div>'
+        +'<input id="abName" maxlength="20" placeholder="أو اكتب اسم تاني (مثال: عند صحبي)" value="'+esc(draft)+'" autocomplete="off">'
+        +'<div class="ab-hint">لو الاسم ده محفوظ قبل كده، هيتحدّث بالعنوان الحالي.</div>'
+        +'<div class="ab-act"><button type="button" class="ab-ok" id="abOk">💾 حفظ</button><button type="button" id="abCancel">إلغاء</button></div></div>';
+    } else {
+      h+='<div class="ab-chips">'+a.map(function(x,i){ var d=i===delIdx; return '<button type="button" class="ab-chip'+(i===activeIdx?' on':'')+(d?' del':'')+'" data-use="'+i+'">'+(d?'مسح «'+esc(x.label)+'»؟ اضغط للتأكيد':esc(x.label))+'<i data-del="'+i+'" title="مسح" role="button">'+(d?'✔':'✕')+'</i></button>'; }).join('')
+        +(a.length<MAX?'<button type="button" class="ab-save" id="abSave">💾 احفظ العنوان ده</button>':'<small style="margin:0">وصلت للحد الأقصى ('+MAX+') — امسح عنوان عشان تضيف جديد</small>')+'</div>';
+    }
+    box.innerHTML=h; box.style.display=(title&&title.style.display==='none')?'none':'';
   }
   function fill(x){
     var ar=window.rrArea, i=ar?ar.areas.findIndex(function(z){return z.name===x.area}):-1;
+    filling=true;
     if(i<0){ say('⚠️ المنطقة دي مش متاحة للتوصيل دلوقتي — اختار منطقة تانية'); } else ar.set(i);
     F.forEach(function(f){ var el=$('f_'+f); if(el){ el.value=x[f]||''; el.dispatchEvent(new Event('input',{bubbles:true})); } });
-    say('✅ اتحمّل عنوان "'+x.label+'"');
+    filling=false; say('✅ اتحمّل عنوان "'+x.label+'"');
   }
   function add(label,a){ var l=book().filter(function(x){return x.label!==label&&!same(x,a)}); l.unshift(Object.assign({label:label},a)); store(l); paint(); }
   if(title&&title.parentNode){
     box=document.createElement('div'); box.className='ab'; title.insertAdjacentElement('afterend',box); paint();
+    box.addEventListener('input',function(e){ if(e.target.id==='abName') draft=e.target.value; });
+    box.addEventListener('keydown',function(e){ if(e.key==='Enter'&&e.target.id==='abName'){ e.preventDefault(); var ok=$('abOk'); if(ok) ok.click(); } });
     box.addEventListener('click',function(e){
-      var del=e.target.closest('[data-del]'), use=e.target.closest('[data-use]');
-      if(del){ e.stopPropagation(); var a=book(); a.splice(+del.dataset.del,1); store(a); paint(); return; }
-      if(use){ var x=book()[+use.dataset.use]; if(x) fill(x); return; }
-      if(e.target.id==='abSave'){
-        var c=cur(); if(!complete(c)){ say('⚠️ كمّل بيانات العنوان الأول (المنطقة والشارع والعمارة والدور والشقة والعلامة)'); return; }
-        var n=book().length, def=n===0?'البيت':n===1?'الشغل':'عنوان '+(n+1), l=(window.prompt('اسم العنوان (مثال: البيت، الشغل):',def)||'').trim().slice(0,20); if(!l) return;
-        add(l,c); say('✅ اتحفظ العنوان "'+l+'"');
+      var t=e.target, del=t.closest('[data-del]'), use=t.closest('[data-use]'), nm=t.closest('[data-nm]');
+      if(nm){ draft=nm.dataset.nm; paint(); return; }
+      if(t.id==='abCancel'){ naming=false; draft=''; paint(); return; }
+      if(t.id==='abOk'){
+        var name=(draft||'').trim().slice(0,20); if(!name){ say('اكتب اسم للعنوان'); return; }
+        var c=cur(), m=missing(c); if(m.length){ say('⚠️ كمّل بيانات العنوان الأول: '+m.join('، ')); return; }
+        var rep=book().some(function(x){return x.label===name});
+        add(name,c); naming=false; draft=''; activeIdx=0; paint(); say(rep?'✅ اتحدّث عنوان "'+name+'"':'✅ اتحفظ العنوان "'+name+'"'); return;
+      }
+      if(t.id==='abSave'){
+        var m2=missing(cur()); if(m2.length){ say('⚠️ كمّل بيانات العنوان الأول: '+m2.join('، ')); return; }
+        naming=true; draft=defName(); paint(); var inp=$('abName'); if(inp){ try{ inp.focus(); inp.select(); }catch(x){} } return;
+      }
+      if(del||use){
+        var i=+((del||use).dataset.del!==undefined?(del||use).dataset.del:(del||use).dataset.use);
+        if(del){ e.stopPropagation(); }
+        if(i===delIdx){ var a=book(); a.splice(i,1); store(a); delIdx=-1; activeIdx=-1; paint(); return; }   // تأكيد المسح (بدون confirm)
+        if(del){ delIdx=i; paint(); setTimeout(function(){ if(delIdx===i){ delIdx=-1; paint(); } },4000); return; }
+        var x=book()[i]; if(x){ delIdx=-1; fill(x); activeIdx=i; paint(); }
       }
     });
+    F.forEach(function(f){ var el=$('f_'+f); if(el) el.addEventListener('input',function(){ if(!filling&&activeIdx>=0){ activeIdx=-1; paint(); } }); });
     if(window.MutationObserver) new MutationObserver(paint).observe(title,{attributes:true,attributeFilter:['style']});
     /* أول طلب توصيل: بنحفظ العنوان تلقائيًا باسم "البيت" */
     document.addEventListener('rr:ordered',function(){ var c=cur(); if(!book().length&&complete(c)&&title.style.display!=='none') add('البيت',c); });
   }
 })();
 </script>
+
+<style>
+#rr-splash {
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 50% 65%, #8d160d 0%, #390707 48%, #100303 100%);
+  animation: rr-splash-out 0.8s ease 3.8s forwards;
+}
+
+#rr-splash::before {
+  content: "";
+  position: absolute;
+  inset: -30%;
+  background:
+    radial-gradient(ellipse at 20% 85%, #ff5a00 0%, transparent 27%),
+    radial-gradient(ellipse at 80% 90%, #ff9d00 0%, transparent 25%),
+    radial-gradient(ellipse at 50% 100%, #ff2500 0%, transparent 35%);
+  filter: blur(24px);
+  animation: rr-fire 1.2s ease-in-out infinite alternate;
+}
+
+#rr-splash .rr-glow {
+  position: absolute;
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  background: #ff3b08;
+  filter: blur(90px);
+  opacity: .35;
+  animation: rr-pulse 1.3s infinite alternate;
+}
+
+#rr-splash img {
+  position: relative;
+  z-index: 2;
+  width: min(72vw, 300px);
+  height: auto;
+  object-fit: contain;
+  border-radius: 18px;
+  animation: rr-logo 1s cubic-bezier(.2,.8,.2,1) both,
+             rr-pulse 1.5s 1s infinite alternate;
+  filter: drop-shadow(0 0 18px #ff5b19);
+}
+
+#rr-splash h1 {
+  position: relative;
+  z-index: 2;
+  margin: 28px 0 8px;
+  color: #ffd36a;
+  font-size: clamp(27px, 8vw, 39px);
+  font-weight: 900;
+  letter-spacing: 3px;
+  text-shadow: 0 0 12px #ff4b00, 0 0 28px #ff2500;
+  animation: rr-title .8s .5s both;
+}
+
+#rr-splash p {
+  position: relative;
+  z-index: 2;
+  margin: 0;
+  color: white;
+  font-size: 19px;
+  font-weight: bold;
+  animation: rr-title .8s .8s both;
+}
+
+#rr-splash .rr-loader {
+  position: relative;
+  z-index: 2;
+  width: 170px;
+  height: 5px;
+  margin-top: 38px;
+  overflow: hidden;
+  border-radius: 10px;
+  background: #ffffff35;
+}
+
+#rr-splash .rr-loader::after {
+  content: "";
+  display: block;
+  width: 45%;
+  height: 100%;
+  border-radius: 10px;
+  background: linear-gradient(90deg, #ff4a00, #ffd45a);
+  box-shadow: 0 0 12px #ff9c00;
+  animation: rr-loading 1.5s ease-in-out infinite;
+}
+
+#rr-splash .rr-spark {
+  position: absolute;
+  z-index: 1;
+  bottom: -20px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #ffbd45;
+  box-shadow: 0 0 12px 3px #ff4b00;
+  animation: rr-spark 2.5s linear infinite;
+}
+
+#rr-splash .s1 { left: 15%; animation-delay: .2s; }
+#rr-splash .s2 { left: 35%; animation-delay: 1.1s; }
+#rr-splash .s3 { left: 65%; animation-delay: .7s; }
+#rr-splash .s4 { left: 85%; animation-delay: 1.5s; }
+
+@keyframes rr-fire {
+  from { transform: scale(1) translateY(0); }
+  to { transform: scale(1.15) translateY(-15px); }
+}
+@keyframes rr-pulse {
+  from { transform: scale(.94); opacity: .25; }
+  to { transform: scale(1.08); opacity: .55; }
+}
+@keyframes rr-logo {
+  from { opacity: 0; transform: scale(.35) rotate(-10deg); }
+  to { opacity: 1; transform: scale(1) rotate(0); }
+}
+@keyframes rr-title {
+  from { opacity: 0; transform: translateY(25px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes rr-loading {
+  from { transform: translateX(-130%); }
+  to { transform: translateX(250%); }
+}
+@keyframes rr-spark {
+  0% { transform: translateY(0) scale(.5); opacity: 0; }
+  15% { opacity: 1; }
+  100% { transform: translateY(-110vh) scale(1.5); opacity: 0; }
+}
+@keyframes rr-splash-out {
+  to { opacity: 0; visibility: hidden; pointer-events: none; }
+}
+</style>
+
+<div id="rr-splash">
+  <div class="rr-glow"></div>
+  <span class="rr-spark s1"></span>
+  <span class="rr-spark s2"></span>
+  <span class="rr-spark s3"></span>
+  <span class="rr-spark s4"></span>
+
+  <img
+    src="https://i.ibb.co/5gZ1LZ9z/492195028-993889166231890-6539753522077003326-n.jpg"
+    alt="Red Roosters Logo"
+  />
+
+  <h1>RED ROOSTERS</h1>
+  <p>أروق ديك في مصر</p>
+  <div class="rr-loader"></div>
+</div>
+
+<script>
+window.addEventListener("load", function () {
+  const splash = document.getElementById("rr-splash");
+  if (splash) {
+    setTimeout(function () {
+      splash.remove();
+    }, 4700);
+  }
+});
+</script>
+<script type="module" src="/onesignal.js"></script>
 </body>
 </html>
