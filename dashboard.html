@@ -98,7 +98,7 @@ main{max-width:1280px;margin:0 auto;padding:16px}
 .cxa .btn{flex:1}
 .btn.cancelok{background:#c01048}
 .btn:disabled{opacity:.4;cursor:not-allowed}
-.pnb label{display:block;font-weight:800;font-size:.85rem;margin-top:10px}.pnb input{width:100%;margin-top:4px;padding:10px 12px;border:2px solid var(--line);border-radius:12px;font:700 1rem "Cairo",sans-serif}.pnb input:focus{outline:none;border-color:var(--red)}.pnq{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}.pnq button{border:1.5px solid var(--line);background:#fff;border-radius:10px;padding:6px 12px;font-weight:800;font-family:inherit}.pnq button.on{border-color:var(--red);background:#FDECEC;color:#9E1B1B}.pnm{margin-top:8px;font-weight:800;font-size:.88rem;color:#9E1B1B;min-height:1.2em}
+.pnm{font-weight:800;font-size:.88rem;color:#9E1B1B;min-height:1.2em;margin-top:8px}.pnt{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0 4px}.pnt div{flex:1;min-width:130px;background:#FDECEC;border-radius:14px;padding:10px 14px;font-weight:800;color:#9E1B1B;font-size:.8rem}.pnt b{display:block;font:900 1.4rem "Tajawal",sans-serif}
 .empty{grid-column:1/-1;text-align:center;color:var(--mute);padding:50px 10px;font-size:1.05rem}
 #toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 22px;border-radius:999px;font-weight:800;z-index:50;opacity:0;pointer-events:none;transition:.3s}
 #toast.show{opacity:1}
@@ -312,6 +312,19 @@ main.wide{max-width:none}
     <div class="panel"><h2>📈 أداء الكوبونات</h2><div id="cpStats">⏳...</div></div>
   </main>
   <main id="cuMain" class="hide">
+    <div class="panel"><h2>⭐ نقاط الولاء</h2>
+      <div class="seg" id="pnMode"><button type="button" data-m="add" class="on">➕ إضافة نقاط</button><button type="button" data-m="sub">➖ خصم نقاط</button></div>
+      <div class="cpf">
+        <label>رقم العميل<input id="pnPhone" type="tel" dir="ltr" inputmode="numeric" maxlength="14" placeholder="01xxxxxxxxx"></label>
+        <label>عدد النقاط<input id="pnPts" type="number" dir="ltr" min="1" max="10000" step="1" inputmode="numeric" placeholder="مثلاً 100"></label>
+        <label>السبب (اختياري)<input id="pnWhy" maxlength="60" placeholder="مثلاً: تعويض عن تأخير"></label>
+        <button class="btn main" id="pnOk" type="button">✅ إضافة النقاط</button>
+      </div>
+      <div class="pnm" id="pnMsg"></div>
+      <div class="pnt"><div>عدد العملاء اللي عندهم نقاط<b id="pnCnt">—</b></div><div>إجمالي النقاط المتاحة عند كل العملاء<b id="pnTot">—</b></div></div>
+      <div class="rng" style="margin-top:10px"><label>بحث في الأرصدة<input id="pnQ" type="search" placeholder="🔎 اسم أو رقم"></label><button class="btn ghost" id="pnGo" type="button">🔄 تحديث</button></div>
+      <div id="pnOut" style="margin-top:8px">⏳...</div>
+      <div class="hint">النقاط بتتفعّل على حساب العميل فورًا (الإضافة والخصم). «قيد التأكيد» = نقاط طلبات لسه ماتسلّمتش. الخصم مايتعداش الرصيد المتاح. كل عملية بتتسجّل في سجل المراجعة.</div></div>
     <div class="panel"><h2>📇 العملاء</h2>
       <div class="rng"><label>الفترة<select id="cuDays"><option value="90">آخر ٣ شهور</option><option value="180">آخر ٦ شهور</option><option value="365">آخر سنة</option></select></label>
         <label>بحث<input id="cuQ" type="search" placeholder="🔎 اسم أو رقم"></label>
@@ -390,17 +403,6 @@ main.wide{max-width:none}
     <div class="cxa"><button class="btn cancelok" id="cxOk" disabled>تأكيد الإلغاء</button><button class="btn ghost" id="cxNo">رجوع</button></div>
   </div>
 </div>
-<div id="pn" class="cx hide" role="dialog" aria-modal="true" aria-label="إضافة نقاط ولاء"><div class="cxb pnb">
-  <h2><span id="pnTitle">⭐ نقاط الولاء</span> <span id="pnName" style="font-size:.9rem;color:var(--mute)"></span></h2>
-  <p id="pnDesc"></p>
-  <div class="pnq" id="pnMode"><button type="button" data-m="add">➕ إضافة نقاط</button><button type="button" data-m="sub">➖ خصم نقاط</button></div>
-  <label>رقم العميل<input id="pnPhone" type="tel" dir="ltr" inputmode="numeric" maxlength="14" placeholder="01xxxxxxxxx"></label>
-  <label>عدد النقاط<input id="pnPts" type="number" dir="ltr" min="1" max="10000" step="1" inputmode="numeric" placeholder="مثلاً 100"></label>
-  <div class="pnq" id="pnQ"><button type="button" data-v="50">50</button><button type="button" data-v="100">100</button><button type="button" data-v="200">200</button><button type="button" data-v="500">500</button><button type="button" data-v="1000">1000</button></div>
-  <div class="pnm" id="pnMsg"></div>
-  <label>السبب (اختياري — بيتسجّل في سجل المراجعة بس)<input id="pnWhy" maxlength="60" placeholder="مثلاً: تعويض عن تأخير"></label>
-  <div class="cxa"><button class="btn main" id="pnOk" type="button">✅ إضافة النقاط</button><button class="btn ghost" id="pnNo" type="button">رجوع</button></div>
-</div></div>
 <div id="lr" class="cx hide" role="dialog" aria-modal="true" aria-label="تقييمات منخفضة"><div class="cxb"><h2>⭐ تقييمات منخفضة (آخر ٣ أيام)</h2><p>كلّم العميل بسرعة — الرقم والطلب في كارت الطلب أو تبويب العملاء.</p><div id="lrList"></div><div class="cxa"><button class="btn ghost" id="lrX" type="button">إغلاق</button></div></div></div>
 <div id="chMo" class="cx hide"><div class="cxb"><h2>🔔 تعديلات وطلبات العملاء</h2><p>تعديل/إلغاء العميل اتنفّذ فعلًا (تأكد بـ«تم الاطلاع»). الطلبات اللي جاية بعد المدة محتاجة قرارك — العميل مستني.</p><div id="chList"></div><div class="cxa"><button type="button" class="btn ghost" id="chClose">إغلاق</button></div></div></div>
 <div id="toast"></div>
@@ -598,7 +600,7 @@ function cardHtml(o){
     (o.type !== 'pickup' && o.lat != null && ACTIVE.includes(o.status) ? '<div class="note">📍 <a href="https://www.google.com/maps/dir/?api=1&destination=' + o.lat + ',' + o.lon + '" target="_blank" rel="noopener">لوكيشن العميل على الخريطة</a></div>' : '') +
     (o.status === 'out' && o.type !== 'pickup' && drivers.length ? (() => { const dv = drivers.find(x => x.id === dasg[o.id]); return '<div class="note">🛵 الطيار: <b>' + (dv ? esc(dv.name) + ' ' + dDot(dv.id) : 'مش محدد (العميل مش شايف خريطة)') + '</b></div>'; })() : '') +
     '<div class="acts">' + (ns ? '<button class="btn main" data-act="set" data-st="' + ns[0] + '">' + ns[1] + '</button>' : '') +
-      flagBtns(o) + (role === 'manager' ? '<button class="btn ghost" data-act="pts">⭐ نقاط</button><button class="btn ghost" data-act="ptsub">➖ خصم نقاط</button>' : '') + (o.payment !== 'cash' ? '<button class="btn ghost" data-act="paid" data-p="' + (o.paid ? 0 : 1) + '">' + (o.paid ? '↩︎ التحويل لسه ماوصلش' : '💰 تم استلام التحويل') + '</button>' : '') +
+      flagBtns(o) + (o.payment !== 'cash' ? '<button class="btn ghost" data-act="paid" data-p="' + (o.paid ? 0 : 1) + '">' + (o.paid ? '↩︎ التحويل لسه ماوصلش' : '💰 تم استلام التحويل') + '</button>' : '') +
       (o.status === 'out' && o.type !== 'pickup' && drivers.length ? '<button class="btn ghost" data-act="drv">🛵 غيّر الطيار</button>' + (dasg[o.id] ? '<button class="btn ghost" data-act="drvmap">🗺️ الخريطة</button><button class="btn ghost" data-act="drvwa">📲 ابعت للطيار</button>' : '') : '') +
       '<button class="btn ghost" data-act="print">🖨️ طباعة</button>' +
       (ACTIVE.includes(o.status) ? '<button class="btn danger" data-act="set" data-st="cancelled">إلغاء</button>' : '') +
@@ -1247,6 +1249,7 @@ function kotPrint(o){
 let cuAll = [], cuSeg = 'all', cuTrunc = false;
 const cuWB = () => { try { return JSON.parse(localStorage.getItem('rr_wb') || '{}'); } catch (e) { return {}; } };
 async function cuLoad(){
+  pnLoad();
   $('cuOut').innerHTML = '⏳ بنحمّل...';
   const days = +$('cuDays').value || 90, to = Date.now(), from = to - days * 864e5;
   try {
@@ -1259,7 +1262,7 @@ async function cuLoad(){
       (o.items || []).forEach(i => { const k = String(i.n || '').replace(/\s*\(.*\)\s*$/, '').trim(); if (k) c.items[k] = (c.items[k] || 0) + (+i.q || 1); });
     });
     cuAll = Object.values(m).map(c => { const top = Object.keys(c.items).sort((a, b) => c.items[b] - c.items[a])[0] || ''; return Object.assign(c, {fav:top, since:Math.floor((to - c.last) / 864e5)}); });
-    cuRender();
+    cuRender(); if (typeof pnRender === 'function' && pnList.length) pnRender();
   } catch (e) { $('cuOut').innerHTML = '<div class="empty">⚠️ مفيش اتصال</div>'; }
 }
 function cuSegs(){ return [['all','الكل',() => true],['lost','وحشتنا (٣٠+ يوم)',c => c.since >= 30],['vip','مميزين (٤+ طلبات)',c => c.n >= 4],['new','جدد (طلب واحد)',c => c.n === 1],['active','نشطين (آخر ٣٠ يوم)',c => c.since < 30]]; }
@@ -1274,7 +1277,7 @@ function cuRender(){
   l.sort((a, b) => cuSeg === 'lost' ? b.total - a.total : b.last - a.last);
   const rows = l.slice(0, 200).map(c => { const rec = wb[c.phone] && Date.now() - wb[c.phone] < 14 * 864e5;
     return ['<span class="' + (rec ? 'dim' : '') + '"><b>' + esc(c.name) + '</b><br><small dir="ltr" style="color:#6B6B6B">' + esc(c.phone) + '</small></span>', num(c.n), money(c.total), 'من ' + num(c.since) + ' يوم', esc(c.fav) || '—',
-      '<a class="btn ghost tiny" target="_blank" rel="noopener" data-wb="' + esc(c.phone) + '" href="https://wa.me/20' + c.phone.replace(/^0/, '') + '?text=' + encodeURIComponent(cuMsg(c)) + '">💬 واتساب' + (rec ? ' ✓' : '') + '</a> <button type="button" class="btn ghost tiny" data-pn="' + esc(c.phone) + '" data-nm="' + esc(c.name) + '">⭐ نقاط</button> <button type="button" class="btn ghost tiny" data-pn="' + esc(c.phone) + '" data-nm="' + esc(c.name) + '" data-m="sub">➖ خصم</button>']; });
+      '<a class="btn ghost tiny" target="_blank" rel="noopener" data-wb="' + esc(c.phone) + '" href="https://wa.me/20' + c.phone.replace(/^0/, '') + '?text=' + encodeURIComponent(cuMsg(c)) + '">💬 واتساب' + (rec ? ' ✓' : '') + '</a>']; });
   $('cuOut').innerHTML = (cuTrunc ? '<div class="warnb" style="margin-bottom:10px">⚠️ البيانات اتقصّت (عدد الطلبات كبير) — اختار فترة أقصر.</div>' : '') +
     '<p class="hint" style="margin:0 0 8px">' + num(l.length) + ' عميل' + (l.length > 200 ? ' (أول ٢٠٠)' : '') + '</p>' +
     tbl(['العميل', 'طلبات', 'إجمالي', 'آخر طلب', 'الأكلة المفضلة', ''], rows.length ? rows : [['—', '', '', '', '', '']]);
@@ -1357,48 +1360,53 @@ $('seBl').addEventListener('click', async e => {
   try { const j = await post({action:'custFlag', user, phone:b.dataset.p, op:b.dataset.bl}); if (!j.ok) throw 0; toast('✅ تم'); delete flags[b.dataset.p]; blLoad(); render(); } catch (er) { toast('⚠️ حصل خطأ'); }
 });
 
-/* ═══ إضافة نقاط ولاء يدويًا (للمدير) ═══ */
+/* ═══ نقاط الولاء (تبويب العملاء) ═══ */
 const PN_PER_EGP = 10;   // لازم تطابق POINTS_PER_EGP في Code.gs
-let pnBusy = false;
+let pnBusy = false, pnMode = 'add', pnList = [], pnTotal = 0;
 const pnDigits = v => String(v || '').replace(/[٠-٩]/g, x => '٠١٢٣٤٥٦٧٨٩'.indexOf(x)).replace(/\D/g, '');
-let pnMode = 'add';
 function pnSetMode(m){
   pnMode = m === 'sub' ? 'sub' : 'add';
   document.querySelectorAll('#pnMode button').forEach(b => b.classList.toggle('on', b.dataset.m === pnMode));
-  $('pnTitle').textContent = pnMode === 'sub' ? '➖ خصم نقاط ولاء' : '⭐ إضافة نقاط ولاء';
-  $('pnDesc').textContent = pnMode === 'sub' ? 'النقاط هتتخصم من رصيد العميل المتاح فورًا (مش هينزل تحت صفر).' : 'النقاط بتتفعّل على حساب العميل (برقم موبايله) فورًا، وبيقدر يستبدلها بخصم من الموقع.';
   $('pnOk').textContent = pnMode === 'sub' ? '✅ خصم النقاط' : '✅ إضافة النقاط';
   $('pnWhy').placeholder = pnMode === 'sub' ? 'مثلاً: تصحيح نقاط غلط' : 'مثلاً: تعويض عن تأخير';
   pnHint();
 }
-function pnOpen(phone, name, mode){
-  $('pnPhone').value = phone || ''; $('pnName').textContent = name ? '— ' + name : ''; $('pnPts').value = ''; $('pnWhy').value = ''; pnSetMode(mode);
-  $('pn').classList.remove('hide'); setTimeout(() => $(phone ? 'pnPts' : 'pnPhone').focus(), 50);
+function pnHint(){ const p = Math.round(+$('pnPts').value); $('pnMsg').textContent = p >= 1 ? '= ' + (p / PN_PER_EGP) + ' ج.م' + (pnMode === 'sub' ? ' هتتشال من رصيد العميل' : ' خصم للعميل') : ''; }
+function pnNames(){ const m = {}; (typeof orders !== 'undefined' ? orders : []).forEach(o => { if (o.phone && o.name) m[o.phone] = o.name; }); (typeof cuAll !== 'undefined' ? cuAll : []).forEach(c => { if (c.phone && c.name) m[c.phone] = c.name; }); return m; }
+function pnRender(){
+  const q = $('pnQ').value.trim().toLowerCase(), nm = pnNames();
+  $('pnCnt').textContent = num(pnList.filter(x => x.points > 0).length); $('pnTot').textContent = num(pnTotal) + ' نقطة';
+  let l = pnList.map(x => Object.assign({name:nm[x.phone] || ''}, x)); if (q) l = l.filter(x => (x.name + ' ' + x.phone).toLowerCase().includes(q));
+  const rows = l.slice(0, 300).map(x => ['<b>' + esc(x.name || '—') + '</b><br><small dir="ltr" style="color:#6B6B6B">' + esc(x.phone) + '</small>', '<b>' + num(x.points) + '</b> <small style="color:#6B6B6B">(' + money(x.points / PN_PER_EGP) + ')</small>', x.pending ? num(x.pending) : '—',
+    '<button type="button" class="btn ghost tiny" data-pnp="' + esc(x.phone) + '" data-m="add">➕</button> <button type="button" class="btn ghost tiny" data-pnp="' + esc(x.phone) + '" data-m="sub">➖</button>']);
+  $('pnOut').innerHTML = tbl(['العميل', 'الرصيد المتاح', 'قيد التأكيد', ''], rows.length ? rows : [['مفيش عملاء عندهم نقاط', '', '', '']]) + (l.length > 300 ? '<p class="hint">أول ٣٠٠ عميل — استخدم البحث.</p>' : '');
 }
-function pnClose(){ $('pn').classList.add('hide'); }
-function pnHint(){ const p = Math.round(+$('pnPts').value); $('pnMsg').textContent = p >= 1 ? '= ' + (p / PN_PER_EGP) + ' ج.م' + (pnMode === 'sub' ? ' هتتشال من رصيده' : ' خصم للعميل') : ''; }
+async function pnLoad(){
+  try {
+    const j = await post({action:'pointsList', user});
+    if (!j.ok) { $('pnOut').innerHTML = '<div class="empty">' + (j.error === 'forbidden' ? '⛔ للمدير بس' : '⚠️ حصل خطأ (اتأكد إنك حدّثت Code.gs وعملت Deploy ▸ New version)') + '</div>'; return; }
+    pnList = j.list || []; pnTotal = j.total || 0; pnRender();
+  } catch (e) { $('pnOut').innerHTML = '<div class="empty">⚠️ مفيش اتصال</div>'; }
+}
 async function pnSave(){
   if (pnBusy) return;
-  const phone = pnDigits($('pnPhone').value).slice(-11), pts = Math.round(+$('pnPts').value), reason = $('pnWhy').value.trim();
+  const phone = pnDigits($('pnPhone').value).slice(-11), pts = Math.round(+$('pnPts').value), reason = $('pnWhy').value.trim(), sub = pnMode === 'sub';
   if (phone.length !== 11) { toast('⚠️ رقم الموبايل لازم ١١ رقم'); return; }
   if (!(pts >= 1 && pts <= 10000)) { toast('⚠️ النقاط من ١ لـ ١٠٠٠٠'); return; }
-  const sub = pnMode === 'sub';
   if (!confirm((sub ? 'تخصم ' : 'تضيف ') + pts + ' نقطة (= ' + (pts / PN_PER_EGP) + ' ج) ' + (sub ? 'من' : 'لـ') + ' الرقم ' + phone + '؟')) return;
   pnBusy = true; $('pnOk').disabled = true;
   try {
     const j = await post({action:'pointsAdd', user, phone, points:pts, reason, op:pnMode});
     if (!j.ok) throw new Error(j.error || 'fail');
-    pnClose(); toast('✅ ' + (sub ? 'اتخصم ' : 'اتضافت ') + pts + ' نقطة — رصيد العميل دلوقتي ' + j.points + ' نقطة');
+    $('pnPts').value = ''; $('pnWhy').value = ''; pnHint(); toast('✅ ' + (sub ? 'اتخصم ' : 'اتضافت ') + pts + ' نقطة — رصيد العميل دلوقتي ' + j.points + ' نقطة'); pnLoad();
   } catch (e) {
-    const m = String(e.message); toast(m === 'forbidden' ? '⛔ إضافة النقاط للمدير بس' : m === 'bad_phone' ? '⚠️ رقم غير صحيح' : m === 'not_enough' ? '⚠️ الرصيد المتاح للعميل أقل من كده' : m === 'bad_points' ? '⚠️ عدد النقاط غير صحيح' : m === 'bad_action' ? '⚠️ حدّث Code.gs واعمل Deploy ▸ New version' : '⚠️ معرفناش نضيف النقاط');
+    const m = String(e.message); toast(m === 'forbidden' ? '⛔ النقاط للمدير بس' : m === 'bad_phone' ? '⚠️ رقم غير صحيح' : m === 'not_enough' ? '⚠️ الرصيد المتاح للعميل أقل من كده' : m === 'bad_points' ? '⚠️ عدد النقاط غير صحيح' : m === 'bad_action' ? '⚠️ حدّث Code.gs واعمل Deploy ▸ New version' : '⚠️ معرفناش ننفّذ العملية');
   } finally { pnBusy = false; $('pnOk').disabled = false; }
 }
-$('pnOk').onclick = pnSave; $('pnNo').onclick = pnClose; $('pn').addEventListener('click', e => { if (e.target === $('pn')) pnClose(); });
+$('pnOk').onclick = pnSave; $('pnGo').onclick = pnLoad; $('pnQ').addEventListener('input', pnRender);
 $('pnPts').addEventListener('input', pnHint); $('pnPts').addEventListener('keydown', e => { if (e.key === 'Enter') pnSave(); });
 $('pnMode').addEventListener('click', e => { const b = e.target.closest('[data-m]'); if (b) pnSetMode(b.dataset.m); });
-$('pnQ').addEventListener('click', e => { const b = e.target.closest('[data-v]'); if (b) { $('pnPts').value = b.dataset.v; pnHint(); } });
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('pn').classList.contains('hide')) pnClose(); });
-$('cuOut').addEventListener('click', e => { const b = e.target.closest('[data-pn]'); if (b) pnOpen(b.dataset.pn, b.dataset.nm, b.dataset.m); });
+$('pnOut').addEventListener('click', e => { const b = e.target.closest('[data-pnp]'); if (!b) return; $('pnPhone').value = b.dataset.pnp; pnSetMode(b.dataset.m); $('pnPts').focus(); $('pnPhone').scrollIntoView({behavior:'smooth', block:'center'}); });
 
 /* ═══ حالة الإشعارات ═══ */
 async function bellLoad(){
@@ -1494,8 +1502,6 @@ $('grid').addEventListener('click', e => {
   if (b.dataset.act === 'drvwa') { const o = orders.find(x => x.id === id), dv = o && drivers.find(x => x.id === dasg[id]); if (!dv) toast('⚠️ اختار الطيار الأول'); else if (!dv.phone) toast('⚠️ ضيف رقم واتساب الطيار من الإعدادات ▸ الطيارين'); else window.open(drvWa(o, dv), '_blank'); }
   if (b.dataset.act === 'paid') setPaid(id, b.dataset.p === '1');
   if (b.dataset.act === 'flag') { const oo = orders.find(x => x.id === id); if (oo) custFlag(oo.phone, b.dataset.op, false, oo.name); }
-  if (b.dataset.act === 'pts') { const oo = orders.find(x => x.id === id); if (oo) pnOpen(oo.phone, oo.name, 'add'); }
-  if (b.dataset.act === 'ptsub') { const oo = orders.find(x => x.id === id); if (oo) pnOpen(oo.phone, oo.name, 'sub'); }
   if (b.dataset.act === 'print') { const o = orders.find(x => x.id === id); if (o) kotPrint(o); }
 });
 window.addEventListener('afterprint', () => { document.body.classList.remove('pk'); const k = $('kot'); if (k) k.remove(); document.body.classList.remove('p1'); document.querySelectorAll('.pme').forEach(c => c.classList.remove('pme')); });
