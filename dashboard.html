@@ -320,6 +320,8 @@ main.wide{max-width:none}
     <div class="panel"><h2>📈 أداء الكوبونات</h2><div id="cpStats">⏳...</div></div>
   </main>
   <main id="cuMain" class="hide">
+    <div class="panel" style="padding:10px 14px"><div class="seg" id="cuTabs"><button type="button" data-ct="list" class="on">📇 العملاء</button><button type="button" data-ct="pts">⭐ نقاط العملاء</button></div></div>
+    <div id="cuSub1">
     <div class="panel"><h2>📇 العملاء</h2>
       <div class="rng"><label>الفترة<select id="cuDays"><option value="90">آخر ٣ شهور</option><option value="180">آخر ٦ شهور</option><option value="365">آخر سنة</option></select></label>
         <label>بحث<input id="cuQ" type="search" placeholder="🔎 اسم أو رقم"></label>
@@ -328,6 +330,15 @@ main.wide{max-width:none}
       <div class="seg" id="cuSeg"></div>
       <div class="hint">زرار واتساب بيفتح رسالة جاهزة تبعتها بنفسك لكل عميل (مش إرسال جماعي). العملاء اللي كلّمتهم في آخر ١٤ يوم بيتعتّموا. اعمل الكود من تبويب الكوبونات الأول (مثلاً «لأول طلب بس» مقفول عشان يشتغل مع العميل القديم).</div></div>
     <div class="panel"><div id="cuOut">⏳...</div></div>
+    </div>
+    <div id="cuSub2" class="hide">
+      <div class="panel"><h2>⭐ نقاط العملاء</h2>
+        <div class="rng"><label>بحث<input id="ptQ" type="search" placeholder="🔎 اسم أو رقم"></label>
+          <button class="btn ghost" id="ptGo" type="button">🔄 تحديث</button>
+          <button class="btn main" id="ptAdd" type="button">➕ إضافة / خصم لرقم</button></div>
+        <div class="hint">كل العملاء اللي عندهم نقاط (مش مرتبط بفترة). «المتاح» هو اللي العميل يقدر يستبدله دلوقتي، و«قيد التأكيد» نقاط طلبات لسه ماتسلّمتش. كل إضافة أو خصم بيتسجّل في سجل المراجعة. ١٠ نقاط = ١ جنيه.</div></div>
+      <div class="panel"><div id="ptOut">⏳...</div></div>
+    </div>
   </main>
   <main id="seMain" class="hide">
     <div class="panel"><h2>⏰ المواعيد ووضع التشغيل</h2>
@@ -619,7 +630,7 @@ function cardHtml(o){
     (o.type !== 'pickup' && o.lat != null && ACTIVE.includes(o.status) ? '<div class="note">📍 <a href="https://www.google.com/maps/dir/?api=1&destination=' + o.lat + ',' + o.lon + '" target="_blank" rel="noopener">لوكيشن العميل على الخريطة</a></div>' : '') +
     (o.status === 'out' && o.type !== 'pickup' && drivers.length ? (() => { const dv = drivers.find(x => x.id === dasg[o.id]); return '<div class="note">🛵 الطيار: <b>' + (dv ? esc(dv.name) + ' ' + dDot(dv.id) : 'مش محدد (العميل مش شايف خريطة)') + '</b></div>'; })() : '') +
     '<div class="acts">' + (ns ? '<button class="btn main" data-act="set" data-st="' + ns[0] + '">' + ns[1] + '</button>' : '') +
-      flagBtns(o) + (role === 'manager' ? '<button class="btn ghost" data-act="pts">⭐ نقاط</button><button class="btn ghost" data-act="ptsub">➖ خصم نقاط</button>' : '') + (o.payment !== 'cash' ? '<button class="btn ghost" data-act="paid" data-p="' + (o.paid ? 0 : 1) + '">' + (o.paid ? '↩︎ التحويل لسه ماوصلش' : '💰 تم استلام التحويل') + '</button>' : '') +
+      flagBtns(o) + (o.payment !== 'cash' ? '<button class="btn ghost" data-act="paid" data-p="' + (o.paid ? 0 : 1) + '">' + (o.paid ? '↩︎ التحويل لسه ماوصلش' : '💰 تم استلام التحويل') + '</button>' : '') +
       (o.status === 'out' && o.type !== 'pickup' && drivers.length ? '<button class="btn ghost" data-act="drv">🛵 غيّر الطيار</button>' + (dasg[o.id] ? '<button class="btn ghost" data-act="drvmap">🗺️ الخريطة</button><button class="btn ghost" data-act="drvwa">📲 ابعت للطيار</button>' : '') : '') +
       '<button class="btn ghost" data-act="print">🖨️ طباعة</button>' +
       (ACTIVE.includes(o.status) ? '<button class="btn danger" data-act="set" data-st="cancelled">إلغاء</button>' : '') +
@@ -783,7 +794,7 @@ function setView(v){
   view = v;
   $('mainEl').classList.toggle('hide', v !== 'orders'); $('anMain').classList.toggle('hide', v !== 'analytics'); $('stMain').classList.toggle('hide', v !== 'staff'); $('mnMain').classList.toggle('hide', v !== 'menu'); $('cpMain').classList.toggle('hide', v !== 'coupons'); $('cuMain').classList.toggle('hide', v !== 'customers'); $('seMain').classList.toggle('hide', v !== 'settings'); $('hiMain').classList.toggle('hide', v !== 'history');
   [['vOrders','orders'],['vMenu','menu'],['vAn','analytics'],['vCp','coupons'],['vCust','customers'],['vSet','settings'],['vStaff','staff'],['vHist','history']].forEach(([id, k]) => $(id).classList.toggle('act', k === v));
-  if (v === 'orders') render(); if (v === 'analytics') anInit(); if (v === 'staff') stLoad(); if (v === 'menu') mnLoad(); if (v === 'coupons') cpLoad(); if (v === 'customers') cuLoad(); if (v === 'settings') seLoad(); if (v === 'history') hiInit();
+  if (v === 'orders') render(); if (v === 'analytics') anInit(); if (v === 'staff') stLoad(); if (v === 'menu') mnLoad(); if (v === 'coupons') cpLoad(); if (v === 'customers') { cuTab('list'); cuLoad(); } if (v === 'settings') seLoad(); if (v === 'history') hiInit();
 }
 $('vOrders').onclick = () => setView('orders'); $('vAn').onclick = () => setView('analytics'); $('vStaff').onclick = () => setView('staff'); $('vCp').onclick = () => setView('coupons'); $('vMenu').onclick = () => setView('menu'); $('vCust').onclick = () => setView('customers'); $('vSet').onclick = () => setView('settings'); $('vHist').onclick = () => setView('history');
 
@@ -1378,6 +1389,34 @@ $('seBl').addEventListener('click', async e => {
   try { const j = await post({action:'custFlag', user, phone:b.dataset.p, op:b.dataset.bl}); if (!j.ok) throw 0; toast('✅ تم'); delete flags[b.dataset.p]; blLoad(); render(); } catch (er) { toast('⚠️ حصل خطأ'); }
 });
 
+/* ═══ تبويب نقاط العملاء (جوه العملاء) ═══ */
+let ptAll = [], ptLoaded = false;
+function cuTab(t){
+  document.querySelectorAll('#cuTabs button').forEach(b => b.classList.toggle('on', b.dataset.ct === t));
+  $('cuSub1').classList.toggle('hide', t !== 'list'); $('cuSub2').classList.toggle('hide', t !== 'pts');
+  if (t === 'pts') ptLoad();
+}
+async function ptLoad(){
+  $('ptOut').innerHTML = '⏳ بنحمّل...';
+  try {
+    const j = await post({action:'pointsList', user});
+    if (!j.ok) { $('ptOut').innerHTML = '<div class="empty">' + (j.error === 'forbidden' ? '⛔ للمدير بس' : '⚠️ مقدرناش نحمّل النقاط') + '</div>'; return; }
+    ptAll = j.list || []; ptLoaded = true; ptRender();
+  } catch (e) { $('ptOut').innerHTML = '<div class="empty">' + (String(e.message) === 'bad_action' ? '⚠️ حدّث Code.gs واعمل Deploy ▸ New version' : '⚠️ مفيش اتصال') + '</div>'; }
+}
+function ptRender(){
+  const q = $('ptQ').value.trim().toLowerCase(), l = ptAll.filter(c => !q || (c.name + ' ' + c.phone).toLowerCase().includes(q));
+  const tot = ptAll.reduce((a, c) => a + Math.max(0, c.points), 0), pen = ptAll.reduce((a, c) => a + Math.max(0, c.pending), 0);
+  const rows = l.slice(0, 300).map(c => ['<b>' + esc(c.name || '—') + '</b><br><small dir="ltr" style="color:#6B6B6B">' + esc(c.phone) + '</small>',
+    '<b>' + num(c.points) + '</b><br><small style="color:#6B6B6B">= ' + money(c.points / PN_PER_EGP) + '</small>', num(c.pending), num(c.earned), num(c.spent),
+    '<button type="button" class="btn ghost tiny" data-pn="' + esc(c.phone) + '" data-nm="' + esc(c.name) + '">➕ إضافة</button> <button type="button" class="btn ghost tiny" data-pn="' + esc(c.phone) + '" data-nm="' + esc(c.name) + '" data-m="sub">➖ خصم</button>']);
+  $('ptOut').innerHTML = '<p class="hint" style="margin:0 0 8px">' + num(l.length) + ' عميل' + (l.length > 300 ? ' (أول ٣٠٠)' : '') + ' · إجمالي النقاط المتاحة: <b>' + num(tot) + '</b> (= ' + money(tot / PN_PER_EGP) + ') · قيد التأكيد: ' + num(pen) + '</p>' +
+    tbl(['العميل', 'المتاح', 'قيد التأكيد', 'اتكسب', 'اتستبدل', ''], rows.length ? rows : [['—', '', '', '', '', '']]);
+}
+$('cuTabs').addEventListener('click', e => { const b = e.target.closest('[data-ct]'); if (b) cuTab(b.dataset.ct); });
+$('ptQ').addEventListener('input', ptRender); $('ptGo').onclick = ptLoad; $('ptAdd').onclick = () => pnOpen('', '', 'add');
+$('ptOut').addEventListener('click', e => { const b = e.target.closest('[data-pn]'); if (b) pnOpen(b.dataset.pn, b.dataset.nm, b.dataset.m); });
+
 /* ═══ إضافة نقاط ولاء يدويًا (للمدير) ═══ */
 const PN_PER_EGP = 10;   // لازم تطابق POINTS_PER_EGP في Code.gs
 let pnBusy = false;
@@ -1409,7 +1448,7 @@ async function pnSave(){
   try {
     const j = await post({action:'pointsAdd', user, phone, points:pts, reason, op:pnMode});
     if (!j.ok) throw new Error(j.error || 'fail');
-    pnClose(); toast('✅ ' + (sub ? 'اتخصم ' : 'اتضافت ') + pts + ' نقطة — رصيد العميل دلوقتي ' + j.points + ' نقطة');
+    pnClose(); if (!$('cuSub2').classList.contains('hide')) ptLoad(); toast('✅ ' + (sub ? 'اتخصم ' : 'اتضافت ') + pts + ' نقطة — رصيد العميل دلوقتي ' + j.points + ' نقطة');
   } catch (e) {
     const m = String(e.message); toast(m === 'forbidden' ? '⛔ إضافة النقاط للمدير بس' : m === 'bad_phone' ? '⚠️ رقم غير صحيح' : m === 'not_enough' ? '⚠️ الرصيد المتاح للعميل أقل من كده' : m === 'bad_points' ? '⚠️ عدد النقاط غير صحيح' : m === 'bad_action' ? '⚠️ حدّث Code.gs واعمل Deploy ▸ New version' : '⚠️ معرفناش نضيف النقاط');
   } finally { pnBusy = false; $('pnOk').disabled = false; }
@@ -1515,8 +1554,6 @@ $('grid').addEventListener('click', e => {
   if (b.dataset.act === 'drvwa') { const o = orders.find(x => x.id === id), dv = o && drivers.find(x => x.id === dasg[id]); if (!dv) toast('⚠️ اختار الطيار الأول'); else if (!dv.phone) toast('⚠️ ضيف رقم واتساب الطيار من الإعدادات ▸ الطيارين'); else window.open(drvWa(o, dv), '_blank'); }
   if (b.dataset.act === 'paid') setPaid(id, b.dataset.p === '1');
   if (b.dataset.act === 'flag') { const oo = orders.find(x => x.id === id); if (oo) custFlag(oo.phone, b.dataset.op, false, oo.name); }
-  if (b.dataset.act === 'pts') { const oo = orders.find(x => x.id === id); if (oo) pnOpen(oo.phone, oo.name, 'add'); }
-  if (b.dataset.act === 'ptsub') { const oo = orders.find(x => x.id === id); if (oo) pnOpen(oo.phone, oo.name, 'sub'); }
   if (b.dataset.act === 'print') { const o = orders.find(x => x.id === id); if (o) kotPrint(o); }
 });
 window.addEventListener('afterprint', () => { document.body.classList.remove('pk'); const k = $('kot'); if (k) k.remove(); document.body.classList.remove('p1'); document.querySelectorAll('.pme').forEach(c => c.classList.remove('pme')); });
