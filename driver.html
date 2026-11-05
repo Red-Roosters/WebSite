@@ -30,12 +30,13 @@ const API='https://script.google.com/macros/s/AKfycbzoNNPfliuE1Cp87iylF0GtJGxrYS
 const $=id=>document.getElementById(id),esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let busy=false,lastN=-1;
 const ago=t=>{const m=Math.max(0,Math.round((Date.now()-t)/60000));return m<1?'دلوقتي':m<60?'من '+m+' د':'من '+Math.floor(m/60)+' س '+(m%60)+' د'};
+const sl=t=>{const k=x=>new Date(x).toDateString();return (k(t)===k(Date.now())?'النهاردة':k(t)===k(Date.now()+864e5)?'بكرة':new Date(t).toLocaleDateString('ar-EG',{day:'numeric',month:'short'}))+' '+new Date(t).toLocaleTimeString('ar-EG',{hour:'numeric',minute:'2-digit'})};
 function nav(o){return o.lat!=null?'https://www.google.com/maps/dir/?api=1&destination='+o.lat+','+o.lon+'&travelmode=driving':'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent((o.address||'')+' '+(o.area||''))}
 function card(o){
   const items=(o.items||[]).map(i=>esc(i.q+'× '+i.n)).join('، ');
   const pay=o.payment==='cash'?'<div class="pay">💵 كاش — حصّل <b>'+o.total+' ج.م</b></div>':o.paid?'<div class="pay ok">✅ مدفوع (تحويل) — مفيش تحصيل</div>':'<div class="pay">⏳ التحويل لسه متأكدش — كلّم الفرع قبل التسليم</div>';
-  return '<div class="card"><h3><span>#'+esc(o.id)+' · '+esc(o.name)+'</span><small>'+ago(o.time)+'</small></h3>'+
-    '<div class="row">📍 '+esc(o.address)+(o.area?' ('+esc(o.area)+')':'')+'</div>'+
+  return '<div class="card"'+(o.sched?' style="border:2px solid #7C3AED"':'')+'><h3><span>#'+esc(o.id)+' · '+esc(o.name)+'</span><small>'+ago(o.time)+'</small></h3>'+
+    (o.sched?'<div class="pay" style="background:#EDE5FF;color:#4C1D95">⏰ ميعاد التسليم: '+sl(o.sched)+'</div>':'')+'<div class="row">📍 '+esc(o.address)+(o.area?' ('+esc(o.area)+')':'')+'</div>'+
     '<div class="row it">🧾 '+items+'</div>'+(o.notes?'<div class="row it">📝 '+esc(o.notes)+'</div>':'')+pay+
     '<div class="btns"><a class="nav" target="_blank" rel="noopener" href="'+nav(o)+'">🧭 ملاحة</a><a class="call" href="tel:'+esc(o.phone)+'">📞 اتصال</a>'+
     '<button class="done" data-id="'+esc(o.id)+'">✅ تم التسليم</button></div></div>';
