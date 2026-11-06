@@ -1,3 +1,4 @@
+/** (v9) تسوية كاش الطيارين (ورقة DrvSettle) · إرسال موقع الطيار من صفحته نفسها (drvPos) · سجل رسائل واتساب للعملاء الغايبين (ورقة WaLog) · أداء الطيارين بتفاصيل أكتر. بعد اللصق: Deploy ▸ Manage deployments ▸ Edit ▸ New version. */
 /** (v8) طلب مجدول: العميل يختار ميعاد توصيل لنفس اليوم (لحد وقت الإغلاق) + استلام الفرع بعد ١٥ دقيقة على الأقل من الطلب (عمود sched في Tickets) — بيظهر في الداشبورد بلون مميز + عدّاد + تنبيه قبل الميعاد، ومش بيدخل في حساب متوسط وقت التوصيل.
  *  بعد اللصق: Deploy ▸ Manage deployments ▸ Edit ▸ New version، وارفع index.html و dashboard.html و driver.html الجداد مع بعض. */
 /** (v7) تعديل/إلغاء العميل لطلبه بنفسه خلال مدة (افتراضي ٥ دقايق — من الإعدادات) + طلبات التعديل/الإلغاء بعد المدة بتوصل الداشبورد كـ popup وتستنى القبول/الرفض + تنبيه للداشبورد على أي تعديل (ورقة Changes + عمود chg في Tickets) · إضافة/تعديل/حذف الطيارين من الداشبورد بسهولة (drvSave / drvDelete).
@@ -22,6 +23,7 @@ var POINTS_PER_EGP = 10;   // 10 نقطة = 1 جنيه خصم
 var STEP = 2000;            // التبديل بمضاعفات 2000 نقطة (2000 = 200 ج)
 var STATUSES = ['new','confirmed','preparing','out','delivered','cancelled'];
 var TK_HEAD = ['orderId','time','name','phone','phone2','type','address','items','subtotal','discount','coupon','fee','total','payment','notes','status','updated','history','reason','log','payref','paid','did','area','lat','lon','drv','chg','sched'];
+var SETTLE_DAYS=10;   // تسوية الطيارين: بنبصّ على كاش الطلبات المتسلّمة في آخر كام يوم
 var SCHED_ON=true, SCHED_MIN_LEAD=45, PICK_MIN=15;   // المجدول: لنفس اليوم بس (لحد وقت الإغلاق) وأقل مدة قبل الميعاد (دقيقة) · false = إيقاف الميزة · PICK_MIN: أقل مدة (دقيقة) بين الطلب وميعاد الاستلام من الفرع
 
 var HOURS_ON=true;   // ⚠️ false = وقف مواعيد العمل (للتجربة). رجّعه true بعد التجربة
@@ -440,7 +442,7 @@ function doGet(e){
     var dds=dayStart_(Date.now()),ddo=tkRecent_(tk_(),300).map(tkObj_).filter(function(o){return o.drv===ddr;}),
       dsl=function(o){return {id:o.id,time:o.time,name:o.name,phone:o.phone,address:o.address,area:o.area,items:o.items,total:o.total,payment:o.payment,paid:o.paid,notes:o.notes,lat:o.lat,lon:o.lon,sched:o.sched};},
       ddn=ddo.filter(function(o){return o.status==='delivered'&&o.updated>=dds;});
-    return out_({ok:true,name:drvName_(ddr),orders:ddo.filter(function(o){return o.status==='out';}).sort(function(x,y){return (x.sched||x.time)-(y.sched||y.time);}).map(dsl),today:{n:ddn.length,cash:ddn.reduce(function(s,o){return s+(o.payment==='cash'?o.total:0);},0)}});}
+    return out_({ok:true,name:drvName_(ddr),orders:ddo.filter(function(o){return o.status==='out';}).sort(function(x,y){return (x.sched||x.time)-(y.sched||y.time);}).map(dsl),today:{n:ddn.length,cash:ddn.reduce(function(s,o){return s+(o.payment==='cash'?o.total:0);},0)},owed:stlOwed_(ddr)});}
   if(a==='coupons'){var cm=cdMap_(),cl=[],cu=cdUsesAll_(false);Object.keys(cm).forEach(function(k){var d=cm[k];if(d.active&&!d.hidden&&(!d.expires||d.expires>Date.now())&&(!d.maxUses||(cu[k]||0)<d.maxUses))cl.push(cdPub_(d));});return out_({ok:true,coupons:cl});}
   if(a==='couponDef'){var cc=String(p.code||'').toUpperCase().trim().slice(0,30);if(!cc||/^RR-/.test(cc))return out_({ok:false});
     var ck_='cd_bad_'+(norm_(p.phone).length===11?norm_(p.phone):'anon');if(+(CacheService.getScriptCache().get(ck_)||0)>=(ck_==='cd_bad_anon'?150:40))return out_({ok:false,error:'busy'});
@@ -482,6 +484,18 @@ function menuSet_(b){var ma=authAny_(b);if(ma.err)return out_({ok:false,error:ma
 /* ===== صفحة الطيار + سجل المراجعة + مسار الطلب ===== */
 var DRV_AUTH_='';
 function authAny_(b){if(DRV_AUTH_&&b&&b.user===DRV_AUTH_&&b.action==='setStatus'&&b.status==='delivered')return {role:'staff',user:DRV_AUTH_,name:DRV_AUTH_};return authAny0_(b);}   // الطيار يقدر «يسلّم» طلباته بس
+/* ═══ تسوية كاش الطيارين: كل تسوية بتسجّل أرقام الطلبات اللي اتسوّت (فمفيش طلب بيتحسب مرتين) ═══ */
+function stlSh_(){return sh_('DrvSettle',['time','driver','name','expected','received','diff','orders','by','note']);}
+function stlRow_(r){return {t:new Date(r[0]).getTime(),d:String(r[1]),name:String(r[2]),exp:+r[3]||0,rec:+r[4]||0,diff:+r[5]||0,n:String(r[6]||'').split(',').filter(function(x){return x;}).length,by:String(r[7]||''),note:String(r[8]||'')};}
+function stlDone_(){var s=stlSh_(),n=s.getLastRow(),m={};if(n<2)return m;var st=Math.max(2,n-400+1);s.getRange(st,7,n-st+1,1).getValues().forEach(function(r){String(r[0]||'').split(',').forEach(function(x){x=x.trim();if(x)m[x]=1;});});return m;}
+function delTime_(o){var m=/(?:^|;)delivered@(\d+)/.exec(String(o.history||''));return m?+m[1]:o.updated;}
+function stlScan_(){   // كاش الطلبات المتسلّمة (بطيار مسجّل) ولسه ماتسوّتش، متجمّع بالطيار — قراءة واحدة للشيت
+  var from=Date.now()-SETTLE_DAYS*864e5,done=stlDone_(),m={};
+  rowsSince_(tk_(),from-864e5).map(tkObj_).forEach(function(o){if(!o.drv||o.status!=='delivered'||o.payment!=='cash'||done[o.id])return;var t=delTime_(o);if(t<from)return;(m[o.drv]||(m[o.drv]=[])).push({id:o.id,total:+o.total||0,t:t,name:o.name});});
+  Object.keys(m).forEach(function(k){m[k].sort(function(a,b){return a.t-b.t;});});return m;}
+function stlOwed_(id){var c=CacheService.getScriptCache(),j=c.get('stl_sum'),m=null;if(j){try{m=JSON.parse(j);}catch(_){}}
+  if(!m){var s=stlScan_();m={};Object.keys(s).forEach(function(k){m[k]={n:s[k].length,amt:s[k].reduce(function(a,o){return a+o.total;},0)};});try{c.put('stl_sum',JSON.stringify(m),30);}catch(_){}}
+  return m[id]||{n:0,amt:0};}
 function drvTok_(id){var k=cfg_().ot_key;return k?hash_(k+'|drvpage',id).slice(0,24):'';}
 function drvChk_(id,tok){id=String(id||'').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,8);var t=drvTok_(id);return(id&&t&&drvName_(id)&&String(tok||'')===t)?id:'';}
 var AUD_={setStatus:1,setPaid:1,settingsSave:1,couponSave:1,couponDelete:1,staffSave:1,setSoldout:1,soldoutClear:1,areasSave:1,backupNow:1,custFlag:1,pointsAdd:1};
@@ -500,6 +514,7 @@ function audit_(b,pre,j){try{var A=b.action,t='',d='';
   else if(A==='menuSet'){t=String(b.name||'');d=b.remove?'رجّع الأصلي / حذف':(b.added?'صنف جديد · ':'')+(b.prices?'سعر '+b.prices:'')+(b.hidden?' · مخفي':'')+(b.img?' · صورة':'')+(b.desc?' · وصف':'');}
   else if(A==='drvSave'||A==='drvDelete'){t=String(b.id||b.name||'');d=A==='drvDelete'?'حذف طيار':'حفظ طيار '+String(b.name||'');}
   else if(A==='chResolve'){t=String(b.id||b.cid||'');d=String(b.op||'')+(b.reason?' · '+String(b.reason).slice(0,60):'');}
+  else if(A==='stlSave'){t=String(b.driver||'');d='تسوية كاش — مستلم '+(+b.received||0)+' ج'+(b.note?' · '+String(b.note).slice(0,60):'');}
   else if(A==='backupNow'){t='نسخة احتياطية';}
   var s=sh_('Audit',['time','user','action','target','detail']);s.appendRow([new Date(),String(b.user||''),A,safe_(t,80),safe_(d,300)]);
   if(s.getLastRow()>6000)s.deleteRows(2,1000);}catch(_){}}
@@ -515,12 +530,39 @@ function drvDeliver_(b){var di=drvChk_(b.d,b.t);if(!di)return out_({ok:false,err
   var id=String(b.id||''),t=tk_(),r=findRow_(t,id);if(!r)return out_({ok:false,error:'not_found'});
   var row=t.getRange(r,1,1,27).getValues()[0];if(String(row[26])!==di||String(row[15])!=='out')return out_({ok:false,error:'forbidden'});
   var u='driver:'+di,body={action:'setStatus',user:u,id:id,status:'delivered'};DRV_AUTH_=u;
-  try{var o=doPost_({postData:{contents:JSON.stringify(body)},parameter:{}}),j=JSON.parse(o.getContent());if(j&&j.ok)audit_(body,{old:'out'},j);return o;}finally{DRV_AUTH_='';}}
+  try{var o=doPost_({postData:{contents:JSON.stringify(body)},parameter:{}}),j=JSON.parse(o.getContent());if(j&&j.ok){audit_(body,{old:'out'},j);try{CacheService.getScriptCache().remove('stl_sum');}catch(_){}}return o;}finally{DRV_AUTH_='';}}
 function doPost(e){
   var b={};try{b=JSON.parse(e.postData.contents);}catch(_){}
   var A=b&&b.action;
   if(A==='ev')return evRec_(b);
   if(A==='drvDeliver')return drvDeliver_(b);
+  if(A==='drvPos'){var pi=drvChk_(b.d,b.t);if(!pi)return out_({ok:false,error:'auth'});   // موقع الطيار من صفحته نفسها (بديل/مكمّل لتطبيق OwnTracks) — بنفس الكاش اللي بيقراه العميل والداشبورد
+    if(!rl_('dpp_'+pi,10,60))return out_({ok:false,error:'busy'});
+    var plat=+b.lat,plon=+b.lon;if(b.lat==null||b.lon==null||!isFinite(plat)||!isFinite(plon)||Math.abs(plat)>90||Math.abs(plon)>180||+b.acc>300)return out_({ok:false,error:'bad'});
+    CacheService.getScriptCache().put('otl_'+pi,JSON.stringify({lat:plat,lon:plon,t:Date.now(),v:+b.vel||0}),21600);return out_({ok:true});}
+  if(A==='stlGet'){var sg=authAny_(b);if(sg.err)return out_({ok:false,error:sg.err});if(sg.role!=='manager'&&sg.role!=='staff')return out_({ok:false,error:'forbidden'});   // كاش معلّق على كل طيار
+    var sm=stlScan_(),sd=drv_().map(function(d){var l=sm[d.id]||[];return {id:d.id,name:d.name,n:l.length,amt:l.reduce(function(s,o){return s+o.total;},0),orders:l};});
+    return out_({ok:true,days:SETTLE_DAYS,drivers:sd,last:sg.role==='manager'?lastRows_(stlSh_(),25).reverse().map(stlRow_):[]});}
+  if(A==='stlSave'){var sv=authAny_(b);if(sv.err)return out_({ok:false,error:sv.err});if(sv.role!=='manager'&&sv.role!=='staff')return out_({ok:false,error:'forbidden'});   // استلام الكاش من الطيار (بيتحسب من الطلبات المختارة بس — مش من رقم العميل)
+    var slk=LockService.getScriptLock();try{slk.waitLock(5000);}catch(_){return out_({ok:false,error:'busy'});}
+    try{var sdi=String(b.driver||'').toLowerCase().replace(/[^a-z0-9]/g,'').slice(0,8);if(!drvName_(sdi))return out_({ok:false,error:'bad_driver'});
+      var swant={};(b.ids||[]).forEach(function(x){swant[String(x)]=1;});var sop=(stlScan_()[sdi]||[]).filter(function(o){return swant[o.id];});
+      if(!sop.length)return out_({ok:false,error:'nothing'});
+      var srec=Math.round(+b.received*100)/100;if(!(srec>=0&&srec<=1e6))return out_({ok:false,error:'bad_amount'});
+      var sexp=sop.reduce(function(s,o){return s+o.total;},0);
+      stlSh_().appendRow([new Date(),sdi,drvName_(sdi),sexp,srec,Math.round((srec-sexp)*100)/100,sop.map(function(o){return o.id;}).join(','),sv.user,safe_(b.note||'',120)]);
+      CacheService.getScriptCache().remove('stl_sum');audit_(b,{},{});
+      return out_({ok:true,exp:sexp,rec:srec,diff:srec-sexp,n:sop.length});}finally{slk.releaseLock();}}
+  if(A==='stlLog'){var sl=authAny_(b);if(sl.err)return out_({ok:false,error:sl.err});if(sl.role!=='manager')return out_({ok:false,error:'forbidden'});   // تسويات فترة + الكاش المعلّق حاليًا (لتقرير أداء الطيارين)
+    var sf=+b.from||0,st_=+b.to||Date.now(),sow={},ssm=stlScan_();Object.keys(ssm).forEach(function(k){sow[k]={n:ssm[k].length,amt:ssm[k].reduce(function(a,o){return a+o.total;},0)};});
+    return out_({ok:true,rows:lastRows_(stlSh_(),1500).map(stlRow_).filter(function(x){return x.t>=sf&&x.t<st_;}),owed:sow});}
+  if(A==='waMark'){var wm=authAny_(b);if(wm.err)return out_({ok:false,error:wm.err});if(wm.role!=='manager')return out_({ok:false,error:'forbidden'});   // سجل رسائل واتساب للعملاء (مشترك بين كل الأجهزة)
+    var wph=norm_(b.phone);if(wph.length!==11)return out_({ok:false,error:'bad_phone'});
+    var wsh=sh_('WaLog',['time','phone','user']),wr_=wsh.getLastRow()+1;wsh.getRange(wr_,2).setNumberFormat('@');wsh.getRange(wr_,1,1,3).setValues([[new Date(),wph,wm.user]]);return out_({ok:true});}
+  if(A==='waLog'){var wl=authAny_(b);if(wl.err)return out_({ok:false,error:wl.err});if(wl.role!=='manager')return out_({ok:false,error:'forbidden'});
+    var wls=sh_('WaLog',['time','phone','user']),wn=wls.getLastRow(),wmap={};
+    if(wn>=2){var wst=Math.max(2,wn-3000+1);wls.getRange(wst,1,wn-wst+1,2).getValues().forEach(function(r){var p=norm_(r[1]),t=new Date(r[0]).getTime();if(p.length===11&&t>(wmap[p]||0))wmap[p]=t;});}
+    return out_({ok:true,map:wmap});}
   if(A==='menuSet')return menuSet_(b);
   if(A==='auditList'){var au=authAny_(b);if(au.err)return out_({ok:false,error:au.err});if(au.role!=='manager')return out_({ok:false,error:'forbidden'});
     return out_({ok:true,rows:lastRows_(sh_('Audit',['time','user','action','target','detail']),300).reverse().map(function(r){return {t:new Date(r[0]).getTime(),u:String(r[1]),a:String(r[2]),id:String(r[3]),d:String(r[4])};})});}

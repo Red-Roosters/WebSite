@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
+<meta name="theme-color" content="#D92B2B"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="طلبات RR"><meta name="apple-mobile-web-app-status-bar-style" content="default"><link rel="apple-touch-icon" href="rr-dash-apple.png">
+<script>/* تثبيت كتطبيق: manifest بيتبني من مكان الصفحة (بيشتغل مهما كان اسم الفولدر) */(function(){try{var B=location.origin+location.pathname,I=function(n){return new URL(n,location.href).href};var m={name:'لوحة طلبات ريد روستر',short_name:'طلبات RR',lang:'ar',dir:'rtl',start_url:B,scope:B,display:'standalone',background_color:'#FAF6F1',theme_color:'#D92B2B',icons:[{src:I('rr-dash-192.png'),sizes:'192x192',type:'image/png'},{src:I('rr-dash-512.png'),sizes:'512x512',type:'image/png'},{src:I('rr-dash-maskable.png'),sizes:'512x512',type:'image/png',purpose:'maskable'}]};var l=document.createElement('link');l.rel='manifest';l.href=URL.createObjectURL(new Blob([JSON.stringify(m)],{type:'application/manifest+json'}));document.head.appendChild(l);}catch(e){}})();</script>
 <title>لوحة طلبات ريد روستر</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@500;700;900&family=Tajawal:wght@800;900&display=swap" rel="stylesheet">
@@ -103,6 +105,10 @@ main{max-width:1280px;margin:0 auto;padding:16px}
 .cxb textarea{width:100%;margin-top:10px;padding:10px 12px;border:2px solid var(--line);border-radius:12px;font:600 .92rem "Cairo",sans-serif;min-height:70px;resize:vertical}
 .cxb textarea:focus{outline:none;border-color:var(--red)}
 .cxa{display:flex;gap:8px;margin-top:14px}
+.stlD{border:1px solid var(--line);border-radius:14px;padding:12px;margin:10px 0}.stlD h3{margin:0 0 6px;font-size:1rem;display:flex;justify-content:space-between;gap:8px}
+.stlO{max-height:150px;overflow:auto;font-size:.85rem;margin:6px 0;background:#faf6f1;border-radius:10px;padding:6px 8px}.stlO label{display:flex;gap:8px;align-items:center;padding:3px 0;margin:0}.stlO input{width:auto;flex:0 0 auto}
+.stlF{display:flex;gap:8px;flex-wrap:wrap}.stlF label{flex:1;min-width:130px;font-size:.82rem;display:flex;flex-direction:column;gap:3px}
+.stlDiff{font-weight:900;font-size:.9rem}.stlDiff.neg{color:var(--red)}.stlDiff.pos{color:var(--green)}
 .cxa .btn{flex:1}
 .btn.cancelok{background:#c01048}
 .btn:disabled{opacity:.4;cursor:not-allowed}
@@ -263,6 +269,7 @@ main.wide{max-width:none}
     <button class="ib hide" id="vSet">⚙️ الإعدادات</button>
     <button class="ib hide" id="vStaff">👥 الموظفين</button>
     <div class="live" id="live"><i></i><span id="liveT">متصل</span></div>
+    <button class="ib hide" id="pwaBtn" type="button">📲 ثبّت التطبيق</button>
     <button class="ib" id="snd">🔔 الصوت: شغال</button>
     <button class="ib" id="rf">🔄 تحديث</button>
     <button class="ib" id="out">خروج</button>
@@ -324,12 +331,14 @@ main.wide{max-width:none}
     <div id="cuSub1">
     <div class="panel"><h2>📇 العملاء</h2>
       <div class="rng"><label>الفترة<select id="cuDays"><option value="90">آخر ٣ شهور</option><option value="180">آخر ٦ شهور</option><option value="365">آخر سنة</option></select></label>
+        <label>«وحشتنا» بعد<select id="cuLost"><option value="21">٢١ يوم</option><option value="30" selected>٣٠ يوم</option><option value="45">٤٥ يوم</option><option value="60">٦٠ يوم</option><option value="90">٩٠ يوم</option></select></label>
         <label>بحث<input id="cuQ" type="search" placeholder="🔎 اسم أو رقم"></label>
         <label>كود الخصم في الرسالة (اختياري)<input id="cuCode" dir="ltr" maxlength="20" placeholder="مثلاً COMEBACK" autocapitalize="characters"></label>
-        <button class="btn ghost" id="cuGo" type="button">🔄 تحديث</button></div>
+        <button class="btn ghost" id="cuGo" type="button">🔄 تحديث</button>
+        <button class="btn main" id="cuSeqGo" type="button">▶️ إرسال متتابع</button></div>
       <div class="seg" id="cuSeg"></div>
       <div class="hint">زرار واتساب بيفتح رسالة جاهزة تبعتها بنفسك لكل عميل (مش إرسال جماعي). العملاء اللي كلّمتهم في آخر ١٤ يوم بيتعتّموا. اعمل الكود من تبويب الكوبونات الأول (مثلاً «لأول طلب بس» مقفول عشان يشتغل مع العميل القديم).</div></div>
-    <div class="panel"><div id="cuOut">⏳...</div></div>
+    <div class="panel"><div id="cuStat"></div><div id="cuSeq" class="hide"></div><div id="cuOut">⏳...</div></div>
     </div>
     <div id="cuSub2" class="hide">
       <div class="panel"><h2>⭐ نقاط العملاء</h2>
@@ -426,6 +435,13 @@ main.wide{max-width:none}
 </div></div>
 <div id="lr" class="cx hide" role="dialog" aria-modal="true" aria-label="تقييمات منخفضة"><div class="cxb"><h2>⭐ تقييمات منخفضة (آخر ٣ أيام)</h2><p>كلّم العميل بسرعة — الرقم والطلب في كارت الطلب أو تبويب العملاء.</p><div id="lrList"></div><div class="cxa"><button class="btn ghost" id="lrX" type="button">إغلاق</button></div></div></div>
 <div id="chMo" class="cx hide"><div class="cxb"><h2>🔔 تعديلات وطلبات العملاء</h2><p>تعديل/إلغاء العميل اتنفّذ فعلًا (تأكد بـ«تم الاطلاع»). الطلبات اللي جاية بعد المدة محتاجة قرارك — العميل مستني.</p><div id="chList"></div><div class="cxa"><button type="button" class="btn ghost" id="chClose">إغلاق</button></div></div></div>
+<div id="stl" class="cx hide" role="dialog" aria-modal="true" aria-label="تسوية كاش الطيارين"><div class="cxb" style="width:min(580px,100%)">
+  <h2>💵 تسوية كاش الطيارين</h2>
+  <p class="hint" id="stlHint" style="margin:0 0 6px"></p>
+  <div id="stlList">⏳...</div>
+  <div id="stlLog"></div>
+  <div class="cxa"><button class="btn ghost" id="stlX" type="button">إغلاق</button></div>
+</div></div>
 <div id="toast"></div>
 
 <script>
@@ -701,19 +717,66 @@ function drvWa(o, dv){
   return 'https://wa.me/20' + String(dv.phone).replace(/^0/, '') + '?text=' + encodeURIComponent(txt);
 }
 const dlBtn = x => role === 'manager' && x.tok ? '<button type="button" class="btn tiny ghost" data-dl="' + esc(x.id) + '" title="نسخ رابط صفحة الطيار">🔗</button>' : '';
-$('drvBar').addEventListener('click', e => { const b = e.target.closest('[data-dl]'); if (!b) return; const x = drivers.find(v => v.id === b.dataset.dl); if (x && x.tok) { copyText(new URL('driver.html', location.href).href + '?d=' + x.id + '&t=' + x.tok); toast('✅ اتنسخ رابط صفحة ' + x.name + ' — ابعته له واتساب (مرة واحدة)'); } });
+$('drvBar').addEventListener('click', e => { if (e.target.closest('[data-stl="open"]')) { stlOpen(); return; } const b = e.target.closest('[data-dl]'); if (!b) return; const x = drivers.find(v => v.id === b.dataset.dl); if (x && x.tok) { copyText(new URL('driver.html', location.href).href + '?d=' + x.id + '&t=' + x.tok); toast('✅ اتنسخ رابط صفحة ' + x.name + ' — ابعته له واتساب (مرة واحدة)'); } });
 function drvBarRender(){
   const bar = $('drvBar'); if (!bar) return;
   if (!drivers.length) { bar.classList.add('hide'); return; }
   const live = drivers.filter(x => dseen[x.id] != null && dseen[x.id] < 120).length;
   bar.classList.remove('hide');
-  bar.innerHTML = '<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 10px"><b>🛵 الطيارين (' + live + ' لايف):</b>' + drivers.map(x => {
+  bar.innerHTML = '<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 10px"><b>🛵 الطيارين (' + live + ' لايف):</b><button type="button" data-stl="open" style="padding:6px 12px;border-radius:999px;background:#0B6E4F;color:#fff;border:0;font-weight:800;font-size:.85rem;cursor:pointer">💵 تسوية الطيارين</button>' + drivers.map(x => {
     const n = orders.filter(o => o.status === 'out' && dasg[o.id] === x.id).length, p = dpos[x.id];
     const t = dDot(x.id) + ' ' + esc(x.name) + (n ? ' · ' + n + ' طلب' : '') + (dseen[x.id] != null ? ' · ' + dAge(dseen[x.id]) : '');
     const st = 'padding:6px 12px;border-radius:999px;background:#fff;border:1px solid #ddd;font-weight:700;font-size:.85rem;color:inherit;text-decoration:none';
     return dlBtn(x) + (p ? '<a href="https://www.google.com/maps?q=' + p[0] + ',' + p[1] + '" target="_blank" rel="noopener" style="' + st + '">' + t + ' 📍</a>' : '<span style="' + st + '">' + t + '</span>');
   }).join('') + '</div><div style="font-size:.75rem;opacity:.65;margin-bottom:8px">🟢 لايف (آخر ٢ دقيقة) · 🟠 قديم · ⚪ مفيش إشارة — دوس على الطيار تشوف مكانه على الخريطة</div>';
 }
+/* ═══ تسوية كاش الطيارين ═══ */
+let stlData = null;
+async function stlOpen(keep){
+  $('stl').classList.remove('hide'); if (!keep) { $('stlList').innerHTML = '⏳ بنحمّل...'; $('stlLog').innerHTML = ''; }
+  try {
+    const j = await post({action:'stlGet', user});
+    if (!j.ok) { $('stlList').innerHTML = '<div class="empty">' + (j.error === 'forbidden' ? '⛔ مش مسموح' : '⚠️ مقدرناش نحمّل — اتأكد إنك عملت Deploy ▸ New version لـ Code.gs') + '</div>'; return; }
+    stlData = j; stlRender();
+  } catch (e) { $('stlList').innerHTML = '<div class="empty">⚠️ مفيش اتصال</div>'; }
+}
+function stlRender(){
+  const j = stlData, w = j.drivers.filter(x => x.n);
+  $('stlHint').textContent = 'كاش الطلبات اللي الطيار سلّمها (آخر ' + j.days + ' أيام) ولسه ماتسوّاش. شيل علامة أي طلب لسه فلوسه ماوصلتش، واكتب المبلغ اللي استلمته فعليًا.';
+  $('stlList').innerHTML = w.length ? w.map(x => '<div class="stlD" data-d="' + esc(x.id) + '"><h3><span>🛵 ' + esc(x.name) + '</span><span class="stlE">' + money(x.amt) + '</span></h3>'
+    + '<div class="stlO">' + x.orders.map(o => '<label><input type="checkbox" checked data-amt="' + o.total + '" data-id="' + esc(o.id) + '"> #' + esc(o.id) + ' · ' + esc(o.name || '') + ' · <b>' + money(o.total) + '</b> <small style="color:var(--mute)">' + clock(o.t) + '</small></label>').join('') + '</div>'
+    + '<div class="stlF"><label>المستلم فعليًا (ج)<input type="number" class="stlR" inputmode="decimal" min="0" step="0.5" dir="ltr" value="' + x.amt + '"></label><label>ملاحظة (اختياري)<input class="stlN" maxlength="100" placeholder="مثلاً: ناقص ١٠ ج فكّة"></label></div>'
+    + '<div style="margin-top:8px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button type="button" class="btn main" data-stl="save">✅ استلمت الكاش</button><span class="stlDiff"></span></div></div>').join('')
+    : '<div class="empty">مفيش كاش معلّق على أي طيار 🙌</div>';
+  stlDiff();
+  const lg = j.last || [];
+  $('stlLog').innerHTML = lg.length ? '<h3 style="margin:14px 0 6px">آخر التسويات</h3>' + tbl(['الوقت', 'الطيار', 'المتوقّع', 'المستلم', 'الفرق', 'بواسطة'], lg.map(x => [new Date(x.t).toLocaleString('ar-EG', {day:'numeric', month:'short', hour:'numeric', minute:'2-digit'}), esc(x.name), money(x.exp), money(x.rec), x.diff === 0 ? '✔' : '<span style="color:' + (x.diff < 0 ? 'var(--red)' : 'var(--green)') + ';font-weight:800">' + (x.diff < 0 ? '−' : '+') + money(Math.abs(x.diff)) + '</span>', esc(x.by) + (x.note ? '<br><small>' + esc(x.note) + '</small>' : '')])) : '';
+}
+function stlDiff(box, fromBoxes){
+  (box ? [box] : [...document.querySelectorAll('#stlList .stlD')]).forEach(b => {
+    const ck = [...b.querySelectorAll('input[type=checkbox]:checked')], exp = ck.reduce((s, c) => s + (+c.dataset.amt || 0), 0), r = b.querySelector('.stlR');
+    b.querySelector('.stlE').textContent = money(exp) + ' (' + num(ck.length) + ' طلب)';
+    if (fromBoxes || !r.dataset.edited) r.value = exp;
+    const df = Math.round(((+r.value || 0) - exp) * 100) / 100, el = b.querySelector('.stlDiff');
+    el.className = 'stlDiff' + (df < 0 ? ' neg' : df > 0 ? ' pos' : ''); el.textContent = df === 0 ? '✔ مطابق' : df < 0 ? '⚠️ ناقص ' + money(-df) : 'زيادة ' + money(df);
+  });
+}
+$('stlList').addEventListener('change', e => { const b = e.target.closest('.stlD'); if (b && e.target.type === 'checkbox') stlDiff(b, true); });
+$('stlList').addEventListener('input', e => { const b = e.target.closest('.stlD'); if (b && e.target.classList.contains('stlR')) { e.target.dataset.edited = '1'; stlDiff(b); } });
+$('stlList').addEventListener('click', async e => {
+  const btn = e.target.closest('[data-stl="save"]'); if (!btn || btn.disabled) return; const b = btn.closest('.stlD'), id = b.dataset.d, nm = (drivers.find(x => x.id === id) || {}).name || id;
+  const ids = [...b.querySelectorAll('input[type=checkbox]:checked')].map(c => c.dataset.id), rec = +b.querySelector('.stlR').value;
+  if (!ids.length) return toast('اختار طلب واحد على الأقل'); if (!(rec >= 0)) return toast('اكتب المبلغ المستلم');
+  if (!confirm('تأكيد استلام ' + rec + ' ج من ' + nm + ' (عن ' + ids.length + ' طلب)؟')) return;
+  btn.disabled = true; btn.textContent = '⏳...';
+  try {
+    const j = await post({action:'stlSave', user, driver:id, ids, received:rec, note:b.querySelector('.stlN').value.trim()});
+    if (!j.ok) { toast(j.error === 'nothing' ? '⚠️ الطلبات دي اتسوّت قبل كده — بنحدّث القايمة' : '⚠️ مقدرناش نسجّل التسوية — جرّب تاني'); }
+    else toast(j.diff === 0 ? '✅ اتسجّلت التسوية — مطابق' : '✅ اتسجّلت التسوية — ' + (j.diff < 0 ? 'ناقص ' : 'زيادة ') + money(Math.abs(j.diff)));
+  } catch (x) { toast('⚠️ مفيش اتصال'); }
+  stlOpen(true);
+});
+$('stlX').onclick = () => $('stl').classList.add('hide');
 function pickDriver(){
   return new Promise(res => {
     if (!drivers.length) { toast('ℹ️ مفيش طيارين متسجلين للتتبع — ضيفهم من الإعدادات (وتأكد إنك عملت Deploy ▸ New version)'); return res(undefined); }
@@ -938,11 +1001,17 @@ $('anAud').onclick = async () => {
   ov.onclick = e => { if (e.target === ov || e.target.id === 'audX') ov.remove(); }; document.body.appendChild(ov);
 };
 async function anExtra(os, from, to){
-  const out = $('anOut'), nm = id => (drivers.find(x => x.id === id) || {}).name || id, dr = {};
-  os.forEach(o => { if (!o.drv || o.status !== 'delivered') return; const r = dr[o.drv] || (dr[o.drv] = {n:0, cash:0, amt:0, ts:[]}); r.n++; r.amt += o.total; if (o.payment === 'cash') r.cash += o.total;
-    const h = {}; String(o.history || '').split(';').forEach(p => { const a = p.split('@'); if (a[1]) h[a[0]] = +a[1]; }); if (h.out && h.delivered > h.out) r.ts.push((h.delivered - h.out) / 60000); });
-  const ks = Object.keys(dr).sort((a, b) => dr[b].n - dr[a].n);
-  let h = sec('🛵 أداء الطيارين', ks.length ? tbl(['الطيار', 'طلبات اتسلّمت', 'متوسط وقت التوصيل', 'الكاش المحصّل', 'إجمالي المبيعات'], ks.map(k => [esc(nm(k)), num(dr[k].n), mins(dr[k].ts.length ? dr[k].ts.reduce((a, b) => a + b, 0) / dr[k].ts.length : null), money(dr[k].cash), money(dr[k].amt)]))
+  const out = $('anOut'), nm = id => (drivers.find(x => x.id === id) || {}).name || id, dr = {}, SLOW = 45; let nodrv = 0;
+  os.forEach(o => { if (o.status !== 'delivered') return; if (!o.drv) { nodrv++; return; }
+    const r = dr[o.drv] || (dr[o.drv] = {n:0, cash:0, amt:0, ts:[], slow:0, days:new Set()}); r.n++; r.amt += o.total; if (o.payment === 'cash') r.cash += o.total; r.days.add(ymd(bizStart(eff(o))));
+    const h = parseHist(o.history); if (h.out && h.delivered > h.out) { const m = (h.delivered - h.out) / 60000; if (m < 600) { r.ts.push(m); if (m > SLOW) r.slow++; } } });
+  let sl = null; try { sl = await post({action:'stlLog', user, from, to}); } catch (e) {}
+  const stl = {}, owed = (sl && sl.ok && sl.owed) || {}; if (sl && sl.ok) sl.rows.forEach(x => { const s = stl[x.d] || (stl[x.d] = {exp:0, rec:0}); s.exp += x.exp; s.rec += x.rec; });
+  const ks = Object.keys(dr).sort((a, b) => dr[b].n - dr[a].n), av = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : null, d1 = m => m == null ? '—' : Math.round(m).toLocaleString('ar-EG') + ' د';
+  let h = sec('🛵 أداء الطيارين', ks.length ? (tbl(['الطيار', 'اتسلّم', 'متوسط التوصيل', 'أسرع / أبطأ', 'متأخر (+' + SLOW + ' د)', 'أيام شغل', 'متوسط/يوم', 'الكاش المحصّل', 'اتسوّى', 'الفرق', 'لسه عليه'], ks.map(k => { const r = dr[k], s = stl[k], w = owed[k], df = s ? Math.round((s.rec - s.exp) * 100) / 100 : null;
+      return [esc(nm(k)), num(r.n), d1(av(r.ts)), r.ts.length ? d1(Math.min(...r.ts)) + ' / ' + d1(Math.max(...r.ts)) : '—', r.ts.length ? num(r.slow) + ' (' + pct(r.slow / r.ts.length) + ')' : '—', num(r.days.size), (Math.round(r.n / Math.max(1, r.days.size) * 10) / 10).toLocaleString('ar-EG'), money(r.cash), s ? money(s.rec) : '—', df == null ? '—' : df === 0 ? '✔ مطابق' : '<span style="color:' + (df < 0 ? 'var(--red)' : 'var(--green)') + ';font-weight:800">' + (df < 0 ? 'ناقص ' : 'زيادة ') + money(Math.abs(df)) + '</span>', w && w.n ? '<b style="color:var(--orange)">' + money(w.amt) + '</b> (' + num(w.n) + ' طلب)' : '—']; }))
+      + bars(ks.map(k => [esc(nm(k)), dr[k].n]), num)
+      + '<div class="hint" style="margin-top:8px">متوسط التوصيل = من «خرج للتوصيل» لـ«اتسلّم» (بنتجاهل أي طلب فوق ١٠ ساعات عشان مايبوّظش المتوسط). «اتسوّى» و«الفرق» من تسويات الكاش جوه الفترة، و«لسه عليه» كاش معلّق دلوقتي مش مرتبط بالفترة.' + (nodrv ? ' ⚠️ ' + num(nodrv) + ' طلب اتسلّم من غير طيار مسجّل عليه — مش داخل في الجدول.' : '') + '</div>')
     : '<div class="hint">مفيش طلبات متسلّمة بطيار في الفترة دي — الطيار بيتسجّل على الطلب لما تختاره عند «خرج للتوصيل».</div>');
   const cu = {}; os.forEach(o => { if (o.status === 'cancelled' || !o.phone) return; const c = cu[o.phone] || (cu[o.phone] = {name:o.name, ph:o.phone, n:0, amt:0, last:0}); c.n++; c.amt += o.total; if (o.time > c.last) { c.last = o.time; c.name = o.name; } });
   const lapsed = Object.values(cu).filter(c => c.n >= 2 && Date.now() - c.last > 30 * 864e5).sort((a, b) => b.amt - a.amt).slice(0, 15);
@@ -1281,6 +1350,7 @@ function kotPrint(o){
 
 /* ═══ العملاء ═══ */
 let cuAll = [], cuSeg = 'all', cuTrunc = false;
+const cuLostD = () => +$('cuLost').value || 30;
 const cuWB = () => { try { return JSON.parse(localStorage.getItem('rr_wb') || '{}'); } catch (e) { return {}; } };
 async function cuLoad(){
   $('cuOut').innerHTML = '⏳ بنحمّل...';
@@ -1290,15 +1360,16 @@ async function cuLoad(){
     if (!j.ok) { $('cuOut').innerHTML = '<div class="empty">' + (j.error === 'forbidden' ? '⛔ للمدير بس' : '⚠️ مقدرناش نحمّل البيانات') + '</div>'; return; }
     cuTrunc = !!j.truncated; const m = {};
     j.orders.filter(o => o.status !== 'cancelled').sort((a, b) => a.time - b.time).forEach(o => {
-      const c = m[o.phone] || (m[o.phone] = {phone:o.phone, name:o.name, n:0, total:0, first:o.time, last:0, items:{}});
-      c.n++; c.total += +o.total || 0; c.last = o.time; c.name = o.name || c.name;
+      const c = m[o.phone] || (m[o.phone] = {phone:o.phone, name:o.name, n:0, total:0, first:o.time, last:0, items:{}, os:[]});
+      c.n++; c.total += +o.total || 0; c.os.push([o.time, +o.total || 0]); c.last = o.time; c.name = o.name || c.name;
       (o.items || []).forEach(i => { const k = String(i.n || '').replace(/\s*\(.*\)\s*$/, '').trim(); if (k) c.items[k] = (c.items[k] || 0) + (+i.q || 1); });
     });
     cuAll = Object.values(m).map(c => { const top = Object.keys(c.items).sort((a, b) => c.items[b] - c.items[a])[0] || ''; return Object.assign(c, {fav:top, since:Math.floor((to - c.last) / 864e5)}); });
+    try { const w = await post({action:'waLog', user}); if (w && w.ok) { const m = cuWB(); Object.keys(w.map).forEach(p => { if (!m[p] || w.map[p] > m[p]) m[p] = w.map[p]; }); try { localStorage.setItem('rr_wb', JSON.stringify(m)); } catch (x) {} } } catch (e) {}   // سجل الرسائل المشترك بين الأجهزة
     cuRender();
   } catch (e) { $('cuOut').innerHTML = '<div class="empty">⚠️ مفيش اتصال</div>'; }
 }
-function cuSegs(){ return [['all','الكل',() => true],['lost','وحشتنا (٣٠+ يوم)',c => c.since >= 30],['vip','مميزين (٤+ طلبات)',c => c.n >= 4],['new','جدد (طلب واحد)',c => c.n === 1],['active','نشطين (آخر ٣٠ يوم)',c => c.since < 30]]; }
+function cuSegs(){ return [['all','الكل',() => true],['lost','وحشتنا (' + num(cuLostD()) + '+ يوم)',c => c.since >= cuLostD()],['vip','مميزين (٤+ طلبات)',c => c.n >= 4],['new','جدد (طلب واحد)',c => c.n === 1],['active','نشطين (آخر ' + num(cuLostD()) + ' يوم)',c => c.since < cuLostD()]]; }
 function cuMsg(c){
   const code = $('cuCode').value.trim().toUpperCase();
   return 'أهلاً ' + (c.name || '') + ' 👋\nوحشتنا في ريد روستر 🐓' + (c.fav ? '\nلسه بتحب ' + c.fav + '؟ 😋' : '') + (code ? '\nاستخدم كود ' + code + ' في طلبك الجاي واستمتع بخصم 🎁' : '') + '\nاطلب من هنا: ' + SITE;
@@ -1314,10 +1385,34 @@ function cuRender(){
   $('cuOut').innerHTML = (cuTrunc ? '<div class="warnb" style="margin-bottom:10px">⚠️ البيانات اتقصّت (عدد الطلبات كبير) — اختار فترة أقصر.</div>' : '') +
     '<p class="hint" style="margin:0 0 8px">' + num(l.length) + ' عميل' + (l.length > 200 ? ' (أول ٢٠٠)' : '') + '</p>' +
     tbl(['العميل', 'طلبات', 'إجمالي', 'آخر طلب', 'الأكلة المفضلة', ''], rows.length ? rows : [['—', '', '', '', '', '']]);
+  const sent = cuAll.filter(c => wb[c.phone] && Date.now() - wb[c.phone] < 60 * 864e5), back = sent.filter(c => c.last > wb[c.phone]), rev = back.reduce((s, c) => s + c.os.filter(x => x[0] > wb[c.phone]).reduce((a, x) => a + x[1], 0), 0);
+  $('cuStat').innerHTML = sent.length ? '<div class="hint" style="margin:0 0 10px">📈 آخر ٦٠ يوم: اتبعتلهم رسالة <b>' + num(sent.length) + '</b> · رجعوا وطلبوا بعدها <b>' + num(back.length) + '</b> (' + pct(back.length / sent.length) + ') · إيرادهم ' + money(rev) + '</div>' : '';
 }
+function cuMark(ph){ const m = cuWB(); m[ph] = Date.now(); try { localStorage.setItem('rr_wb', JSON.stringify(m)); } catch (x) {} post({action:'waMark', user, phone:ph}).catch(() => {}); }
+/* إرسال متتابع: واتساب بيتفتح لكل عميل برسالة جاهزة (إنت اللي بتدوس إرسال) والسيستم بيسجّل ويجيب اللي بعده */
+let cuSq = {list:[], i:0};
+function cuSeqPaint(){
+  const el = $('cuSeq'), q = cuSq; if (!q.list.length) { el.classList.add('hide'); return; } el.classList.remove('hide');
+  if (q.i >= q.list.length) { el.innerHTML = '<div class="hint" style="margin:0 0 10px">✅ خلّصت القايمة (' + num(q.list.length) + ' عميل). <button type="button" class="btn ghost tiny" data-sq="stop">إغلاق</button></div>'; return; }
+  const c = q.list[q.i];
+  el.innerHTML = '<div class="warnb" style="margin:0 0 10px;background:#F3EEFF"><b>▶️ إرسال متتابع — ' + num(q.i + 1) + ' من ' + num(q.list.length) + '</b><div style="margin:6px 0"><b>' + esc(c.name) + '</b> <small dir="ltr">' + esc(c.phone) + '</small> · ' + num(c.n) + ' طلب · آخر طلب من ' + num(c.since) + ' يوم</div><pre style="white-space:pre-wrap;font:inherit;background:#fff;border-radius:10px;padding:8px;margin:0 0 8px">' + esc(cuMsg(c)) + '</pre><div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn main" data-sq="send">💬 افتح واتساب</button><button type="button" class="btn ghost" data-sq="skip">⏭️ تخطّي</button><button type="button" class="btn ghost" data-sq="stop">⏹️ إنهاء</button></div></div>';
+}
+$('cuSeq').addEventListener('click', e => {
+  const b = e.target.closest('[data-sq]'); if (!b) return; const a = b.dataset.sq, c = cuSq.list[cuSq.i];
+  if (a === 'stop') { cuSq = {list:[], i:0}; cuSeqPaint(); cuRender(); return; }
+  if (a === 'send' && c) { window.open('https://wa.me/20' + c.phone.replace(/^0/, '') + '?text=' + encodeURIComponent(cuMsg(c)), '_blank', 'noopener'); cuMark(c.phone); cuSq.i++; } else if (a === 'skip') cuSq.i++;
+  cuSeqPaint();
+});
+$('cuSeqGo').onclick = () => {
+  const seg = cuSegs(), f = (seg.find(x => x[0] === cuSeg) || seg[0])[2], wb = cuWB();
+  const l = cuAll.filter(f).filter(c => !(wb[c.phone] && Date.now() - wb[c.phone] < 14 * 864e5)).sort((a, b) => cuSeg === 'lost' ? b.total - a.total : b.last - a.last).slice(0, 100);
+  if (!l.length) return toast('ℹ️ مفيش عملاء في الشريحة دي (أو كلهم اتكلّموا في آخر ١٤ يوم)');
+  cuSq = {list:l, i:0}; cuSeqPaint();
+};
+$('cuLost').onchange = () => cuRender();
 $('cuSeg').addEventListener('click', e => { const b = e.target.closest('[data-s]'); if (b) { cuSeg = b.dataset.s; cuRender(); } });
 $('cuQ').addEventListener('input', () => cuRender()); $('cuCode').addEventListener('input', () => cuRender()); $('cuDays').onchange = cuLoad; $('cuGo').onclick = cuLoad;
-$('cuOut').addEventListener('click', e => { const a = e.target.closest('[data-wb]'); if (a) { const m = cuWB(); m[a.dataset.wb] = Date.now(); try { localStorage.setItem('rr_wb', JSON.stringify(m)); } catch (x) {} setTimeout(cuRender, 400); } });
+$('cuOut').addEventListener('click', e => { const a = e.target.closest('[data-wb]'); if (a) { cuMark(a.dataset.wb); setTimeout(cuRender, 400); } });
 
 /* ═══ الإعدادات والمناطق ═══ */
 let seAreas = [], seBuiltin = false, seFilter = '';
@@ -2263,6 +2358,19 @@ main:not(.hide){animation:none!important}
     var r=b.getBoundingClientRect(), s=document.createElement('span'); s.className='ripple';
     s.style.left=(e.clientX-r.left)+'px'; s.style.top=(e.clientY-r.top)+'px'; b.appendChild(s); setTimeout(function(){s.remove()},650);
   },{passive:true});
+})();
+</script>
+<script>
+/* ═══ تثبيت كتطبيق (PWA) ═══ */
+(function(){
+  var pb = document.getElementById('pwaBtn'), dip = null, st = function(){ return matchMedia('(display-mode: standalone)').matches || navigator.standalone === true; };
+  if (pb) {
+    addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); dip = e; if (!st()) pb.classList.remove('hide'); });
+    addEventListener('appinstalled', function(){ pb.classList.add('hide'); dip = null; });
+    if (/iphone|ipad|ipod/i.test(navigator.userAgent) && !st()) pb.classList.remove('hide');
+    pb.addEventListener('click', function(){ if (dip) { dip.prompt(); dip.userChoice.then(function(){ dip = null; pb.classList.add('hide'); }).catch(function(){}); } else alert('آيفون: دوس زر المشاركة ⬆️ ثم «إضافة إلى الشاشة الرئيسية».\nأندرويد: من قايمة المتصفح ⋮ اختار «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية».'); });
+  }
+  if ('serviceWorker' in navigator) addEventListener('load', function(){ navigator.serviceWorker.register('staff-sw.js', {scope: location.pathname}).catch(function(){}); });
 })();
 </script>
 </body>
