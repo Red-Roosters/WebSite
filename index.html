@@ -4736,7 +4736,7 @@ imChips.previousElementSibling.style.display = noChips ? 'none' : '';
     function deliveryNote() {
         const c = window.RR_CFG || {};
         if (c.pause && c.pause.on) return `<div class="delivery-time-note" style="border-color:#9E1B1B;color:#9E1B1B">⏸️ ${esc(c.pause.msg || 'التوصيل متوقف مؤقتًا')} — اختار «استلام من الفرع» لو حابب.</div>`;
-        if (typeof SC !== 'undefined' && SC && SC.mode === 'later' && $('f_sched').value) return `<div class="delivery-time-note" style="border-color:#7C3AED;color:#5B21B6">⏰ طلبك متحجوز لميعاد <b>النهاردة ${esc(timeLabel(+$('f_sched').value))}</b> — هنكلمك نأكد الحجز.</div>`;
+        if (typeof SC !== 'undefined' && SC && SC.mode === 'later' && $('f_sched').value) return `<div class="delivery-time-note" style="border-color:#7C3AED;color:#5B21B6">⏰ طلبك محجوز لميعاد <b>النهاردة ${esc(timeLabel(+$('f_sched').value))}</b> — هنكلمك نأكد الحجز.</div>`;
         const e = etaMin();
         return `<div class="delivery-time-note">⏱️ وقت التوصيل المتوقع${e.area ? ' لمنطقتك' : ' حاليًا'} حوالي ${e.m} دقيقة${e.busy || e.m > 55 ? '' : ' — والحد الأقصى 60 دقيقة من تأكيد الأوردر'}${c.busy && c.busy.msg ? '<br><small>' + esc(c.busy.msg) + '</small>' : ''}</div>`;
     }

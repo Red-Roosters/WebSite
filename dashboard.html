@@ -262,6 +262,7 @@ main.wide{max-width:none}
     <button class="ib hide" id="pbChip" type="button">🔕 الإشعارات واقفة</button>
     <button class="ib act hide" id="vOrders">🗂️ الطلبات</button>
     <button class="ib hide" id="vMenu">🚫 الأصناف</button>
+    <button class="ib hide" id="vDrv">🛵 الطيارين</button>
     <button class="ib hide" id="vAn">📊 التحليلات</button>
     <button class="ib hide" id="vCp">🎟️ الكوبونات</button>
     <button class="ib hide" id="vCust">📇 العملاء</button>
@@ -277,7 +278,6 @@ main.wide{max-width:none}
   <div id="bars"><div id="alertBar" class="hide"></div><div id="chBar" class="hide"></div></div>
   <main id="mainEl">
     <div class="stats" id="stats"></div>
-    <div id="drvBar" class="hide"></div>
     <div class="tools"><div class="tabs" id="tabs"></div><input id="q" type="search" placeholder="ابحث بالاسم / الموبايل / رقم الطلب"></div>
     <div class="grid" id="grid"></div>
   </main>
@@ -352,6 +352,12 @@ main.wide{max-width:none}
       <div class="panel"><div id="ptOut">⏳...</div></div>
     </div>
   </main>
+  <main id="dvMain" class="hide">
+    <div class="panel"><div id="drvBar" class="hide"></div>
+      <div id="dvAddBox"><div class="frm" style="margin-top:8px"><input id="dvN" maxlength="30" placeholder="اسم الطيار (مثلاً: أحمد)"><input id="dvP" type="tel" inputmode="numeric" dir="ltr" maxlength="13" placeholder="رقم الواتساب (اختياري)"><button class="btn main" id="dvAdd" type="button">➕ إضافة طيار</button></div></div>
+      <div id="dvList" style="margin-top:10px"></div>
+      <div class="hint">بعد ما تضيف الطيار دوس «📲 ابعت اللينك» (واتساب) أو «🔗 نسخ» — ده لينك صفحته (طلباته + زرار تم التسليم)، بيتبعت له مرة واحدة. الكود بتاعه (Tracker ID) هو اللي بيتكتب في تطبيق OwnTracks عشان العميل يشوف مكانه على الخريطة.</div></div>
+  </main>
   <main id="seMain" class="hide">
     <div class="panel"><h2>⏰ المواعيد ووضع التشغيل</h2>
       <div class="cpf">
@@ -375,10 +381,6 @@ main.wide{max-width:none}
         <label class="ck"><input type="checkbox" id="sePayInsta"> 🏦 إنستا باي</label></div>
       <div class="cpf" style="margin-top:8px"><label>رسالة تظهر للعميل على الطريقة المقفولة (اختياري)<input id="sePayMsg" maxlength="60" placeholder="مثلاً: متوقفة مؤقتًا"></label></div>
       <div class="hint">شيل العلامة من أي طريقة وبعدين اضغط حفظ عشان توقفها، وحطها تاني عشان تشغّلها. لازم طريقة واحدة شغّالة على الأقل. السيرفر بيرفض أي طلب بطريقة مقفولة حتى لو الصفحة عند العميل لسه قديمة.</div>
-      <h2 style="margin-top:18px">🛵 الطيارين</h2>
-      <div class="frm" style="margin-top:8px"><input id="dvN" maxlength="30" placeholder="اسم الطيار (مثلاً: أحمد)"><input id="dvP" type="tel" inputmode="numeric" dir="ltr" maxlength="13" placeholder="رقم الواتساب (اختياري)"><button class="btn main" id="dvAdd" type="button">➕ إضافة طيار</button></div>
-      <div id="dvList" style="margin-top:10px"></div>
-      <div class="hint">بعد ما تضيف الطيار دوس «📲 ابعت اللينك» (واتساب) أو «🔗 نسخ» — ده لينك صفحته (طلباته + زرار تم التسليم)، بيتبعت له مرة واحدة. الكود بتاعه (Tracker ID) هو اللي بيتكتب في تطبيق OwnTracks عشان العميل يشوف مكانه على الخريطة.</div>
       <details style="margin-top:8px"><summary style="cursor:pointer;font-weight:800">⚙️ إعدادات متقدمة (OwnTracks)</summary>
       <div class="cpf" style="margin-top:8px">
         <label>مفتاح سري (بيتعمل تلقائي مع أول طيار)<input id="seOtKey" dir="ltr" maxlength="40" autocomplete="off" placeholder="مثلاً: rr2026secret"></label>
@@ -851,19 +853,19 @@ $('cxOk').onclick = () => { const r = cxReason(), id = cxId, fl = $('cxFlag').ch
 /* ═══ الأدوار والتنقل ═══ */
 function applyRole(){
   const m = role === 'manager';
-  ['vOrders','vMenu'].forEach(id => $(id).classList.remove('hide'));   // الموظف والمدير الاتنين يقدروا يوقّفوا الأصناف
+  ['vOrders','vMenu','vDrv'].forEach(id => $(id).classList.remove('hide'));   // الموظف والمدير الاتنين يقدروا يوقّفوا الأصناف
   ['vAn','vStaff','vCp','vCust','vSet','vHist'].forEach(id => $(id).classList.toggle('hide', !m));
   if (m && !applyRole.bk) { applyRole.bk = 1; setTimeout(bkCheck, 1500); }   // تنبيه لو النسخة الاحتياطية متأخرة/فاشلة
   $('who').textContent = myName;
-  if (!m && view !== 'orders' && view !== 'menu') setView('orders');
+  if (!m && view !== 'orders' && view !== 'menu' && view !== 'drivers') setView('orders');
 }
 function setView(v){
   view = v;
-  $('mainEl').classList.toggle('hide', v !== 'orders'); $('anMain').classList.toggle('hide', v !== 'analytics'); $('stMain').classList.toggle('hide', v !== 'staff'); $('mnMain').classList.toggle('hide', v !== 'menu'); $('cpMain').classList.toggle('hide', v !== 'coupons'); $('cuMain').classList.toggle('hide', v !== 'customers'); $('seMain').classList.toggle('hide', v !== 'settings'); $('hiMain').classList.toggle('hide', v !== 'history');
-  [['vOrders','orders'],['vMenu','menu'],['vAn','analytics'],['vCp','coupons'],['vCust','customers'],['vSet','settings'],['vStaff','staff'],['vHist','history']].forEach(([id, k]) => $(id).classList.toggle('act', k === v));
-  if (v === 'orders') render(); if (v === 'analytics') anInit(); if (v === 'staff') stLoad(); if (v === 'menu') mnLoad(); if (v === 'coupons') cpLoad(); if (v === 'customers') { cuTab('list'); cuLoad(); } if (v === 'settings') seLoad(); if (v === 'history') hiInit();
+  $('mainEl').classList.toggle('hide', v !== 'orders'); $('anMain').classList.toggle('hide', v !== 'analytics'); $('stMain').classList.toggle('hide', v !== 'staff'); $('mnMain').classList.toggle('hide', v !== 'menu'); $('cpMain').classList.toggle('hide', v !== 'coupons'); $('cuMain').classList.toggle('hide', v !== 'customers'); $('seMain').classList.toggle('hide', v !== 'settings'); $('hiMain').classList.toggle('hide', v !== 'history'); $('dvMain').classList.toggle('hide', v !== 'drivers');
+  [['vOrders','orders'],['vMenu','menu'],['vAn','analytics'],['vCp','coupons'],['vCust','customers'],['vSet','settings'],['vStaff','staff'],['vHist','history'],['vDrv','drivers']].forEach(([id, k]) => $(id).classList.toggle('act', k === v));
+  if (v === 'orders') render(); if (v === 'analytics') anInit(); if (v === 'staff') stLoad(); if (v === 'menu') mnLoad(); if (v === 'coupons') cpLoad(); if (v === 'customers') { cuTab('list'); cuLoad(); } if (v === 'settings') seLoad(); if (v === 'history') hiInit(); if (v === 'drivers') { drvBarRender(); dvRender(); $('dvAddBox').classList.toggle('hide', role !== 'manager'); }
 }
-$('vOrders').onclick = () => setView('orders'); $('vAn').onclick = () => setView('analytics'); $('vStaff').onclick = () => setView('staff'); $('vCp').onclick = () => setView('coupons'); $('vMenu').onclick = () => setView('menu'); $('vCust').onclick = () => setView('customers'); $('vSet').onclick = () => setView('settings'); $('vHist').onclick = () => setView('history');
+$('vOrders').onclick = () => setView('orders'); $('vAn').onclick = () => setView('analytics'); $('vStaff').onclick = () => setView('staff'); $('vCp').onclick = () => setView('coupons'); $('vMenu').onclick = () => setView('menu'); $('vCust').onclick = () => setView('customers'); $('vSet').onclick = () => setView('settings'); $('vHist').onclick = () => setView('history'); $('vDrv').onclick = () => setView('drivers');
 
 /*ANALYZE-START*/
 const pad2 = n => String(n).padStart(2, '0');
@@ -1997,8 +1999,9 @@ tbody tr:hover td{background:#FCFAF8}
     vCust:'<circle cx="9" cy="8" r="3.2"/><path d="M3 20a6 6 0 0112 0"/><path d="M16 6.5a3 3 0 010 5.5M18 20a5 5 0 00-3-4.5"/>',
     vCp:'<path d="M3 9a2 2 0 002-2V5.5h14V7a2 2 0 002 2v6a2 2 0 00-2 2v1.5H5V17a2 2 0 00-2-2z"/><path d="M10 9.5l4 5M10.5 14.5h.01M13.5 9.5h.01"/>',
     vSet:'<circle cx="12" cy="12" r="3"/><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M18.4 5.6l-1.8 1.8M7.4 16.6l-1.8 1.8"/>',
-    vStaff:'<circle cx="12" cy="8" r="3.4"/><path d="M5 20a7 7 0 0114 0"/>'};
-  var GR=[['العمليات',['vOrders','vHist','vMenu']],['التقارير والعملاء',['vAn','vCust','vCp']],['الإدارة',['vSet','vStaff']]];
+    vStaff:'<circle cx="12" cy="8" r="3.4"/><path d="M5 20a7 7 0 0114 0"/>',
+    vDrv:'<circle cx="6" cy="17" r="2.6"/><circle cx="18" cy="17" r="2.6"/><path d="M8.6 17h6.8M15 17l-2-7h-3M13 10h3l2 7M7 7h3"/>'};
+  var GR=[['العمليات',['vOrders','vHist','vMenu','vDrv']],['التقارير والعملاء',['vAn','vCust','vCp']],['الإدارة',['vSet','vStaff']]];
   var sb=document.createElement('aside'); sb.id='sb'; sb.setAttribute('aria-label','القائمة الرئيسية');
   sb.innerHTML='<div class="sb-brand"><i>R</i><div><b>ريد روستر</b><small>لوحة التحكم</small></div></div>';
   var grpEls=[];
@@ -2373,5 +2376,23 @@ main:not(.hide){animation:none!important}
   if ('serviceWorker' in navigator) addEventListener('load', function(){ navigator.serviceWorker.register('staff-sw.js', {scope: location.pathname}).catch(function(){}); });
 })();
 </script>
+
+<style id="rr-mobile-nav-fix">
+/* ═════ إصلاح الشريط العلوي على الموبايل ═════ */
+@media(max-width:900px){
+  #sb{display:flex!important;flex-wrap:wrap!important;gap:6px!important;padding:8px!important}
+  #sb .sb-brand{order:0!important;flex:none!important;padding:0 4px!important}
+  /* شريط الأدوات: صف واحد بيتسحب أفقيًا، العناصر مابتتكسرش */
+  #sb .nv-tools{order:1!important;flex:1 1 0!important;min-width:0!important;flex-wrap:nowrap!important;overflow-x:auto!important;justify-content:flex-start!important;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding:2px!important}
+  #sb .nv-tools::-webkit-scrollbar{display:none}
+  #sb .nv-tools>*{flex:none!important;white-space:nowrap!important;writing-mode:horizontal-tb!important}
+  #sb .nv-tools .ib{height:auto!important;max-width:none!important}
+  .nv-tools .live span{display:inline!important}
+  /* التبويبات: صف تحت، 3 في الصف، النص في سطر واحد */
+  #sb>.ib{order:2!important;flex:1 1 calc(33.33% - 6px)!important;min-width:0!important;white-space:nowrap!important;justify-content:center!important;padding:9px 6px!important;font-size:.82rem!important}
+  #sb>.ib span{overflow:hidden;text-overflow:ellipsis}
+  #sb>.ib svg{width:16px!important;height:16px!important;flex:none}
+}
+</style>
 </body>
 </html>
