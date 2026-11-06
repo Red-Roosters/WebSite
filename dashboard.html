@@ -334,7 +334,10 @@ main.wide{max-width:none}
     <div id="cuSub2" class="hide">
       <div class="panel"><h2>⭐ نقاط العملاء</h2>
         <div class="rng"><label>بحث<input id="ptQ" type="search" placeholder="🔎 اسم أو رقم"></label>
+          <label>الترتيب<select id="ptSort"><option value="points">الأكتر نقاطًا</option><option value="pending">الأكتر قيد التأكيد</option><option value="spent">الأكتر استبدالًا</option><option value="name">الاسم</option></select></label>
+          <label style="flex-direction:row;align-items:center;gap:6px"><input id="ptHide0" type="checkbox"> إخفاء اللي رصيده صفر</label>
           <button class="btn ghost" id="ptGo" type="button">🔄 تحديث</button>
+          <button class="btn ghost" id="ptCsv" type="button">⬇️ تصدير CSV</button>
           <button class="btn main" id="ptAdd" type="button">➕ إضافة / خصم لرقم</button></div>
         <div class="hint">كل العملاء اللي عندهم نقاط (مش مرتبط بفترة). «المتاح» هو اللي العميل يقدر يستبدله دلوقتي، و«قيد التأكيد» نقاط طلبات لسه ماتسلّمتش. كل إضافة أو خصم بيتسجّل في سجل المراجعة. ١٠ نقاط = ١ جنيه.</div></div>
       <div class="panel"><div id="ptOut">⏳...</div></div>
@@ -414,6 +417,7 @@ main.wide{max-width:none}
   <p id="pnDesc"></p>
   <div class="pnq" id="pnMode"><button type="button" data-m="add">➕ إضافة نقاط</button><button type="button" data-m="sub">➖ خصم نقاط</button></div>
   <label>رقم العميل<input id="pnPhone" type="tel" dir="ltr" inputmode="numeric" maxlength="14" placeholder="01xxxxxxxxx"></label>
+  <label>اسم العميل (اختياري — مفيد لو الرقم عمره ما طلب)<input id="pnNm" maxlength="40" placeholder="مثلاً: أحمد"></label>
   <label>عدد النقاط<input id="pnPts" type="number" dir="ltr" min="1" max="10000" step="1" inputmode="numeric" placeholder="مثلاً 100"></label>
   <div class="pnq" id="pnQ"><button type="button" data-v="50">50</button><button type="button" data-v="100">100</button><button type="button" data-v="200">200</button><button type="button" data-v="500">500</button><button type="button" data-v="1000">1000</button></div>
   <div class="pnm" id="pnMsg"></div>
@@ -1306,7 +1310,7 @@ function cuRender(){
   l.sort((a, b) => cuSeg === 'lost' ? b.total - a.total : b.last - a.last);
   const rows = l.slice(0, 200).map(c => { const rec = wb[c.phone] && Date.now() - wb[c.phone] < 14 * 864e5;
     return ['<span class="' + (rec ? 'dim' : '') + '"><b>' + esc(c.name) + '</b><br><small dir="ltr" style="color:#6B6B6B">' + esc(c.phone) + '</small></span>', num(c.n), money(c.total), 'من ' + num(c.since) + ' يوم', esc(c.fav) || '—',
-      '<a class="btn ghost tiny" target="_blank" rel="noopener" data-wb="' + esc(c.phone) + '" href="https://wa.me/20' + c.phone.replace(/^0/, '') + '?text=' + encodeURIComponent(cuMsg(c)) + '">💬 واتساب' + (rec ? ' ✓' : '') + '</a> <button type="button" class="btn ghost tiny" data-pn="' + esc(c.phone) + '" data-nm="' + esc(c.name) + '">⭐ نقاط</button> <button type="button" class="btn ghost tiny" data-pn="' + esc(c.phone) + '" data-nm="' + esc(c.name) + '" data-m="sub">➖ خصم</button>']; });
+      '<a class="btn ghost tiny" target="_blank" rel="noopener" data-wb="' + esc(c.phone) + '" href="https://wa.me/20' + c.phone.replace(/^0/, '') + '?text=' + encodeURIComponent(cuMsg(c)) + '">💬 واتساب' + (rec ? ' ✓' : '') + '</a>']; });
   $('cuOut').innerHTML = (cuTrunc ? '<div class="warnb" style="margin-bottom:10px">⚠️ البيانات اتقصّت (عدد الطلبات كبير) — اختار فترة أقصر.</div>' : '') +
     '<p class="hint" style="margin:0 0 8px">' + num(l.length) + ' عميل' + (l.length > 200 ? ' (أول ٢٠٠)' : '') + '</p>' +
     tbl(['العميل', 'طلبات', 'إجمالي', 'آخر طلب', 'الأكلة المفضلة', ''], rows.length ? rows : [['—', '', '', '', '', '']]);
@@ -1396,26 +1400,58 @@ function cuTab(t){
   $('cuSub1').classList.toggle('hide', t !== 'list'); $('cuSub2').classList.toggle('hide', t !== 'pts');
   if (t === 'pts') ptLoad();
 }
-async function ptLoad(){
+async function ptLoad(fresh){
   $('ptOut').innerHTML = '⏳ بنحمّل...';
   try {
-    const j = await post({action:'pointsList', user});
+    const j = await post({action:'pointsList', user, fresh:fresh === true});
     if (!j.ok) { $('ptOut').innerHTML = '<div class="empty">' + (j.error === 'forbidden' ? '⛔ للمدير بس' : '⚠️ مقدرناش نحمّل النقاط') + '</div>'; return; }
     ptAll = j.list || []; ptLoaded = true; ptRender();
   } catch (e) { $('ptOut').innerHTML = '<div class="empty">' + (String(e.message) === 'bad_action' ? '⚠️ حدّث Code.gs واعمل Deploy ▸ New version' : '⚠️ مفيش اتصال') + '</div>'; }
 }
+function ptView(){
+  const q = $('ptQ').value.trim().toLowerCase(), k = $('ptSort').value, hide = $('ptHide0').checked;
+  let l = ptAll.filter(c => (!q || (c.name + ' ' + c.phone).toLowerCase().includes(q)) && (!hide || c.points !== 0));
+  l.sort((a, b) => k === 'name' ? String(a.name || '~').localeCompare(String(b.name || '~'), 'ar') : (b[k] - a[k]));
+  return l;
+}
 function ptRender(){
-  const q = $('ptQ').value.trim().toLowerCase(), l = ptAll.filter(c => !q || (c.name + ' ' + c.phone).toLowerCase().includes(q));
-  const tot = ptAll.reduce((a, c) => a + Math.max(0, c.points), 0), pen = ptAll.reduce((a, c) => a + Math.max(0, c.pending), 0);
-  const rows = l.slice(0, 300).map(c => ['<b>' + esc(c.name || '—') + '</b><br><small dir="ltr" style="color:#6B6B6B">' + esc(c.phone) + '</small>',
-    '<b>' + num(c.points) + '</b><br><small style="color:#6B6B6B">= ' + money(c.points / PN_PER_EGP) + '</small>', num(c.pending), num(c.earned), num(c.spent),
-    '<button type="button" class="btn ghost tiny" data-pn="' + esc(c.phone) + '" data-nm="' + esc(c.name) + '">➕ إضافة</button> <button type="button" class="btn ghost tiny" data-pn="' + esc(c.phone) + '" data-nm="' + esc(c.name) + '" data-m="sub">➖ خصم</button>']);
+  const l = ptView(), tot = ptAll.reduce((a, c) => a + Math.max(0, c.points), 0), pen = ptAll.reduce((a, c) => a + Math.max(0, c.pending), 0);
+  const rows = l.slice(0, 300).map(c => { const d = 'data-pn="' + esc(c.phone) + '" data-nm="' + esc(c.name) + '"';
+    return ['<b>' + esc(c.name || '—') + '</b><br><small dir="ltr" style="color:#6B6B6B">' + esc(c.phone) + '</small>',
+    '<b>' + num(c.points) + '</b><br><small style="color:#6B6B6B">= ' + money(c.points / PN_PER_EGP) + '</small>', num(c.pending), num(c.earned), c.manual ? '<span style="color:' + (c.manual > 0 ? '#0B6E4F' : '#9E1B1B') + '">' + (c.manual > 0 ? '+' : '') + num(c.manual) + '</span>' : '—', num(c.spent),
+    '<button type="button" class="btn ghost tiny" ' + d + '>➕ إضافة</button> <button type="button" class="btn ghost tiny" ' + d + ' data-m="sub">➖ خصم</button> <button type="button" class="btn ghost tiny" data-ph="' + esc(c.phone) + '" data-nm="' + esc(c.name) + '">📜 سجل</button>']; });
   $('ptOut').innerHTML = '<p class="hint" style="margin:0 0 8px">' + num(l.length) + ' عميل' + (l.length > 300 ? ' (أول ٣٠٠)' : '') + ' · إجمالي النقاط المتاحة: <b>' + num(tot) + '</b> (= ' + money(tot / PN_PER_EGP) + ') · قيد التأكيد: ' + num(pen) + '</p>' +
-    tbl(['العميل', 'المتاح', 'قيد التأكيد', 'اتكسب', 'اتستبدل', ''], rows.length ? rows : [['—', '', '', '', '', '']]);
+    tbl(['العميل', 'المتاح', 'قيد التأكيد', 'اتكسب من الطلبات', 'تعديل يدوي', 'اتستبدل', ''], rows.length ? rows : [['—', '', '', '', '', '', '']]);
+}
+function ptCsv(){
+  const q = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+  const out = [['الاسم', 'الموبايل', 'المتاح', 'قيد التأكيد', 'اتكسب من الطلبات', 'تعديل يدوي', 'اتستبدل']].concat(ptView().map(c => [c.name, '="' + c.phone + '"', c.points, c.pending, c.earned, c.manual, c.spent]));
+  const blob = new Blob(['\ufeff' + out.map(r => r.map((v, i) => i === 1 && r !== out[0] ? v : q(v)).join(',')).join('\r\n')], {type:'text/csv;charset=utf-8'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'loyalty-points-' + ymd(Date.now()) + '.csv';
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+const PT_K = {order:'🛒 طلب', ref:'🤝 مكافأة دعوة', adj:'🛠️ تعديل يدوي', redeem:'🎟️ استبدال كود'};
+async function ptHist(phone, name){
+  const ov = document.createElement('div'); ov.id = 'ptHv';
+  ov.style.cssText = 'position:fixed;inset:0;z-index:90;background:rgba(20,12,10,.6);display:grid;place-items:center;padding:12px';
+  ov.innerHTML = '<div style="background:#fff;color:#222;border-radius:16px;padding:14px;width:min(640px,100%);max-height:88vh;overflow:auto;direction:rtl"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><b>📜 سجل نقاط ' + esc(name || '') + ' <span dir="ltr" style="color:#6B6B6B;font-weight:600">' + esc(phone) + '</span></b><button type="button" data-x="1" style="border:0;background:#f1eeee;border-radius:50%;width:34px;height:34px;cursor:pointer">✕</button></div><div id="ptHb">⏳ بنحمّل...</div></div>';
+  document.body.appendChild(ov);
+  const close = () => { ov.remove(); document.removeEventListener('keydown', esc_); }, esc_ = e => { if (e.key === 'Escape') close(); };
+  ov.addEventListener('click', e => { if (e.target === ov || e.target.closest('[data-x]')) close(); }); document.addEventListener('keydown', esc_);
+  try {
+    const j = await post({action:'pointsHistory', user, phone});
+    if (!j.ok) throw new Error(j.error || 'fail');
+    const rows = j.rows.map(r => { const sign = r.points > 0 ? '+' : '';
+      const st = r.kind === 'redeem' ? (r.used ? 'اتستخدم' : 'لسه ماتستخدمش') : (r.ok ? '✅ مؤكدة' : '⏳ قيد التأكيد');
+      const what = PT_K[r.kind] + (r.kind === 'order' ? ' #' + esc(r.ref) : r.kind === 'redeem' ? ' <small dir="ltr">' + esc(r.ref) + '</small>' : '') + (r.note ? '<br><small style="color:#6B6B6B">' + esc(r.note) + '</small>' : '');
+      return [new Date(r.t).toLocaleString('ar-EG', {day:'numeric', month:'short', hour:'numeric', minute:'2-digit'}), what, '<b style="color:' + (r.points < 0 ? '#9E1B1B' : '#0B6E4F') + '">' + sign + num(r.points) + '</b>', st]; });
+    $('ptHb').innerHTML = '<p class="hint" style="margin:0 0 8px">الرصيد المتاح: <b>' + num(j.balance.points) + '</b> نقطة (= ' + money(j.balance.points / PN_PER_EGP) + ') · قيد التأكيد: ' + num(j.balance.pending) + (j.more ? ' · (آخر ٢٠٠ حركة)' : '') + '</p>' +
+      tbl(['الوقت', 'الحركة', 'النقاط', 'الحالة'], rows.length ? rows : [['—', 'مفيش حركات', '', '']]);
+  } catch (e) { $('ptHb').innerHTML = '<div class="empty">' + (String(e.message) === 'bad_action' ? '⚠️ حدّث Code.gs واعمل Deploy ▸ New version' : '⚠️ مقدرناش نحمّل السجل') + '</div>'; }
 }
 $('cuTabs').addEventListener('click', e => { const b = e.target.closest('[data-ct]'); if (b) cuTab(b.dataset.ct); });
-$('ptQ').addEventListener('input', ptRender); $('ptGo').onclick = ptLoad; $('ptAdd').onclick = () => pnOpen('', '', 'add');
-$('ptOut').addEventListener('click', e => { const b = e.target.closest('[data-pn]'); if (b) pnOpen(b.dataset.pn, b.dataset.nm, b.dataset.m); });
+$('ptQ').addEventListener('input', ptRender); $('ptSort').onchange = ptRender; $('ptHide0').onchange = ptRender; $('ptGo').onclick = () => ptLoad(true); $('ptCsv').onclick = ptCsv; $('ptAdd').onclick = () => pnOpen('', '', 'add');
+$('ptOut').addEventListener('click', e => { const h = e.target.closest('[data-ph]'); if (h) { ptHist(h.dataset.ph, h.dataset.nm); return; } const b = e.target.closest('[data-pn]'); if (b) pnOpen(b.dataset.pn, b.dataset.nm, b.dataset.m); });
 
 /* ═══ إضافة نقاط ولاء يدويًا (للمدير) ═══ */
 const PN_PER_EGP = 10;   // لازم تطابق POINTS_PER_EGP في Code.gs
@@ -1432,7 +1468,7 @@ function pnSetMode(m){
   pnHint();
 }
 function pnOpen(phone, name, mode){
-  $('pnPhone').value = phone || ''; $('pnName').textContent = name ? '— ' + name : ''; $('pnPts').value = ''; $('pnWhy').value = ''; pnSetMode(mode);
+  $('pnPhone').value = phone || ''; $('pnNm').value = name || ''; $('pnName').textContent = name ? '— ' + name : ''; $('pnPts').value = ''; $('pnWhy').value = ''; pnSetMode(mode);
   $('pn').classList.remove('hide'); setTimeout(() => $(phone ? 'pnPts' : 'pnPhone').focus(), 50);
 }
 function pnClose(){ $('pn').classList.add('hide'); }
@@ -1446,9 +1482,9 @@ async function pnSave(){
   if (!confirm((sub ? 'تخصم ' : 'تضيف ') + pts + ' نقطة (= ' + (pts / PN_PER_EGP) + ' ج) ' + (sub ? 'من' : 'لـ') + ' الرقم ' + phone + '؟')) return;
   pnBusy = true; $('pnOk').disabled = true;
   try {
-    const j = await post({action:'pointsAdd', user, phone, points:pts, reason, op:pnMode});
+    const j = await post({action:'pointsAdd', user, phone, points:pts, reason, op:pnMode, name:$('pnNm').value.trim()});
     if (!j.ok) throw new Error(j.error || 'fail');
-    pnClose(); if (!$('cuSub2').classList.contains('hide')) ptLoad(); toast('✅ ' + (sub ? 'اتخصم ' : 'اتضافت ') + pts + ' نقطة — رصيد العميل دلوقتي ' + j.points + ' نقطة');
+    pnClose(); if (!$('cuSub2').classList.contains('hide')) ptLoad(true); toast('✅ ' + (sub ? 'اتخصم ' : 'اتضافت ') + pts + ' نقطة — رصيد العميل دلوقتي ' + j.points + ' نقطة');
   } catch (e) {
     const m = String(e.message); toast(m === 'forbidden' ? '⛔ إضافة النقاط للمدير بس' : m === 'bad_phone' ? '⚠️ رقم غير صحيح' : m === 'not_enough' ? '⚠️ الرصيد المتاح للعميل أقل من كده' : m === 'bad_points' ? '⚠️ عدد النقاط غير صحيح' : m === 'bad_action' ? '⚠️ حدّث Code.gs واعمل Deploy ▸ New version' : '⚠️ معرفناش نضيف النقاط');
   } finally { pnBusy = false; $('pnOk').disabled = false; }
@@ -1458,7 +1494,6 @@ $('pnPts').addEventListener('input', pnHint); $('pnPts').addEventListener('keydo
 $('pnMode').addEventListener('click', e => { const b = e.target.closest('[data-m]'); if (b) pnSetMode(b.dataset.m); });
 $('pnQ').addEventListener('click', e => { const b = e.target.closest('[data-v]'); if (b) { $('pnPts').value = b.dataset.v; pnHint(); } });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('pn').classList.contains('hide')) pnClose(); });
-$('cuOut').addEventListener('click', e => { const b = e.target.closest('[data-pn]'); if (b) pnOpen(b.dataset.pn, b.dataset.nm, b.dataset.m); });
 
 /* ═══ حالة الإشعارات ═══ */
 async function bellLoad(){
