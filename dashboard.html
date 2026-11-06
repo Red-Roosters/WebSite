@@ -271,6 +271,7 @@ main.wide{max-width:none}
     <button class="ib hide" id="vStaff">👥 الموظفين</button>
     <div class="live" id="live"><i></i><span id="liveT">متصل</span></div>
     <button class="ib hide" id="pwaBtn" type="button">📲 ثبّت التطبيق</button>
+    <button class="ib" id="pushB" type="button">🔔 إشعارات: ...</button>
     <button class="ib" id="snd">🔔 الصوت: شغال</button>
     <button class="ib" id="rf">🔄 تحديث</button>
     <button class="ib" id="out">خروج</button>
@@ -2374,6 +2375,38 @@ main:not(.hide){animation:none!important}
     pb.addEventListener('click', function(){ if (dip) { dip.prompt(); dip.userChoice.then(function(){ dip = null; pb.classList.add('hide'); }).catch(function(){}); } else alert('آيفون: دوس زر المشاركة ⬆️ ثم «إضافة إلى الشاشة الرئيسية».\nأندرويد: من قايمة المتصفح ⋮ اختار «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية».'); });
   }
   if ('serviceWorker' in navigator) addEventListener('load', function(){ navigator.serviceWorker.register('staff-sw.js', {scope: location.pathname}).catch(function(){}); });
+})();
+
+/* ═══ إشعارات الطلبات الجديدة على الموبايل (OneSignal) — بتشتغل حتى لو الداشبورد مقفولة ═══ */
+(function(){
+  var APP='24f07a03-ba83-4261-9f12-689fded386be', b = document.getElementById('pushB'), OS = null, started = false;
+  var ios = /iphone|ipad|ipod/i.test(navigator.userAgent), sa = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  var sup = ('Notification' in window) && ('serviceWorker' in navigator) && ('PushManager' in window);
+  function paint(){
+    if (!b) return;
+    if (!sup) { b.textContent = ios && !sa ? '🔔 ثبّت التطبيق الأول' : '🔔 غير مدعوم'; return; }
+    if (Notification.permission === 'denied') { b.textContent = '🔕 مقفولة من المتصفح'; return; }
+    var on = false; try { on = !!(OS && OS.User.PushSubscription.optedIn) && Notification.permission === 'granted'; } catch (e) {}
+    b.textContent = on ? '🔔 إشعارات: شغّالة' : '🔕 إشعارات: فعّل';
+  }
+  if (b) b.addEventListener('click', async function(){
+    if (ios && !sa && !sup) { alert('آيفون: دوس زر المشاركة ⬆️ ثم «إضافة إلى الشاشة الرئيسية»، وافتح الداشبورد من الأيقونة وبعدها فعّل الإشعارات.'); return; }
+    if (!OS) { b.textContent = '⏳ استنى...'; return; }
+    try { await OS.Notifications.requestPermission(); await OS.User.PushSubscription.optIn(); } catch (e) {} paint();
+  });
+  async function init(){
+    if (started || !token || !sup) return; started = true;
+    var eid = ''; try { var j = await post({action:'pushReg', user}); if (j && j.ok) eid = j.eid; } catch (e) {}
+    if (!eid) { started = false; return; }
+    var s = document.createElement('script'); s.src = 'https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js'; s.defer = true; document.head.appendChild(s);
+    window.OneSignalDeferred = window.OneSignalDeferred || [];
+    OneSignalDeferred.push(async function(O){
+      await O.init({appId:APP, serviceWorkerPath:location.pathname.replace(/[^\/]*$/, '') + 'staff-sw.js', serviceWorkerParam:{scope:location.pathname}, notifyButton:{enable:false}, allowLocalhostAsSecureOrigin:true});
+      OS = O; try { O.login(eid); } catch (e) {} paint();
+      try { O.Notifications.addEventListener('permissionChange', paint); O.User.PushSubscription.addEventListener('change', paint); } catch (e) {}
+    });
+  }
+  paint(); setInterval(init, 3000);   // بيبدأ أول ما الدخول يتم
 })();
 </script>
 

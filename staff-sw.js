@@ -1,4 +1,5 @@
-/* Service Worker لصفحة الطيار والداشبورد (تثبيت كتطبيق). مش بيلمس الـ API ولا موقع العملاء. */
+/* Service Worker لصفحة الطيار والداشبورد (تثبيت كتطبيق + إشعارات OneSignal). مش بيلمس الـ API ولا موقع العملاء. */
+try { importScripts('https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js'); } catch (e) {}   // استقبال إشعارات الطلبات (لازم يبقى أول سطر)
 const V = 'rr-staff-v1';
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', e => e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== V).map(k => caches.delete(k)))).then(() => self.clients.claim())));

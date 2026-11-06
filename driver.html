@@ -39,6 +39,8 @@ main{padding:12px;max-width:560px;margin:auto}
 <main>
 <div class="trk"><span id="trkS">📍 مشاركة موقعك: متوقفة</span><button id="trkB" type="button">شغّل</button></div>
 <div class="trkh">💡 المتصفح بيوقف الموقع أول ما الصفحة تنزل الخلفية أو الشاشة تتقفل. عشان العميل يشوف مكانك طول الطريق: سيب الصفحة مفتوحة والشاشة شغّالة (مش هتنطفي لوحدها)، واستخدم تطبيق OwnTracks لو عايز الموقع يفضل شغّال والموبايل مقفول.</div>
+<div class="trk"><span id="pshS">🔔 إشعارات الطلبات: متوقفة</span><button id="pshB" type="button">فعّل</button></div>
+<div class="trkh">🔔 فعّلها عشان يجيلك إشعار أول ما الفرع يديلك طلب جديد، حتى لو الصفحة مقفولة. على الآيفون لازم تكون ثبّت التطبيق على الشاشة الرئيسية الأول.</div>
 <div class="owe hide" id="owe"></div>
 <div id="list"><div class="empty">⏳ بنحمّل طلباتك...</div></div><div class="msg" id="msg"></div>
 <div class="msg"><button class="pwab hide" id="pwaBtn" type="button">📲 ثبّت التطبيق على الموبايل</button></div>
@@ -133,6 +135,31 @@ document.addEventListener('visibilitychange',()=>{
   }
 });
 addEventListener('pagehide',()=>trkSend(true));
+
+
+/* ═══ إشعارات الطلبات الجديدة (OneSignal) ═══ */
+(function(){
+  const APP='24f07a03-ba83-4261-9f12-689fded386be',b=$('pshB'),s=$('pshS');let OS=null;
+  const ios=/iphone|ipad|ipod/i.test(navigator.userAgent),sa=matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+  const sup='Notification' in window&&'serviceWorker' in navigator&&'PushManager' in window;
+  function paint(){
+    b.style.display='';
+    if(!sup){s.textContent=ios&&!sa?'🔔 على الآيفون: ثبّت التطبيق (مشاركة ⬆️ ثم إضافة إلى الشاشة الرئيسية) وافتحه من الأيقونة':'🔔 الجهاز مش بيدعم الإشعارات';b.style.display='none';return}
+    if(Notification.permission==='denied'){s.textContent='🔕 الإشعارات مقفولة — فعّلها من إعدادات المتصفح للموقع';b.style.display='none';return}
+    let on=false;try{on=!!(OS&&OS.User.PushSubscription.optedIn)&&Notification.permission==='granted'}catch(e){}
+    s.textContent=on?'🔔 إشعارات الطلبات شغّالة':'🔕 إشعارات الطلبات متوقفة';b.textContent=on?'مفعّلة':'فعّل';b.className=on?'on':'';b.disabled=on;
+  }
+  b.addEventListener('click',async()=>{if(!OS){s.textContent='⏳ استنى ثانية وجرّب تاني...';return}
+    try{await OS.Notifications.requestPermission();await OS.User.PushSubscription.optIn()}catch(e){}paint()});
+  paint();if(!sup||!T)return;
+  const sc=document.createElement('script');sc.src='https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js';sc.defer=true;document.head.appendChild(sc);
+  window.OneSignalDeferred=window.OneSignalDeferred||[];
+  OneSignalDeferred.push(async function(O){
+    await O.init({appId:APP,serviceWorkerPath:location.pathname.replace(/[^\/]*$/,'')+'staff-sw.js',serviceWorkerParam:{scope:location.pathname},notifyButton:{enable:false},allowLocalhostAsSecureOrigin:true});
+    OS=O;try{O.login('drv_'+T)}catch(e){}paint();
+    try{O.Notifications.addEventListener('permissionChange',paint);O.User.PushSubscription.addEventListener('change',paint)}catch(e){}
+  });
+})();
 
 /* ═══ تثبيت كتطبيق (PWA) ═══ */
 (function(){
