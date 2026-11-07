@@ -2490,6 +2490,8 @@ body{background:
   padding:6px 12px;border-radius:11px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;box-shadow:0 12px 24px -10px rgba(8,30,24,.7)}
 #app #sb>.ib:hover span{opacity:1;transform:translateY(-50%)}
 #app #sb .nv-ind,.sb-grp,.sb-foot{display:none!important}
+#app #sb>.ib[data-n]::after{content:attr(data-n);position:absolute;top:-3px;right:-3px;min-width:19px;height:19px;padding:0 5px;border-radius:10px;background:var(--org);color:#2b1407;font:900 .68rem/19px 'Cairo',sans-serif;text-align:center;box-shadow:0 0 0 3px #0c2a23;pointer-events:none}
+#app #sb>.ib[data-n="!"]::after{background:#ffd166}
 
 /* ── صف الهيرو + الكاليندر ── */
 #rr-top{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:18px;max-width:1480px;margin:18px auto 0;padding:0 16px;align-items:stretch}
@@ -2616,6 +2618,19 @@ tbody tr:hover td{background:#f6fbf8!important}
     var d=e.target.closest('[data-d]'); if(d){sel=+d.dataset.d; render();}
   });
   render();
+  /* الكود الأصلي بيعيد كتابة نص أزرار السايدبار (عدّاد / ⚠️) — بنرجّع الأيقونة ونحط العدّاد كبادج */
+  var EM=/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\uFE0F\u200D]+/gu;
+  ['vOrders','vHist','vMenu','vDrv','vAn','vCust','vCp','vSet','vStaff'].forEach(function(id){
+    var b=document.getElementById(id); if(!b) return; var ico=b.querySelector('svg'); ico=ico?ico.outerHTML:''; if(!ico) return;
+    function fix(){
+      if(b.querySelector('svg')) return;
+      var raw=b.textContent||'', m=raw.match(/\((\d+)\)/), warn=/\u26A0/.test(raw);
+      var label=raw.replace(/\(\d+\)/g,'').replace(EM,'').replace(/\s+/g,' ').trim();
+      b.innerHTML=ico+'<span>'+label+'</span>';
+      if(m) b.setAttribute('data-n',m[1]); else if(warn) b.setAttribute('data-n','!'); else b.removeAttribute('data-n');
+    }
+    new MutationObserver(fix).observe(b,{childList:true,characterData:true,subtree:true});
+  });
   /* لون المتصفح */
   var tc=document.querySelector('meta[name="theme-color"]'); if(tc) tc.setAttribute('content','#0f3329');
 })();
