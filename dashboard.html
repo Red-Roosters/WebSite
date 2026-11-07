@@ -553,7 +553,7 @@ async function loadNow(){
     { const nw = Date.now(); chDone.forEach((t, k) => { if (nw - t > 90000) chDone.delete(k); }); }
     changes = (j.changes || []).filter(c => !chDone.has(c.cid));   // اللي لسه بنرد عليه ماينفعش يرجع من تحديث قديم
     const freshCh = changes.filter(c => chKnown && !chKnown.has(c.cid)); chKnown = new Set(changes.map(c => c.cid));
-    render(); drvBarRender(); updateDrvMap(); dvRender(); chRender();
+    keepScroll(() => { render(); drvBarRender(); updateDrvMap(); dvRender(); chRender(); });
     if (freshCh.length) { toast('✏️ ' + freshCh.map(c => (CHK_S[c.kind] || '') + ' #' + c.id + ' — ' + c.name).join('، ')); pushNotify('✏️ تعديل من عميل — ريد روستر', freshCh.map(c => (CHK_S[c.kind] || '') + ' #' + c.id + ' · ' + c.name).join('\n')); chOpen(); ringTick(); }
     { const dn = orders.filter(isDue), fd = dn.filter(o => !dueKnown.has(o.id)); dn.forEach(o => dueKnown.add(o.id));   // طلب مجدول قرّب ميعاده: تنبيه مرة واحدة
       if (fd.length) { toast('⏰ طلب مجدول قرّب: ' + fd.map(o => '#' + o.id + ' ' + clock(o.sched)).join('، ')); pushNotify('⏰ طلب مجدول قرّب — ريد روستر', fd.map(o => o.name + ' · ' + clock(o.sched)).join('\n')); beep(); } }
@@ -592,6 +592,15 @@ function waLink(o){
 }
 
 /* ═══ الرسم ═══ */
+/* بيثبّت مكان السكرول وقت إعادة رسم الصفحة (التحديث التلقائي) عشان الموبايل ماينطّش لفوق */
+function keepScroll(fn){
+  const y = window.scrollY, h = document.documentElement.scrollHeight;
+  document.body.style.minHeight = h + 'px';
+  try { fn(); } finally {
+    if (Math.abs(window.scrollY - y) > 2) window.scrollTo(0, y);
+    requestAnimationFrame(() => { document.body.style.minHeight = ''; });
+  }
+}
 function render(){
   const q = query.trim().toLowerCase(), day = new Date(bizStart()), dT = day.getTime();
   const todayAll = orders.filter(o => eff(o) >= dT), today = todayAll.filter(o => o.status !== 'cancelled');
@@ -1695,7 +1704,7 @@ $('q').addEventListener('input', e => { query = e.target.value; render(); });
 $('rf').onclick = () => { load(); toast('🔄 اتحدّث'); };
 $('snd').onclick = () => { askNotify(); sound = !sound; $('snd').textContent = '🔔 الصوت: ' + (sound ? 'شغال' : 'مقفول'); if (sound) beep(); };
 $('out').onclick = () => logout('');
-setInterval(render, 60000);   // يحدّث "من كام دقيقة" والتأخير
+setInterval(() => keepScroll(render), 60000);   // يحدّث "من كام دقيقة" والتأخير
 
 
 /* ═══ إدارة الطيارين (إضافة/تعديل/حذف + لينك الطيار) ═══ */
@@ -2004,7 +2013,7 @@ tbody tr:hover td{background:#FCFAF8}
     vDrv:'<circle cx="6" cy="17" r="2.6"/><circle cx="18" cy="17" r="2.6"/><path d="M8.6 17h6.8M15 17l-2-7h-3M13 10h3l2 7M7 7h3"/>'};
   var GR=[['العمليات',['vOrders','vHist','vMenu','vDrv']],['التقارير والعملاء',['vAn','vCust','vCp']],['الإدارة',['vSet','vStaff']]];
   var sb=document.createElement('aside'); sb.id='sb'; sb.setAttribute('aria-label','القائمة الرئيسية');
-  sb.innerHTML='<div class="sb-brand"><i>R</i><div><b>ريد روستر</b><small>لوحة التحكم</small></div></div>';
+  sb.innerHTML='<div class="sb-brand"><i><img src="https://i.ibb.co/5gZ1LZ9z/492195028-993889166231890-6539753522077003326-n.jpg" alt="" onerror="this.replaceWith(document.createTextNode(String.fromCharCode(82)))"></i><div><b>ريد روستر</b><small>لوحة التحكم</small></div></div>';
   var grpEls=[];
   GR.forEach(function(g){
     var h=document.createElement('div'); h.className='sb-grp'; h.textContent=g[0]; sb.appendChild(h); var items=[];
@@ -2428,6 +2437,11 @@ main:not(.hide){animation:none!important}
   #sb>.ib span{overflow:hidden;text-overflow:ellipsis}
   #sb>.ib svg{width:16px!important;height:16px!important;flex:none}
 }
+
+/* لوجو المطعم بدل حرف R */
+.sb-brand i{overflow:hidden;background:#fff!important;padding:0}
+.sb-brand i img{width:100%;height:100%;object-fit:cover;display:block;border-radius:inherit}
+html{overflow-anchor:none}
 </style>
 </body>
 </html>
