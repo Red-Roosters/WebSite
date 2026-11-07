@@ -1024,7 +1024,7 @@ async function anExtra(os, from, to){
     const f = await post({action:'funnel', user, from:ymd(from), to:ymd(to - 1)});
     if (!f || !f.ok) throw 0;
     const c = f.counts, st = [['visit', '👀 فتحوا الموقع'], ['cart', '🛒 ضافوا للسلة'], ['checkout', '📝 فتحوا صفحة التأكيد'], ['submit', '👆 دوسوا تأكيد الطلب'], ['order', '✅ الطلب اتسجّل']], v = c.visit || 0;
-    out.insertAdjacentHTML('beforeend', sec('🔻 مسار الطلب (من فتح الموقع للطلب)', v ? tbl(['المرحلة', 'العدد', 'من اللي قبلها', 'من اللي فتحوا الموقع'], st.map((s, i) => [s[1], num(c[s[0]]), i ? pct(c[st[i - 1][0]] ? c[s[0]] / c[st[i - 1][0]] : 0) : '—', pct(c[s[0]] / v)])) + bars(st.map(s => [s[1], c[s[0]]]), num) + '<div class="hint" style="margin-top:8px">كل جلسة بتتحسب مرة واحدة في كل مرحلة. الأرقام بتبدأ من تاريخ رفع index.html الجديد.</div>' : '<div class="hint">لسه مفيش بيانات للفترة دي — الأرقام بتبدأ تتجمّع بعد ما ترفع index.html الجديد.</div>'));
+    out.insertAdjacentHTML('beforeend', sec('🔻 مسار الطلب (من فتح الموقع للطلب)', v ? tbl(['المرحلة', 'العدد', 'من اللي قبلها', 'من اللي فتحوا الموقع'], st.map((s, i) => [s[1], num(c[s[0]]), i ? pct(c[st[i - 1][0]] ? c[s[0]] / c[st[i - 1][0]] : 0) : '—', pct(c[s[0]] / v)])) + bars(st.map(s => [s[1], c[s[0]]]), num) + (f.fixed ? '<div class="hint" style="margin-top:8px">⚠️ بعض الأرقام اتعدّلت تلقائيًا (مرحلة مينفعش تبقى أقل من اللي بعدها) لأن أحداث قديمة ضاعت قبل الإصلاح. الفترات الجديدة هتكون أدق.</div>' : '') + '<div class="hint" style="margin-top:8px">كل جلسة بتتحسب مرة واحدة في كل مرحلة. الأرقام بتبدأ من تاريخ رفع index.html الجديد.</div>' : '<div class="hint">لسه مفيش بيانات للفترة دي — الأرقام بتبدأ تتجمّع بعد ما ترفع index.html الجديد.</div>'));
   } catch (e) { out.insertAdjacentHTML('beforeend', sec('🔻 مسار الطلب', '<div class="hint">⚠️ مقدرناش نحمّل البيانات — تأكد إنك عملت Deploy ▸ New version لـ Code.gs.</div>')); }
 }
 async function anRun(){
@@ -2379,7 +2379,7 @@ main:not(.hide){animation:none!important}
 
 /* ═══ إشعارات الطلبات الجديدة على الموبايل (OneSignal) — بتشتغل حتى لو الداشبورد مقفولة ═══ */
 (function(){
-  var APP='24f07a03-ba83-4261-9f12-689fded386be', b = document.getElementById('pushB'), OS = null, started = false;
+  var APP='24f07a03-ba83-4261-9f12-689fded386be', b = document.getElementById('pushB'), OS = null, started = false, why = '', tmr = null;
   var ios = /iphone|ipad|ipod/i.test(navigator.userAgent), sa = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
   var sup = ('Notification' in window) && ('serviceWorker' in navigator) && ('PushManager' in window);
   function paint(){
@@ -2387,22 +2387,24 @@ main:not(.hide){animation:none!important}
     if (!sup) { b.textContent = ios && !sa ? '🔔 ثبّت التطبيق الأول' : '🔔 غير مدعوم'; return; }
     if (Notification.permission === 'denied') { b.textContent = '🔕 مقفولة من المتصفح'; return; }
     var on = false; try { on = !!(OS && OS.User.PushSubscription.optedIn) && Notification.permission === 'granted'; } catch (e) {}
-    b.textContent = on ? '🔔 إشعارات: شغّالة' : '🔕 إشعارات: فعّل';
+    b.textContent = on ? '🔔 إشعارات: شغّالة' : why ? '⚠️ إشعارات: مش شغّالة' : '🔕 إشعارات: فعّل'; b.title = why;
   }
   if (b) b.addEventListener('click', async function(){
     if (ios && !sa && !sup) { alert('آيفون: دوس زر المشاركة ⬆️ ثم «إضافة إلى الشاشة الرئيسية»، وافتح الداشبورد من الأيقونة وبعدها فعّل الإشعارات.'); return; }
-    if (!OS) { b.textContent = '⏳ استنى...'; return; }
+    if (!OS) { started = false; init(); alert(why || 'الإشعارات لسه بتتجهّز — جرّب تاني بعد ثواني.'); paint(); return; }
     try { await OS.Notifications.requestPermission(); await OS.User.PushSubscription.optIn(); } catch (e) {} paint();
   });
   async function init(){
     if (started || !token || !sup) return; started = true;
-    var eid = ''; try { var j = await post({action:'pushReg', user}); if (j && j.ok) eid = j.eid; } catch (e) {}
-    if (!eid) { started = false; return; }
-    var s = document.createElement('script'); s.src = 'https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js'; s.defer = true; document.head.appendChild(s);
+    var eid = '', j = null; try { j = await post({action:'pushReg', user}); if (j && j.ok) eid = j.eid; } catch (e) { why = 'مفيش اتصال بالسيرفر'; }
+    if (!eid) { why = (j && j.error === 'no_ot_key') ? 'حدد «المفتاح السري» (OwnTracks) من الإعدادات الأول' : why || 'السيرفر مش جاهز للإشعارات — انشر Code.gs الجديد (Deploy ← New version)'; started = false; paint(); return; }
+    if (document.getElementById('osSdk')) return;
+    var s = document.createElement('script'); s.id = 'osSdk'; s.src = 'https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js'; s.defer = true; s.onerror = function(){ why = 'تعذّر تحميل OneSignal (النت أو حاجب إعلانات)'; paint(); }; document.head.appendChild(s);
+    clearTimeout(tmr); tmr = setTimeout(function(){ if (!OS) { why = why || 'OneSignal ماردّش — تأكد من الدومين في إعدادات OneSignal'; paint(); } }, 12000);
     window.OneSignalDeferred = window.OneSignalDeferred || [];
     OneSignalDeferred.push(async function(O){
-      await O.init({appId:APP, serviceWorkerPath:location.pathname.replace(/[^\/]*$/, '') + 'staff-sw.js', serviceWorkerParam:{scope:location.pathname}, notifyButton:{enable:false}, allowLocalhostAsSecureOrigin:true});
-      OS = O; try { O.login(eid); } catch (e) {} paint();
+      try { await O.init({appId:APP, serviceWorkerPath:location.pathname.replace(/[^\/]*$/, '') + 'staff-sw.js', serviceWorkerParam:{scope:location.pathname}, notifyButton:{enable:false}, allowLocalhostAsSecureOrigin:true}); } catch (e) { why = 'فشل تشغيل OneSignal: ' + String(e && e.message || e).slice(0, 80); paint(); return; }
+      OS = O; why = ''; clearTimeout(tmr); try { O.login(eid); } catch (e) {} paint();
       try { O.Notifications.addEventListener('permissionChange', paint); O.User.PushSubscription.addEventListener('change', paint); } catch (e) {}
     });
   }
