@@ -1226,10 +1226,24 @@ async function mnSyncPrices(list, force){
   } catch (e) { mnSyncMsg = '⚠️ تعذّرت مزامنة الأسعار (مفيش اتصال)'; }
   mnRender();
 }
+/* اختيارات العروض (ساندوتشات التشيكن / البيف / التويستر / الريزو… جوه كل عرض) — بتتقرا من app.js في الموقع.
+   وقف أي اختيار = بيتقفل في كل العروض اللي فيها (نفس آلية الأصناف الموقوفة). */
+function mnParseChoices(js){
+  try {
+    const a = js.indexOf('const CHICKEN'), m = js.indexOf('const CHOICES_RAW'); if (a < 0 || m < 0 || a > m) return [];
+    const re = /\n\s*\};/g; re.lastIndex = m; const e = re.exec(js); if (!e) return [];
+    const code = js.slice(a, e.index + e[0].length).replace(/\/\/[^\n]*/g, '');
+    const bare = code.replace(/\.concat\(\s*[A-Z_]+\s*\)/g, '').replace(/'[^']*'/g, "''");
+    if (/[()]|=>|\b(function|import|fetch|eval|window|document|this)\b/.test(bare)) return [];   // بنقبل داتا (مصفوفات) بس
+    const raw = new Function(code + '\nreturn CHOICES_RAW;')(), use = new Map();
+    Object.keys(raw).forEach(d => (raw[d] || []).forEach(g => (g.options || []).forEach(o => { if (!use.has(o)) use.set(o, []); if (!use.get(o).includes(d)) use.get(o).push(d); })));
+    return [...use].map(([o, ds]) => ({sec:'🎯 اختيارات العروض', name:o, en:'في: ' + ds.join('، '), price:'يتقفل في كل العروض'}));
+  } catch (err) { return []; }
+}
 let mnOv = {ver:'', items:[]};
 const ovFor = n => mnOv.items.find(x => nz(x.n) === nz(n));
 async function mnOvLoad(){ try { const j = await (await fetch(API + '?action=menuov&_=' + Date.now())).json(); if (j && j.ok) mnOv = {ver:j.ver, items:j.items || []}; } catch (e) {} }
-const mnCanEdit = m => role === 'manager' && !/^(➕|🥣)/.test(m.sec);
+const mnCanEdit = m => role === 'manager' && !/^(➕|🥣|🎯)/.test(m.sec);
 const mnFind = name => (menu || []).find(m => nz(m.name) === nz(name)) || (() => { const o = ovFor(name); return o && o.a ? {sec:o.s, name:o.n, en:'', price:(o.p[0] || '') + ' LE', added:true} : null; })();
 function mnForm(title, fields, extra){
   return new Promise(res => { const ov = document.createElement('div'); ov.className = 'cx';
@@ -1261,7 +1275,7 @@ async function mnEdit(name){
   mnSet({name, prices:same ? '' : nums.join('/'), desc:r.v[1], img:r.v[2], hidden:r.v[3], sec:m.sec, added:!!m.added}, '✅ اتحفظ — هيظهر للعملاء خلال دقيقة');
 }
 async function mnAddItem(){
-  const secs = [...new Set((menu || []).map(m => m.sec).filter(s => !/^(➕|🥣)/.test(s)))]; if (!secs.length) return toast('⚠️ حمّل قايمة الأصناف الأول');
+  const secs = [...new Set((menu || []).map(m => m.sec).filter(s => !/^(➕|🥣|🎯)/.test(s)))]; if (!secs.length) return toast('⚠️ حمّل قايمة الأصناف الأول');
   const r = await mnForm('➕ صنف جديد', [{label:'القسم', type:'select', options:secs}, {label:'الاسم', ph:'زي ما هيظهر للعميل'}, {label:'السعر', ph:'مثلاً 99'}, {label:'الوصف (اختياري)'}, {label:'رابط الصورة (اختياري، https://…)', ph:'https://'}]);
   if (!r) return; const [sec, name, price, desc, img] = r.v, n = mnNums(price);
   if (!name || n.length !== 1) return toast('⚠️ اكتب الاسم وسعر واحد'); if (mnFind(name)) return toast('⚠️ فيه صنف بنفس الاسم');
@@ -1275,6 +1289,10 @@ async function mnLoad(force){
   menu = null; menuErr = '';
   for (const u of [new URL('index.html', location.href).href, SITE + 'index.html']) {
     try { const r = await fetch(u, {cache:'no-store'}); if (!r.ok) continue; const m = mnParse(await r.text()); if (m.length) { menu = m; break; } } catch (e) {}
+  }
+  if (menu) {
+    let ch = []; for (const u of [new URL('app.js', location.href).href, SITE + 'app.js']) { try { const r = await fetch(u, {cache:'no-store'}); if (!r.ok) continue; ch = mnParseChoices(await r.text()); if (ch.length) break; } catch (e) {} }
+    if (ch.length) menu = menu.concat(ch); else menuErr = '⚠️ معرفناش نقرا اختيارات العروض من app.js — تقدر توقّف أي اختيار بكتابة اسمه تحت.';
   }
   if (!menu) menuErr = '⚠️ معرفناش نحمّل قايمة الأصناف من الموقع. تقدر توقّف أي صنف بكتابة اسمه تحت.';
   else if (role === 'manager') mnSyncPrices(menu, force === true);   // مزامنة الأسعار المعلنة للسيرفر (بيرفض أي طلب بسعر أقل)
