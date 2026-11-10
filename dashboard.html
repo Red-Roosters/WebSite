@@ -106,6 +106,30 @@ main{max-width:1280px;margin:0 auto;padding:16px}
 .cxb textarea{width:100%;margin-top:10px;padding:10px 12px;border:2px solid var(--line);border-radius:12px;font:600 .92rem "Cairo",sans-serif;min-height:70px;resize:vertical}
 .cxb textarea:focus{outline:none;border-color:var(--red)}
 .cxa{display:flex;gap:8px;margin-top:14px}
+.pfb{width:min(740px,100%)}
+.pf-h{display:flex;gap:12px;align-items:center;margin-bottom:6px}
+.pf-av{width:54px;height:54px;border-radius:50%;display:grid;place-items:center;background:var(--g2);color:#fff;font:900 1.45rem "Tajawal",sans-serif;flex:none}
+.pf-h h2{margin:0}.pf-h small{color:var(--mute);font-weight:700;direction:ltr;unicode-bidi:embed}
+.pf-tags{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 12px}
+.pf-tags span{font:800 .76rem "Cairo",sans-serif;padding:3px 10px;border-radius:99px;background:var(--mint2);color:var(--g3)}
+.pf-tags .bad{background:rgba(220,60,60,.14);color:#b3261e}
+.pf-k{display:grid;grid-template-columns:repeat(auto-fit,minmax(125px,1fr));gap:8px;margin:0 0 12px}
+.pf-k div{border:1px solid var(--line);border-radius:14px;padding:10px 12px;background:rgba(127,127,127,.06)}
+.pf-k small{display:block;color:var(--mute);font-weight:700;font-size:.74rem}
+.pf-k b{font:900 1.05rem "Tajawal",sans-serif}
+.pf-s{margin:14px 0 6px;font:900 .95rem "Tajawal",sans-serif}
+.pf-bar{display:flex;align-items:center;gap:8px;margin:4px 0;font-size:.85rem}
+.pf-bar span{flex:0 0 38%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pf-bar div{flex:1}.pf-bar i{display:block;height:8px;border-radius:8px;background:var(--red);min-width:4px}
+.pf-bar em{font-style:normal;font-weight:900;min-width:34px;text-align:end}
+.pf-act{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0 4px}
+.pf-o{border:1px solid var(--line);border-radius:12px;margin:6px 0;background:rgba(127,127,127,.05)}
+.pf-o>summary{padding:9px 12px;cursor:pointer;display:flex;gap:8px;align-items:center;flex-wrap:wrap;list-style:none;font-size:.86rem}
+.pf-o>summary::-webkit-details-marker{display:none}
+.pf-o>div{padding:0 12px 10px;font-size:.84rem;color:var(--mute);line-height:1.7}
+.pf-m{color:var(--mute);font-size:.84rem;line-height:1.8}
+.who[data-prof]{cursor:pointer}.who[data-prof]:hover span{text-decoration:underline dotted}
+.pf-lnk{color:inherit;text-decoration:underline dotted}
 .stlD{border:1px solid var(--line);border-radius:14px;padding:12px;margin:10px 0}.stlD h3{margin:0 0 6px;font-size:1rem;display:flex;justify-content:space-between;gap:8px}
 .stlO{max-height:150px;overflow:auto;font-size:.85rem;margin:6px 0;background:#faf6f1;border-radius:10px;padding:6px 8px}.stlO label{display:flex;gap:8px;align-items:center;padding:3px 0;margin:0}.stlO input{width:auto;flex:0 0 auto}
 .stlF{display:flex;gap:8px;flex-wrap:wrap}.stlF label{flex:1;min-width:130px;font-size:.82rem;display:flex;flex-direction:column;gap:3px}
@@ -261,6 +285,7 @@ main.wide{max-width:none}
     <span id="who"></span>
     <button class="ib hide" id="lrChip" type="button">⭐ 0</button>
     <button class="ib hide" id="pbChip" type="button">🔕 الإشعارات واقفة</button>
+    <button class="ib hide" id="vfChip" type="button">📵 0 رقم مستني تأكيد</button>
     <button class="ib act hide" id="vOrders">🗂️ الطلبات</button>
     <button class="ib hide" id="vMenu">🚫 الأصناف</button>
     <button class="ib hide" id="vDrv">🛵 الطيارين</button>
@@ -374,6 +399,12 @@ main.wide{max-width:none}
         <label class="ck"><input type="checkbox" id="seHours"> مواعيد العمل شغّالة (لو مقفولة الموقع بيقبل طلبات في أي وقت)</label>
         <label class="ck"><input type="checkbox" id="sePause"> ⏸️ وقف التوصيل مؤقتًا (الاستلام من الفرع شغال)</label>
         <button class="btn main" id="seSave" type="button">💾 حفظ</button></div>
+      <h2 style="margin-top:18px">📱 تحقق رقم العميل (واتساب)</h2>
+      <div class="cpf" style="margin-top:8px">
+        <label>التحقق<select id="seVfMode"><option value="off">مقفول (من غير تحقق)</option><option value="flag">اختياري — الطلب يتقبل بعلامة «غير متحقق»</option><option value="require">إجباري — مفيش طلب من غير تحقق</option></select></label>
+        <label>رقم واتساب المطعم اللي بيستقبل الأكواد<input id="seVfWa" type="tel" inputmode="numeric" dir="ltr" maxlength="15" placeholder="01XXXXXXXXX"></label>
+      </div>
+      <div class="hint">العميل بيشوف كود ويبعته من رقمه على الرقم ده، وانت بتأكد من زرار «📵 مستني تأكيد» اللي بيظهر فوق. الرقم بيتحقق مرة واحدة بس، وأي رقم اتسلّم له طلب قبل كده بيتعتبر متحقق. اضغط «💾 حفظ» بعد التغيير.</div>
       <h2 style="margin-top:18px">✏️ تعديل/إلغاء العميل لطلبه</h2>
       <div class="cpf" style="margin-top:8px"><label>المدة اللي العميل يقدر فيها يعدّل أو يلغي بنفسه (بالدقايق — 0 = مقفول)<input type="number" id="seEditMin" min="0" max="60" placeholder="5"></label></div>
       <div class="hint">خلال المدة العميل بيعدّل الكميات أو يلغي والتعديل بيتنفّذ فورًا وبيجيلك تنبيه. بعد المدة بيبعت «طلب» بيظهرلك popup (رقم الطلب + اسمه + رقمه) وبتقبله أو ترفضه والعميل بيتبلّغ. بيتحفظ بزرار «💾 حفظ» اللي فوق (جنب مواعيد العمل).</div>
@@ -426,6 +457,7 @@ main.wide{max-width:none}
     <div class="cxa"><button class="btn cancelok" id="cxOk" disabled>تأكيد الإلغاء</button><button class="btn ghost" id="cxNo">رجوع</button></div>
   </div>
 </div>
+<div id="pf" class="cx hide" role="dialog" aria-modal="true" aria-label="ملف العميل"><div class="cxb pfb"><div id="pfBody"></div><div class="cxa"><button class="btn ghost" id="pfX" type="button">إغلاق</button></div></div></div>
 <div id="pn" class="cx hide" role="dialog" aria-modal="true" aria-label="إضافة نقاط ولاء"><div class="cxb pnb">
   <h2><span id="pnTitle">⭐ نقاط الولاء</span> <span id="pnName" style="font-size:.9rem;color:var(--mute)"></span></h2>
   <p id="pnDesc"></p>
@@ -447,6 +479,7 @@ main.wide{max-width:none}
   <div id="stlLog"></div>
   <div class="cxa"><button class="btn ghost" id="stlX" type="button">إغلاق</button></div>
 </div></div>
+<div id="vfM" class="cx hide" role="dialog" aria-modal="true" aria-label="تأكيد أرقام العملاء"><div class="cxb" style="width:min(520px,100%)"><h2>📵 أرقام مستنية تأكيد</h2><p>افتح واتساب المطعم وتأكد إن فيه رسالة من <b>نفس الرقم</b> فيها <b>نفس الكود</b>، وبعدين دوس ✅. لو الرقم أو الكود مش مطابق دوس ❌.</p><div id="vfList"></div><div class="cxa"><button class="btn ghost" id="vfX" type="button">إغلاق</button></div></div></div>
 <div id="toast"></div>
 
 <script>
@@ -479,6 +512,7 @@ try { const c = JSON.parse(sessionStorage.getItem('rr_admin_cred') || localStora
 const AUTH_ERR = {locked:'اتقفل الدخول مؤقتًا (محاولات كتير غلط). جرّب بعد 10 دقايق.', bad:'اسم المستخدم أو كلمة السر غلط', disabled:'الحساب ده متوقّف. كلّم المدير.', bad_token:'انتهت الجلسة، سجّل دخولك تاني.', bad_action:'لازم تحدّث ملف Code.gs وتعمل Deploy ▸ New version الأول.', busy:'محاولات كتير، جرّب بعد شوية.'};
 function bizStart(ts){ const d = new Date(ts == null ? Date.now() : ts); const t = d.getTime(); d.setHours(DAY_START_HOUR, 0, 0, 0); if (t < d.getTime()) d.setDate(d.getDate() - 1); return d.getTime(); }
 let flags = {}, lowData = null;
+let vfState = {mode:'off', unv:new Set(), pend:[]}, vfKnown = null;
 const pend = new Map();   // تغييرات لسه ماتأكدتش من السيرفر: id → {st, reason, upd, paid, busy, t}
 let changes = [], chKnown = null, chDone = new Map(), orders = [], tab = 'board', query = '', known = null, sound = true, lastBeep = 0, timer = null, ac = null, ringT = null, wl = null, flip = false;
 
@@ -550,7 +584,7 @@ async function loadNow(){
     overlay(j.orders);
     setLive(true); role = j.role || 'staff'; myName = j.name || user; applyRole();
     const fresh = j.orders.filter(o => known && !known.has(o.id) && o.status === 'new');
-    known = new Set(j.orders.map(o => o.id)); orders = j.orders; flags = j.flags || {}; drivers = j.drivers || []; dseen = j.dseen || {}; dpos = j.dpos || {}; dasg = j.dasg || {}; chips(j);
+    known = new Set(j.orders.map(o => o.id)); orders = j.orders; flags = j.flags || {}; drivers = j.drivers || []; dseen = j.dseen || {}; dpos = j.dpos || {}; dasg = j.dasg || {}; chips(j); vfUpdate(j.vf);
     if (Array.isArray(j.soldout) && !soBusy && Date.now() - soLast > 4000) { soList = j.soldout; mnRender(); }
     { const nw = Date.now(); chDone.forEach((t, k) => { if (nw - t > 90000) chDone.delete(k); }); }
     changes = (j.changes || []).filter(c => !chDone.has(c.cid));   // اللي لسه بنرد عليه ماينفعش يرجع من تحديث قديم
@@ -649,7 +683,7 @@ function cardHtml(o){
   return '<article class="card ' + o.status + (late ? ' late' : '') + (o.sched ? ' sch' : '') + ((pend.get(o.id) || {}).busy ? ' saving' : '') + '" data-id="' + esc(o.id) + '">' +
     '<div class="top"><span class="oid">#' + esc(o.id) + '</span><span class="chip ' + o.status + '">' + esc(lbl(o)) + '</span></div>' +
     schedHtml(o) + '<div class="sub"><span>🕒 ' + (o.sched ? 'اتطلب ' : '') + clock(o.time) + ' · ' + ago(o.time) + '</span><span>' + (o.type === 'pickup' ? '🏪 استلام من الفرع' : '🛵 دليفري') + '</span>' + lastBy(o) + edBadge(o) + (late ? '<span class="late">⏰ عدّى ' + lim + ' دقيقة</span>' : '') + '</div>' +
-    '<div class="who"><i class="av">' + esc((o.name || '?').trim().charAt(0)) + '</i><span>' + esc(o.name) + '</span></div>' + flagHtml(o) +
+    '<div class="who"' + (role === 'manager' ? ' data-prof="' + esc(o.phone) + '" data-nm="' + esc(o.name) + '" title="ملف العميل"' : '') + '><i class="av">' + esc((o.name || '?').trim().charAt(0)) + '</i><span>' + esc(o.name) + '</span></div>' + flagHtml(o) +
     '<div class="ph"><a class="n" href="#" data-copy="' + esc(o.phone) + '" title="اضغط للنسخ">📋 ' + esc(o.phone) + '</a><a class="cl2" href="tel:' + esc(o.phone) + '" title="اتصال">📞</a>' + (o.phone2 ? '<a class="n" href="#" data-copy="' + esc(o.phone2) + '" title="اضغط للنسخ">📋 ' + esc(o.phone2) + '</a><a class="cl2" href="tel:' + esc(o.phone2) + '" title="اتصال">📞</a>' : '') + '<a class="wa" target="_blank" rel="noopener" href="' + waLink(o) + '">💬 ابعت تحديث للعميل</a></div>' +
     '<div class="addr">📍 ' + esc(o.address) + '</div>' +
     '<div class="items">' + o.items.map(i => '<div class="it"><span><span class="q">' + i.q + '×</span>' + esc(i.n) +
@@ -1412,7 +1446,7 @@ function cuRender(){
   let l = cuAll.filter(f[2]); if (q) l = l.filter(c => (c.name + ' ' + c.phone).toLowerCase().includes(q));
   l.sort((a, b) => cuSeg === 'lost' ? b.total - a.total : b.last - a.last);
   const rows = l.slice(0, 200).map(c => { const rec = wb[c.phone] && Date.now() - wb[c.phone] < 14 * 864e5;
-    return ['<span class="' + (rec ? 'dim' : '') + '"><b>' + esc(c.name) + '</b><br><small dir="ltr" style="color:#6B6B6B">' + esc(c.phone) + '</small></span>', num(c.n), money(c.total), 'من ' + num(c.since) + ' يوم', esc(c.fav) || '—',
+    return ['<span class="' + (rec ? 'dim' : '') + '"><b><a href="#" class="pf-lnk" data-prof="' + esc(c.phone) + '" data-nm="' + esc(c.name) + '">' + esc(c.name || c.phone) + '</a></b><br><small dir="ltr" style="color:#6B6B6B">' + esc(c.phone) + '</small></span>', num(c.n), money(c.total), 'من ' + num(c.since) + ' يوم', esc(c.fav) || '—',
       '<a class="btn ghost tiny" target="_blank" rel="noopener" data-wb="' + esc(c.phone) + '" href="https://wa.me/20' + c.phone.replace(/^0/, '') + '?text=' + encodeURIComponent(cuMsg(c)) + '">💬 واتساب' + (rec ? ' ✓' : '') + '</a>']; });
   $('cuOut').innerHTML = (cuTrunc ? '<div class="warnb" style="margin-bottom:10px">⚠️ البيانات اتقصّت (عدد الطلبات كبير) — اختار فترة أقصر.</div>' : '') +
     '<p class="hint" style="margin:0 0 8px">' + num(l.length) + ' عميل' + (l.length > 200 ? ' (أول ٢٠٠)' : '') + '</p>' +
@@ -1445,6 +1479,82 @@ $('cuLost').onchange = () => cuRender();
 $('cuSeg').addEventListener('click', e => { const b = e.target.closest('[data-s]'); if (b) { cuSeg = b.dataset.s; cuRender(); } });
 $('cuQ').addEventListener('input', () => cuRender()); $('cuCode').addEventListener('input', () => cuRender()); $('cuDays').onchange = cuLoad; $('cuGo').onclick = cuLoad;
 $('cuOut').addEventListener('click', e => { const a = e.target.closest('[data-wb]'); if (a) { cuMark(a.dataset.wb); setTimeout(cuRender, 400); } });
+/* ═══ ملف العميل: بيجمّع كل تاريخ العميل في نافذة واحدة (للمدير) ═══ */
+const pfDate = t => new Date(t).toLocaleDateString('ar-EG', {day:'numeric', month:'short', year:'numeric'});
+let pfCache = {t:0, orders:[], trunc:false}, pfLast = null, pfBusy = 0;
+async function pfOrders(){
+  if (pfCache.orders.length && Date.now() - pfCache.t < 600000) return pfCache;
+  const to = Date.now() + 60000, j = await post({action:'adminReport', user, from:to - 365 * 864e5, to});
+  if (!j.ok) throw new Error(j.error || 'fail');
+  pfCache = {t:Date.now(), orders:j.orders || [], trunc:!!j.truncated}; return pfCache;
+}
+async function pfPoints(ph){
+  try {
+    if (!ptLoaded) { const j = await post({action:'pointsList', user}); if (j.ok) { ptAll = j.list || []; ptLoaded = true; } }
+    return ptAll.find(c => c.phone === ph) || null;
+  } catch (e) { return null; }
+}
+function pfClose(){ pfBusy++; $('pf').classList.add('hide'); }
+async function pfOpen(phone, nameHint){
+  phone = String(phone || '').replace(/\D/g, '').slice(-11);
+  if (role !== 'manager') return toast('⛔ ملف العميل للمدير بس');
+  if (phone.length !== 11) return toast('⚠️ رقم العميل مش واضح');
+  const my = ++pfBusy; $('pf').classList.remove('hide'); $('pfBody').innerHTML = '<div class="empty">⏳ بنجمّع بيانات العميل...</div>';
+  try {
+    const [c, pts] = await Promise.all([pfOrders(), pfPoints(phone)]);
+    if (my !== pfBusy) return;
+    pfLast = {ph:phone, name:nameHint || '', c, pts}; pfPaint();
+  } catch (e) { if (my === pfBusy) $('pfBody').innerHTML = '<div class="empty">' + (String(e.message) === 'forbidden' ? '⛔ للمدير بس' : '⚠️ مقدرناش نحمّل ملف العميل — اتأكد من الاتصال') + '</div>'; }
+}
+function pfPaint(){
+  const L = pfLast; if (!L) return;
+  const ph = L.ph, all = L.c.orders.filter(o => o.phone === ph || o.phone2 === ph).sort((a, b) => b.time - a.time);
+  if (!all.length) { $('pfBody').innerHTML = '<div class="empty">مفيش طلبات متسجّلة للرقم ده في آخر سنة.<br><small dir="ltr">' + esc(ph) + '</small></div>'; return; }
+  const ok = all.filter(o => o.status !== 'cancelled'), canc = all.length - ok.length, n = ok.length, f = flags[ph] || {};
+  const name = (all.find(o => o.name) || {}).name || L.name || ph, tot = ok.reduce((s, o) => s + (+o.total || 0), 0);
+  const first = ok.length ? ok[ok.length - 1].time : all[all.length - 1].time, last = ok.length ? ok[0].time : all[0].time;
+  const since = Math.floor((Date.now() - last) / 864e5), gap = n > 1 ? (last - first) / 864e5 / (n - 1) : 0;
+  const tag = [], bad = [];
+  if (f.b) bad.push('🚫 محظور'); else if (f.s) bad.push('🚩 ' + num(f.s) + ' تنبيه');
+  if (canc >= 2) bad.push('⚠️ ' + num(canc) + ' طلب ملغي'); if (vfState.mode !== 'off' && vfState.unv.has(ph)) bad.push('📵 غير متحقق');
+  if (n >= 4) tag.push('⭐ عميل مميز'); if (n === 1) tag.push('🆕 عميل جديد');
+  if (n && since >= cuLostD()) tag.push('💤 وحشنا (' + num(since) + ' يوم)'); else if (n) tag.push('✅ نشط');
+  const cnt = (fn) => { const m = {}; ok.forEach(o => { const k = fn(o); if (k) m[k] = (m[k] || 0) + 1; }); return Object.keys(m).sort((a, b) => m[b] - m[a]).map(k => [k, m[k]]); };
+  const itm = {}; ok.forEach(o => (o.items || []).forEach(i => { const k = String(i.n || '').replace(/\s*\(.*\)\s*$/, '').trim(); if (k) itm[k] = (itm[k] || 0) + (+i.q || 1); }));
+  const top = Object.keys(itm).sort((a, b) => itm[b] - itm[a]).slice(0, 5), mx = top.length ? itm[top[0]] : 1;
+  const adr = cnt(o => (o.type === 'pickup' ? '' : String(o.address || '').trim())).slice(0, 3), pay = cnt(o => PAY[o.payment] || o.payment), cp = cnt(o => o.coupon);
+  const del = ok.filter(o => o.type !== 'pickup').length, k = (l, v) => '<div><small>' + l + '</small><b>' + v + '</b></div>';
+  const wa = 'https://wa.me/20' + ph.replace(/^0/, '') + '?text=' + encodeURIComponent(cuMsg({name, fav:top[0] || ''}));
+  const rec = all.slice(0, 10).map(o => '<details class="pf-o"><summary><b>#' + esc(o.id) + '</b><span>' + pfDate(o.time) + ' · ' + clock(o.time) + '</span><span class="chip ' + o.status + '">' + esc(lbl(o)) + '</span><b style="margin-inline-start:auto">' + money(o.total) + '</b></summary><div>' +
+      (o.items || []).map(i => num(i.q) + '× ' + esc(i.n) + ((i.o && i.o.length) ? ' <small>(' + esc(i.o.join('، ')) + ')</small>' : '')).join('<br>') +
+      '<br>' + (o.type === 'pickup' ? '🏪 استلام من الفرع' : '🛵 ' + esc(o.address || '')) + ' · ' + (PAY[o.payment] || esc(o.payment)) + (o.coupon ? ' · 🎟️ ' + esc(o.coupon) : '') + (o.status === 'cancelled' && o.reason ? '<br>❌ السبب: ' + esc(o.reason) : '') + '</div></details>').join('');
+  $('pfBody').innerHTML =
+    '<div class="pf-h"><i class="pf-av">' + esc(String(name).trim().charAt(0) || '?') + '</i><div><h2>' + esc(name) + '</h2><small>' + esc(ph) + (all.find(o => o.phone2 && o.phone2 !== ph) ? ' · ' + esc(all.find(o => o.phone2 && o.phone2 !== ph).phone2) : '') + '</small></div></div>' +
+    '<div class="pf-tags">' + bad.map(t => '<span class="bad">' + t + '</span>').join('') + tag.map(t => '<span>' + t + '</span>').join('') + '</div>' +
+    (L.c.trunc ? '<div class="warnb" style="margin-bottom:10px">⚠️ عدد الطلبات كبير والبيانات اتقصّت — ممكن تاريخ العميل يبقى ناقص.</div>' : '') +
+    '<div class="pf-k">' + k('عدد الطلبات', num(n)) + k('إجمالي الإنفاق', money(tot)) + k('متوسط الطلب', money(n ? tot / n : 0)) + k('أول طلب', pfDate(first)) + k('آخر طلب', pfDate(last) + '<br><small>من ' + num(since) + ' يوم</small>') +
+      k('بيطلب كل', n > 1 ? '~' + num(Math.round(gap)) + ' يوم' : '—') + k('طلبات ملغية', num(canc) + (all.length ? ' <small>(' + pct(canc / all.length) + ')</small>' : '')) + (L.pts ? k('نقاط الولاء', num(L.pts.points) + (L.pts.pending ? ' <small>+' + num(L.pts.pending) + ' معلّقة</small>' : '')) : '') + '</div>' +
+    '<div class="pf-act"><a class="btn" target="_blank" rel="noopener" href="' + wa + '">💬 واتساب</a><a class="btn ghost" href="tel:' + esc(ph) + '">📞 اتصال</a><button type="button" class="btn ghost" data-pf="copy">📋 نسخ الرقم</button><button type="button" class="btn ghost" data-pf="pts">⭐ نقاط</button>' +
+      (f.b ? '<button type="button" class="btn ghost" data-pf="unblock">✅ رفع الحظر</button>' : '<button type="button" class="btn ghost" data-pf="strike">🚩 تنبيه</button><button type="button" class="btn ghost" data-pf="block">🚫 حظر</button>') + '</div>' +
+    (top.length ? '<div class="pf-s">🍗 أكتر حاجة بيطلبها</div>' + top.map(t => '<div class="pf-bar"><span>' + esc(t) + '</span><div><i style="width:' + Math.max(6, Math.round(itm[t] / mx * 100)) + '%"></i></div><em>' + num(itm[t]) + '×</em></div>').join('') : '') +
+    '<div class="pf-s">📍 التوصيل والدفع</div><div class="pf-m">' +
+      (del ? '🛵 دليفري ' + num(del) + ' · 🏪 استلام ' + num(n - del) : '🏪 كل طلباته استلام من الفرع') +
+      (adr.length ? '<br>' + adr.map(a => '📍 ' + esc(a[0]) + ' <b>(' + num(a[1]) + '×)</b>').join('<br>') : '') +
+      (pay.length ? '<br>💳 ' + pay.map(a => a[0] + ' (' + num(a[1]) + ')').join(' · ') : '') +
+      (cp.length ? '<br>🎟️ استخدم: ' + cp.map(a => esc(a[0]) + ' (' + num(a[1]) + ')').join('، ') : '') + '</div>' +
+    '<div class="pf-s">🧾 آخر ' + num(Math.min(10, all.length)) + ' طلبات' + (all.length > 10 ? ' من ' + num(all.length) : '') + '</div>' + rec +
+    '<p class="hint" style="margin:10px 0 0">البيانات من آخر ٣٦٥ يوم · الإجماليات من غير الطلبات الملغية.</p>';
+}
+$('pf').addEventListener('click', async e => {
+  if (e.target === $('pf') || e.target.closest('#pfX')) return pfClose();
+  const b = e.target.closest('[data-pf]'), L = pfLast; if (!b || !L) return; const a = b.dataset.pf;
+  if (a === 'copy') { try { await navigator.clipboard.writeText(L.ph); toast('📋 اتنسخ ' + L.ph); } catch (x) { toast(L.ph); } }
+  else if (a === 'pts') pnOpen(L.ph, (pfLast && pfLast.name) || '');
+  else if (a === 'strike' || a === 'block' || a === 'unblock') { await custFlag(L.ph, a, false, L.name); pfPaint(); }
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('pf').classList.contains('hide') && $('pn').classList.contains('hide')) pfClose(); });
+document.addEventListener('click', e => { const a = e.target.closest('.who[data-prof]'); if (a) pfOpen(a.dataset.prof, a.dataset.nm); });
+$('cuOut').addEventListener('click', e => { const a = e.target.closest('[data-prof]'); if (a) { e.preventDefault(); pfOpen(a.dataset.prof, a.dataset.nm); } });
 
 /* ═══ الإعدادات والمناطق ═══ */
 let seAreas = [], seBuiltin = false, seFilter = '';
@@ -1455,7 +1565,7 @@ async function seLoad(){
     const c = j.settings; $('seOpen').value = c.open_at; $('seClose').value = c.close_at; $('seBusy').value = c.busy_extra || 0; $('seBusyMsg').value = c.busy_msg || ''; $('sePauseMsg').value = c.pause_msg || '';
     $('seHours').checked = c.hours_on === 'true'; $('sePause').checked = c.pause_on === 'true';
     $('seRefOn').checked = c.ref_on !== 'false'; $('seRefPts').value = c.ref_points || 500; $('seRefCap').value = c.ref_cap || 20;
-    $('sePayCash').checked = c.pay_cash !== 'false'; $('sePayWallet').checked = c.pay_wallet !== 'false'; $('sePayInsta').checked = c.pay_instapay !== 'false'; $('sePayMsg').value = c.pay_msg || ''; $('seOtKey').value = c.ot_key || ''; $('seDrivers').value = c.drivers || ''; $('seEditMin').value = (c.edit_min === undefined || c.edit_min === '') ? 5 : c.edit_min; updOtUrl(); dvRender();
+    $('sePayCash').checked = c.pay_cash !== 'false'; $('sePayWallet').checked = c.pay_wallet !== 'false'; $('sePayInsta').checked = c.pay_instapay !== 'false'; $('sePayMsg').value = c.pay_msg || ''; $('seOtKey').value = c.ot_key || ''; $('seDrivers').value = c.drivers || ''; $('seEditMin').value = (c.edit_min === undefined || c.edit_min === '') ? 5 : c.edit_min; $('seVfMode').value = c.vf_mode || 'off'; $('seVfWa').value = c.vf_wa ? String(c.vf_wa).replace(/^20/, '0') : ''; updOtUrl(); dvRender();
     seAreas = j.areas.map(a => Object.assign({}, a)); seBuiltin = !!j.builtin; seAreaRender();
   } catch (e) { $('seAreas').innerHTML = '<div class="empty">⚠️ مفيش اتصال</div>'; }
   bkLoad(); bellLoad(); blLoad();
@@ -1464,10 +1574,37 @@ function updOtUrl(){ $('seOtUrl').textContent = $('seOtKey').value.trim() ? API 
 $('seOtKey').oninput = updOtUrl;
 $('seSave').onclick = async () => {
   try {
-    const j = await post({action:'settingsSave', user, settings:{hours_on:$('seHours').checked, open_at:$('seOpen').value, close_at:$('seClose').value, busy_extra:+$('seBusy').value || 0, busy_msg:$('seBusyMsg').value.trim(), pause_on:$('sePause').checked, pause_msg:$('sePauseMsg').value.trim(), ref_on:$('seRefOn').checked, ref_points:+$('seRefPts').value || 0, ref_cap:+$('seRefCap').value || 20, pay_cash:$('sePayCash').checked, pay_wallet:$('sePayWallet').checked, pay_instapay:$('sePayInsta').checked, pay_msg:$('sePayMsg').value.trim(), ot_key:$('seOtKey').value.trim(), drivers:$('seDrivers').value.trim(), edit_min:$('seEditMin').value === '' ? 5 : +$('seEditMin').value}});
-    toast(j.ok ? '✅ اتحفظت الإعدادات' : (j.error === 'bad_time' ? 'المواعيد غير صحيحة' : j.error === 'no_pay' ? '⚠️ لازم طريقة دفع واحدة شغّالة على الأقل' : '⚠️ حصل خطأ'));
+    const j = await post({action:'settingsSave', user, settings:{hours_on:$('seHours').checked, open_at:$('seOpen').value, close_at:$('seClose').value, busy_extra:+$('seBusy').value || 0, busy_msg:$('seBusyMsg').value.trim(), pause_on:$('sePause').checked, pause_msg:$('sePauseMsg').value.trim(), ref_on:$('seRefOn').checked, ref_points:+$('seRefPts').value || 0, ref_cap:+$('seRefCap').value || 20, pay_cash:$('sePayCash').checked, pay_wallet:$('sePayWallet').checked, pay_instapay:$('sePayInsta').checked, pay_msg:$('sePayMsg').value.trim(), ot_key:$('seOtKey').value.trim(), drivers:$('seDrivers').value.trim(), edit_min:$('seEditMin').value === '' ? 5 : +$('seEditMin').value, vf_mode:$('seVfMode').value, vf_wa:$('seVfWa').value.trim()}});
+    toast(j.ok ? '✅ اتحفظت الإعدادات' : (j.error === 'bad_time' ? 'المواعيد غير صحيحة' : j.error === 'no_pay' ? '⚠️ لازم طريقة دفع واحدة شغّالة على الأقل' : j.error === 'no_wa' ? '⚠️ اكتب رقم واتساب صالح لو التحقق شغّال' : '⚠️ حصل خطأ'));
   } catch (e) { toast('⚠️ مفيش اتصال'); }
 };
+/* ═══ تحقق أرقام العملاء (واتساب): الموظف بيطابق الرقم والكود مع رسايل واتساب المطعم ═══ */
+function vfUpdate(v){
+  v = v || {mode:'off'}; vfState = {mode:v.mode || 'off', unv:new Set(v.unv || []), pend:v.pend || []};
+  const ch = $('vfChip'), n = vfState.pend.length; ch.classList.toggle('hide', !n); ch.textContent = '📵 ' + num(n) + ' رقم مستني تأكيد';
+  const ids = new Set(vfState.pend.map(p => p.phone + ':' + p.code));
+  if (vfKnown && vfState.pend.some(p => !vfKnown.has(p.phone + ':' + p.code))) { toast('📵 عميل مستني تأكيد رقمه — شوف رسايل واتساب المطعم'); beep(); }
+  vfKnown = ids;
+  if (!$('vfM').classList.contains('hide')) vfRender();
+}
+function vfRender(){
+  const l = vfState.pend;
+  $('vfList').innerHTML = l.length ? l.map(p => '<div class="lri"><b dir="ltr" style="font-size:1.05rem">' + esc(p.phone) + '</b> · الكود <b dir="ltr" style="font-size:1.25rem;letter-spacing:.2em">' + esc(p.code) + '</b> <small style="color:#6B6B6B">' + ago(p.t) + '</small>' +
+    '<div class="cxa" style="margin-top:8px"><button type="button" class="btn main" data-vf="ok" data-p="' + esc(p.phone) + '">✅ مطابق — تأكيد الرقم</button><button type="button" class="btn danger" data-vf="reject" data-p="' + esc(p.phone) + '">❌ رفض</button></div></div>').join('') : '<div class="empty">مفيش أرقام مستنية 👌</div>';
+}
+$('vfChip').onclick = () => { vfRender(); $('vfM').classList.remove('hide'); };
+$('vfX').onclick = () => $('vfM').classList.add('hide');
+document.addEventListener('keydown', e => { if (e.key === 'Escape') $('vfM').classList.add('hide'); });
+$('vfM').addEventListener('click', async e => {
+  if (e.target === $('vfM')) { $('vfM').classList.add('hide'); return; }
+  const b = e.target.closest('[data-vf]'); if (!b || b.disabled) return; b.disabled = true;
+  try {
+    const j = await post({action:'verConfirm', user, phone:b.dataset.p, op:b.dataset.vf}); if (!j.ok) throw new Error(j.error || 'fail');
+    if (b.dataset.vf === 'ok') vfState.unv.delete(b.dataset.p);
+    vfUpdate({mode:vfState.mode, unv:[...vfState.unv], pend:j.pend || []}); render();
+    toast(b.dataset.vf === 'ok' ? '✅ اتأكد الرقم ' + b.dataset.p : '❌ اترفض الكود — العميل هيطلب كود جديد');
+  } catch (er) { b.disabled = false; toast(String(er.message) === 'bad_action' ? '⚠️ حدّث Code.gs واعمل Deploy ▸ New version' : '⚠️ معرفناش ننفّذ — جرّب تاني'); }
+});
 /* ═══ تنبيهات: تقييم منخفض + الإشعارات واقفة ═══ */
 function chips(j){
   const lr = $('lrChip'), pb = $('pbChip');
@@ -1488,8 +1625,8 @@ $('pbChip').onclick = () => $('vSet').click();
 
 /* ═══ علامات العميل: تنبيه / حظر ═══ */
 function flagHtml(o){
-  const f = flags[o.phone]; if (!f) return '';
-  const p = []; if (f.b) p.push('🚫 رقم محظور'); else if (f.s) p.push('🚩 ' + f.s + ' تنبيه سابق'); if (f.c >= 2) p.push('⚠️ ' + f.c + ' طلب ملغي سابقًا');
+  const f = flags[o.phone] || {}, unv = vfState.mode !== 'off' && vfState.unv.has(o.phone);
+  const p = []; if (f.b) p.push('🚫 رقم محظور'); else if (f.s) p.push('🚩 ' + f.s + ' تنبيه سابق'); if (f.c >= 2) p.push('⚠️ ' + f.c + ' طلب ملغي سابقًا'); if (unv) p.push('📵 رقم غير متحقق منه');
   return p.length ? '<div class="flg' + (f.b ? ' bl' : '') + '">' + p.join(' · ') + '</div>' : '';
 }
 function flagBtns(o){
@@ -2209,7 +2346,7 @@ main{padding-top:20px!important}
 (function(){
   var sb=document.getElementById('sb'), bar=document.querySelector('#app .bar'); if(!sb||!bar) return;
   var tools=document.createElement('div'); tools.className='nv-tools';
-  ['lrChip','pbChip','live','who','snd','themeBtn','rf','out'].forEach(function(id){var e=document.getElementById(id); if(e) tools.appendChild(e);});
+  ['lrChip','pbChip','vfChip','live','who','snd','themeBtn','rf','out'].forEach(function(id){var e=document.getElementById(id); if(e) tools.appendChild(e);});
   sb.appendChild(tools);
   var h1=bar.querySelector('h1'), ey=document.createElement('div'), sub=document.createElement('div');
   ey.className='eyebrow'; sub.className='hsub';
@@ -2829,6 +2966,12 @@ html[data-theme="dark"] #chBar{background:#1c1608!important;color:#F0CF6B!import
 @keyframes rrFlD2{50%{background:#2e2409}}
 html[data-theme="dark"] #toast{background:#000;color:#F0CF6B;border:1px solid #D4AF37}
 
+html[data-theme="dark"] .pf-av{background:linear-gradient(135deg,#F0CF6B,#C99A1E);color:#000}
+html[data-theme="dark"] .pf-tags span{background:rgba(212,175,55,.14);color:#F0CF6B}
+html[data-theme="dark"] .pf-tags .bad{background:rgba(220,60,60,.16);color:#ff9b9b}
+html[data-theme="dark"] .pf-k div,html[data-theme="dark"] .pf-o{border-color:rgba(212,175,55,.22);background:rgba(212,175,55,.05)}
+html[data-theme="dark"] .pf-k b{color:#F6DD8A}
+html[data-theme="dark"] .pf-bar i{background:linear-gradient(90deg,#8E6F1A,#F0CF6B)}
 @media print{html[data-theme="dark"] body{background:#fff!important}}
 </style>
 <script>

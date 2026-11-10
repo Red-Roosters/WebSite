@@ -1083,6 +1083,85 @@ imChips.previousElementSibling.style.display = noChips ? 'none' : '';
     document.querySelectorAll('#schedMode button').forEach(b => b.addEventListener('click', () => { if (!b.disabled) schedMode(b.dataset.v); }));
     $('f_stime').addEventListener('change', () => { $('f_sched').value = $('f_stime').value; renderSummary(); });
 
+    /* ═══ تحقق رقم الموبايل بواتساب ═══
+       لو المطعم مفعّل التحقق: العميل بيشوف كود يبعته على واتساب المطعم من نفس رقمه، والموظف بيأكد من الداشبورد.
+       الرقم اللي اتحقق (أو اتسلّم له طلب قبل كده) مابيتسألش تاني. */
+    const VF = { busy: false };
+    async function vfCall(action, phone) {
+        const r = await fetch(CONFIG.couponApi, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: action, phone: phone }) });
+        return r.json();
+    }
+    function vfBrand() {
+        const sb = document.querySelector('#checkoutForm [type=submit]'), cs = sb ? getComputedStyle(sb) : null;
+        return { bg: (cs && cs.backgroundColor && cs.backgroundColor !== 'rgba(0, 0, 0, 0)') ? cs.backgroundColor : '#D92B2B', fg: (cs && cs.color) || '#fff' };
+    }
+    async function rrVerifyGate(phone, force) {
+        const cfg = window.RR_CFG && RR_CFG.vf, mode = cfg && cfg.mode;
+        if (!force && (!mode || mode === 'off')) return true;
+        if (VF.busy) return false;
+        try { if (!force && localStorage.getItem('rr_vf_ph') === phone) return true; } catch (e) {}
+        VF.busy = true;
+        try {
+            let j = null;
+            try { j = await vfCall('verReq', phone); } catch (e) {}
+            if (!j || !j.ok) {
+                if (j && j.error === 'blocked') { toast('⚠️ تعذّر تنفيذ الطلب حاليًا. كلّمنا على 0237721525 وهنساعدك.', 9000); return false; }
+                if (j && j.error === 'bad_phone') return true;      /* الرقم الغلط بيتمسك في validate */
+                if (mode === 'flag') return true;                    /* التحقق اختياري: ماننعش العميل بسبب عطل مؤقت */
+                toast('⚠️ مقدرناش نتحقق من الرقم دلوقتي. جرّب تاني.', 6000); return false;
+            }
+            if (j.mode === 'off' || j.verified) { try { localStorage.setItem('rr_vf_ph', phone); } catch (e) {} return true; }
+            return await vfModal(phone, j, j.mode || mode);
+        } finally { VF.busy = false; }
+    }
+    function vfModal(phone, first, mode) {
+        return new Promise(resolve => {
+            const B = vfBrand(), wa = String(first.wa || ''), shown = wa.replace(/^20/, '0');
+            let data = first, timer = null, until = Date.now() + (first.ttl || 1800) * 1000, done = false, state = 'wait';
+            const ov = document.createElement('div');
+            ov.id = 'rrVf'; ov.setAttribute('role', 'dialog'); ov.setAttribute('aria-modal', 'true');
+            ov.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,.62);display:grid;place-items:center;padding:16px;font-family:Cairo,Tajawal,sans-serif;direction:rtl';
+            document.body.appendChild(ov);
+            const finish = ok => { if (done) return; done = true; clearInterval(timer); ov.remove(); resolve(ok); };
+            const btn = 'display:block;width:100%;margin-top:8px;padding:12px;border-radius:14px;border:0;font:900 .95rem Cairo,Tajawal,sans-serif;cursor:pointer;text-decoration:none;box-sizing:border-box;';
+            function paint() {
+                const waLink = 'https://wa.me/' + wa + '?text=' + encodeURIComponent('كود التحقق: ' + data.code);
+                let body;
+                if (state === 'wait') {
+                    body = '<p style="margin:0 0 12px;color:#6B6B6B;font-size:.92rem;line-height:1.8">عشان نتأكد إن الرقم <b dir="ltr" style="color:#222">' + phone + '</b> بتاعك، ابعت الكود ده على واتساب المطعم <b dir="ltr" style="color:#222">' + shown + '</b> من <b>نفس الرقم</b>.</p>' +
+                        '<div dir="ltr" style="font:900 2.1rem Tajawal,Cairo,monospace;letter-spacing:.35em;background:#f6f3f2;color:#222;border-radius:14px;padding:12px 0 12px .35em">' + data.code + '</div>' +
+                        '<a href="' + waLink + '" target="_blank" rel="noopener" style="' + btn + 'background:#25D366;color:#fff;margin-top:14px">💬 ابعت الكود على واتساب</a>' +
+                        '<div style="margin-top:10px;color:#6B6B6B;font-size:.85rem;line-height:1.7">⏳ بنستنى رسالتك… هنكمّل طلبك أول ما نتأكد (ممكن ياخد دقيقة).<br>لو واتساب مافتحش، ابعت الكود يدويًا للرقم اللي فوق.</div>';
+                } else {
+                    body = '<p style="margin:0 0 6px;color:#6B6B6B;font-size:.92rem;line-height:1.8">' + (state === 'rej' ? '⚠️ الكود ده اترفض — اتأكد إنك بتبعته من نفس الرقم اللي في الطلب.' : '⌛ الكود انتهى. خد كود جديد وابعته.') + '</p>' +
+                        '<button type="button" id="rrVfNew" style="' + btn + 'background:' + B.bg + ';color:' + B.fg + '">🔄 كود جديد</button>';
+                }
+                ov.innerHTML = '<div style="background:#fff;color:#222;border-radius:22px;max-width:390px;width:100%;padding:22px 20px;text-align:center;box-shadow:0 30px 60px -20px rgba(0,0,0,.5);max-height:94vh;overflow:auto">' +
+                    '<div style="font-size:2rem">📱</div><h3 style="margin:6px 0 6px;font:900 1.2rem Tajawal,Cairo,sans-serif">تأكيد رقم موبايلك</h3>' + body +
+                    (mode === 'flag' ? '<button type="button" id="rrVfSkip" style="' + btn + 'background:transparent;color:#6B6B6B;border:1.5px solid #ddd">كمّل الطلب من غير تحقق</button>' : '<div style="margin-top:8px;color:#6B6B6B;font-size:.8rem">لازم نتأكد من الرقم قبل تنفيذ الطلب.</div>') +
+                    '<button type="button" id="rrVfX" style="' + btn + 'background:transparent;color:#9E1B1B">إلغاء</button></div>';
+                const q = id => ov.querySelector(id);
+                q('#rrVfX').onclick = () => finish(false);
+                if (q('#rrVfSkip')) q('#rrVfSkip').onclick = () => finish(true);
+                if (q('#rrVfNew')) q('#rrVfNew').onclick = async () => {
+                    try { const j = await vfCall('verReq', phone); if (j && j.ok && j.verified) { try { localStorage.setItem('rr_vf_ph', phone); } catch (e) {} finish(true); return; } if (j && j.ok) { data = j; until = Date.now() + (j.ttl || 1800) * 1000; state = 'wait'; paint(); } else toast('⚠️ مقدرناش نجيب كود جديد، جرّب تاني', 5000); } catch (e) { toast('⚠️ مفيش اتصال، جرّب تاني', 5000); }
+                };
+            }
+            paint();
+            timer = setInterval(async () => {
+                if (done || state !== 'wait') return;
+                if (Date.now() > until) { state = 'exp'; paint(); return; }
+                try {
+                    const j = await vfCall('verStatus', phone);
+                    if (done || !j || !j.ok) return;
+                    if (j.verified) { try { localStorage.setItem('rr_vf_ph', phone); } catch (e) {} toast('✅ تم التحقق من رقمك', 4000); finish(true); }
+                    else if (j.rejected) { state = 'rej'; paint(); }
+                    else if (!j.code) { state = 'exp'; paint(); }
+                } catch (e) {}
+            }, 4000);
+        });
+    }
+
     $('checkoutForm').addEventListener('submit', async e => {
         e.preventDefault();
         if (sending) return;
@@ -1095,6 +1174,7 @@ imChips.previousElementSibling.style.display = noChips ? 'none' : '';
         hideFail();
         { const so = soInCart(); if (so.length) { showFail('so', so); return; } }
         if (!window.rrTrackSave) { toast('⚠️ في مشكلة مؤقتة، كلمنا على 0237721525', 6000); return; }
+        if (!(await rrVerifyGate(toEn($('f_phone').value.trim())))) return;   /* تحقق الرقم (لو المطعم مفعّله) */
 
         const v = id => $(id).value.trim();
         const pickup = pk();
@@ -1137,6 +1217,7 @@ imChips.previousElementSibling.style.display = noChips ? 'none' : '';
         if (res === 'bad_pick') { pendingId = null; loadServerConfig().catch(() => {}); toast('⏰ موعد الاستلام لازم يكون بعد ' + pickMin() + ' دقيقة على الأقل من دلوقتي — اختار موعد تاني', 7000); return; }
         if (res === 'bad_sched') { pendingId = null; loadServerConfig().catch(() => {}); schedFill(); toast('⏰ الميعاد اللي اخترته مبقاش متاح — اختار ميعاد تاني', 7000); return; }
         if (res === 'pay_off') { pendingId = null; loadServerConfig().catch(() => {}); toast('⚠️ طريقة الدفع دي مش متاحة دلوقتي — اختار طريقة تانية', 7000); return; }
+        if (res === 'unverified') { pendingId = null; loadServerConfig().catch(() => {}); if (await rrVerifyGate(num('f_phone'), true)) toast('✅ تم التحقق — اضغط تأكيد الطلب تاني', 6000); return; }
         if (res === 'blocked') { pendingId = null; toast('⚠️ تعذّر تنفيذ الطلب حاليًا. كلّمنا على 0237721525 وهنساعدك.', 9000); return; }
         if (/^coupon_(invalid|expired|limit|not_new)$/.test(res)) { pendingId = null; const bad = coupon && coupon.code; coupon = null; $('couponInput').value = ''; setCouponMsg(CP_ERR[res] || '', false); render(); renderSummary(); toast((CP_ERR[res] || '') + (bad ? ' (' + bad + ') — اتشال من طلبك، راجع الإجمالي وأكّد تاني' : ''), 7500); return; }
         if (res === 'busy') { toast('⏳ طلبات كتيرة في وقت قصير. جرّب بعد دقيقة.', 6000); return; }
@@ -2119,7 +2200,7 @@ try {
     if(!o.did&&window.rrDid) o.did=window.rrDid();
     if(o.coupon==='FRIEND'&&!o.ref){ try{ o.ref=localStorage.getItem('rr_ref')||''; }catch(e){} }   // كود دعوة الصاحب
     function attempt(n){ return post1(o,18000).then(function(j){
-        if(j&&j.ok) return 'ok'; if(j&&j.error==='coupon_used') return 'coupon_used'; if(j&&j.error==='closed') return 'closed'; if(j&&j.error==='pay_off') return 'pay_off'; if(j&&/^coupon_(invalid|expired|limit|not_new)$/.test(j.error)) return j.error; if(j&&j.error==='blocked') return 'blocked'; if(j&&j.error==='bad_sched') return 'bad_sched'; if(j&&j.error==='bad_pick') return 'bad_pick'; if(j&&j.error==='busy') return 'busy'; if(j&&j.error==='bad_total') return 'bad_total'; if(j&&(j.error==='bad_price'||j.error==='bad_item')) return 'bad_price'; if(j&&/^(delivery_paused|area_closed|bad_area)$/.test(j.error)) return j.error; if(j&&j.error==='soldout'){ window.rrSoNames=j.items||[]; return 'soldout'; }
+        if(j&&j.ok) return 'ok'; if(j&&j.error==='coupon_used') return 'coupon_used'; if(j&&j.error==='closed') return 'closed'; if(j&&j.error==='pay_off') return 'pay_off'; if(j&&/^coupon_(invalid|expired|limit|not_new)$/.test(j.error)) return j.error; if(j&&j.error==='blocked') return 'blocked'; if(j&&j.error==='unverified') return 'unverified'; if(j&&j.error==='bad_sched') return 'bad_sched'; if(j&&j.error==='bad_pick') return 'bad_pick'; if(j&&j.error==='busy') return 'busy'; if(j&&j.error==='bad_total') return 'bad_total'; if(j&&(j.error==='bad_price'||j.error==='bad_item')) return 'bad_price'; if(j&&/^(delivery_paused|area_closed|bad_area)$/.test(j.error)) return j.error; if(j&&j.error==='soldout'){ window.rrSoNames=j.items||[]; return 'soldout'; }
         return n<2?attempt(n+1):'fail';
       },function(){ return n<2?attempt(n+1):'fail'; }); }
     return attempt(1).then(function(r){
