@@ -307,6 +307,7 @@ main.wide{max-width:none}
   <main id="mainEl">
     <div class="stats" id="stats"></div>
     <div class="tools"><div class="tabs" id="tabs"></div><input id="q" type="search" placeholder="ابحث بالاسم / الموبايل / رقم الطلب"></div>
+  <div class="hint hide" id="capNote" style="margin:-2px 4px 10px">ℹ️ عدّادات «تم التسليم / ملغي / الكل» هنا لآخر ٣٠٠ طلب بس (اللوحة مش بتحمّل أكتر من كده). للأرقام الكاملة افتح <b>📊 التحليلات</b>.</div>
     <div class="grid" id="grid"></div>
   </main>
   <main id="anMain" class="hide">
@@ -637,17 +638,20 @@ function keepScroll(fn){
     requestAnimationFrame(() => { document.body.style.minHeight = ''; });
   }
 }
+/* وقت دخول الطلب لحالته الحالية (تسليم/إلغاء) من سجل الحالات — مش «آخر تعديل» اللي بيتغيّر لو اتعلّم مدفوع أو اتعدّل بعد كده */
+function stTs(o){ const h = parseHist(o.history); return h[o.status] || o.updated || o.time; }
 function render(){
   const q = query.trim().toLowerCase(), day = new Date(bizStart()), dT = day.getTime();
   const todayAll = orders.filter(o => eff(o) >= dT), today = todayAll.filter(o => o.status !== 'cancelled');
+  $('capNote').classList.toggle('hide', orders.length < 300);
   const st = (b, t, c, ic) => '<div class="st' + (c ? ' ' + c : '') + '"><div class="sh"><i class="ic">' + (ic || '') + '</i><span>' + t + '</span></div><b>' + b + '</b>' +
     (c === 'hot' ? '<i class="go">' + _s('<path d="M7 17L17 7M9 7h8v8"/>') + '</i><svg class="sq" viewBox="0 0 120 40" fill="none"><path d="M2 30C15 10 25 38 40 20S65 6 80 22s25 6 38-14" stroke="#fff" stroke-width="2.5" stroke-linecap="round" opacity=".75"/></svg>' : '') + '</div>';
   $('stats').innerHTML =
     st(orders.filter(o => o.status === 'new').length, 'طلبات جديدة', 'hot', ICN.nw) +
     st(orders.filter(o => ['confirmed','preparing','out'].includes(o.status)).length, 'قيد التنفيذ', '', ICN.pr) +
     st(today.length, 'طلبات النهاردة', '', ICN.td) +
-    st(orders.filter(o => o.status === 'delivered' && (o.updated || o.time) >= dT).length, 'تم تسليمها النهاردة', '', ICN.dn) +
-    st(orders.filter(o => o.status === 'cancelled' && (o.updated || o.time) >= dT).length, 'ملغية النهاردة', '', ICN.cx) +
+    st(orders.filter(o => o.status === 'delivered' && stTs(o) >= dT).length, 'تم تسليمها النهاردة', '', ICN.dn) +
+    st(orders.filter(o => o.status === 'cancelled' && stTs(o) >= dT).length, 'ملغية النهاردة', '', ICN.cx) +
     (role === 'manager' ? st(today.reduce((s, o) => s + o.total, 0).toLocaleString('ar-EG') + ' ج', 'مبيعات النهاردة', '', ICN.sl) : '');
   $('tabs').innerHTML = TABS.map(([k, n]) => '<button class="tab' + (k === tab ? ' on' : '') + '" data-tab="' + k + '">' + n + '<em>' + orders.filter(inTab[k]).length + '</em></button>').join('');
   let list = orders.filter(inTab[tab]);
@@ -660,7 +664,7 @@ function render(){
     const colHtml = ([st, title]) => {
       let l = src.filter(o => o.status === st);
       const done = st === 'delivered' || st === 'cancelled';
-      if (done) l = l.filter(o => (o.updated || o.time) >= day.getTime());
+      if (done) l = l.filter(o => stTs(o) >= day.getTime());
       l.sort((a, b) => ACTIVE.includes(st) ? eff(a) - eff(b) : b.time - a.time);
       return '<section class="col c-' + st + '"><h3><span class="dt"></span><span class="ct">' + title + '</span>' + (role === 'manager' && st !== 'cancelled' && l.length ? '<small class="cs">' + l.reduce((s, o) => s + (o.total || 0), 0).toLocaleString('ar-EG') + ' ج</small>' : '') + '<em>' + l.length + '</em></h3><div class="cl">' +
         (l.length ? l.map(done ? miniHtml : cardHtml).join('') : '<div class="ce">مفيش طلبات</div>') + '</div></section>';
@@ -995,16 +999,59 @@ function heatmap(ok){
     return '<i class="hc" title="' + WD[d] + ' · ' + (x % 12 || 12) + (x < 12 ? ' ص' : ' م') + ' — ' + c + ' طلب" style="' + (c ? 'background:rgba(217,43,43,' + (.14 + .86 * c / mx).toFixed(2) + ')' : '') + '"></i>'; }).join('') + '</div>'; });
   return h + '</div></div><div class="hint">كل مربع = عدد الطلبات في الساعة دي (الأرقام فوق = الساعة). الأغمق = أكتر ازدحامًا.</div>';
 }
+/* ═══ تدقيق سلامة البيانات: بيفحص الطلبات اللي اتحمّلت للتقرير (من الشيت) ويطلّع أي حاجة تخلّي الأرقام مش موثوقة ═══ */
+let anExT = false;
+const TEST_RX = /(تجرب|تست|\btest\b|trial|dummy|fake|وهمي)/i;
+const isTestOrder = o => TEST_RX.test(String(o.name || '') + ' ' + String(o.notes || '')) || /^01[0125](\d)\1{7}$/.test(String(o.phone || ''));
+function audit(list){
+  const amt = l => l.reduce((s, o) => s + (+o.total || 0), 0), ok = list.filter(o => o.status !== 'cancelled');
+  const seen = new Map(); list.forEach(o => { const k = String(o.id).toUpperCase(); if (!seen.has(k)) seen.set(k, []); seen.get(k).push(o); });
+  const dup = []; seen.forEach(a => { if (a.length > 1) dup.push(...a.slice(1)); });
+  const calc = o => (+o.subtotal || 0) - (+o.discount || 0) + (+o.fee || 0), its = o => (o.items || []).reduce((s, i) => s + (+i.p || 0) * (+i.q || 0), 0);
+  const qtyAll = o => (o.items || []).reduce((s, i) => s + (+i.q || 0), 0);
+  const pairs = []; { const m = new Map(); ok.forEach(o => { if (!m.has(o.phone)) m.set(o.phone, []); m.get(o.phone).push(o); });
+    m.forEach(a => { a.sort((x, y) => x.time - y.time); for (let i = 1; i < a.length; i++) if (a[i].total === a[i - 1].total && a[i].time - a[i - 1].time < 600000) pairs.push(a[i]); }); }
+  const C = (key, label, sev, l, tip) => ({key, label, sev, list:l, amt:amt(l), tip});
+  return [
+    C('dup', 'نفس رقم الطلب ظاهر أكتر من مرة', 'hi', dup, 'بيتحسب مرتين في المبيعات'),
+    C('empty', 'طلب من غير أصناف أو إجماليه صفر', 'hi', ok.filter(o => !(o.total > 0) || !(o.items && o.items.length)), 'طلب فاضي'),
+    C('tot', 'الإجمالي مش مطابق لـ (المجموع − الخصم + التوصيل)', 'hi', ok.filter(o => Math.abs(calc(o) - (+o.total || 0)) > 1), 'المبيعات والخصومات مش هتتطابق'),
+    C('stuck', 'طلبات عالقة: لا اتسلّمت ولا اتلغت بعد ١٢ ساعة', 'hi', list.filter(o => ACTIVE.includes(o.status) && Date.now() - eff(o) > 432e5), 'بتتحسب في المبيعات رغم إنها مش اتسلّمت'),
+    C('sub', 'مجموع الأصناف مش مطابق لمجموع الطلب', 'mid', ok.filter(o => Math.abs(its(o) - (+o.subtotal || 0)) > 1), 'ممكن يكون تعديل طلب أو سعر صنف اتغيّر'),
+    C('test', 'يُشتبه إنها تجريبية (اسم أو ملاحظة «تجربة/test» أو رقم وهمي)', 'mid', list.filter(isTestOrder), 'فعّل «استبعاد التجريبي» تحت لو فعلاً تجارب'),
+    C('twin', 'طلبين بنفس الرقم والإجمالي في أقل من ١٠ دقايق', 'mid', pairs, 'احتمال ضغطة مكررة من العميل'),
+    C('qty', 'كميات غير معتادة (صنف ١٥+ أو طلب ٤٠+ قطعة)', 'mid', ok.filter(o => (o.items || []).some(i => (+i.q || 0) >= 15) || qtyAll(o) >= 40), 'بتضخّم «عدد الأصناف المبيعة»'),
+    C('unpaid', 'اتسلّمت بس التحويل (محفظة/إنستا) لسه مش مؤكد', 'mid', list.filter(o => o.status === 'delivered' && o.payment !== 'cash' && !o.paid), 'فلوس ممكن مااستلمتهاش'),
+    C('rsn', 'ملغية من غير سبب مسجّل', 'low', list.filter(o => o.status === 'cancelled' && !String(o.reason || '').trim()), 'تحليل أسباب الإلغاء ناقص')
+  ];
+}
+function auditHtml(A){
+  const a = A.audit || [], bad = a.filter(c => c.list.length), ic = {hi:'🔴', mid:'🟠', low:'🟡'};
+  const rows = a.map(c => [c.list.length ? ic[c.sev] : '✅', esc(c.label) + (c.list.length ? '<br><small style="color:#6B6B6B">' + esc(c.tip) + '</small>' : ''), num(c.list.length), c.list.length ? money(c.amt) : '—',
+    c.list.length ? '<span dir="ltr">' + c.list.slice(0, 6).map(o => '#' + esc(o.id)).join(' ') + (c.list.length > 6 ? ' …' : '') + '</span>' : '—']);
+  const nTest = (a.find(c => c.key === 'test') || {list:[]}).list.length;
+  return sec('🔍 تدقيق سلامة الأرقام', '<p class="hint" style="margin:0 0 8px">' + (bad.length ? '⚠️ ' + num(bad.length) + ' فحص فيه ملاحظات من ' + num(a.length) + ' — راجع الأرقام قبل ما تعتمد عليها.' : '✅ كل الفحوصات سليمة على ' + num(A.rawN) + ' طلب.') + ' الفحوصات دي على بيانات الشيت نفسها، مش على حسابات التقرير.</p>' +
+    tbl(['', 'الفحص', 'العدد', 'قيمتها', 'أرقام الطلبات (أول ٦)'], rows) +
+    '<label class="ck" style="margin-top:10px;display:flex;gap:8px;align-items:center"><input type="checkbox" id="anExT"' + (anExT ? ' checked' : '') + '> استبعاد الطلبات المشتبه إنها تجريبية (' + num(nTest) + ') من كل أرقام التقرير</label>' +
+    '<div class="hint">لو لقيت رقم طلب عايز تراجعه، دوّر عليه من «📜 سجل الطلبات». الاستبعاد بيتعمل في العرض بس ومبيمسحش حاجة من الشيت.</div>');
+}
+function auditHead(A){
+  const d = Math.round((A.to - A.from) / 864e5), pl = A.prevRaw == null ? '⚠️ مقدرناش نحمّل الفترة السابقة' : 'الفترة السابقة (' + ymd(A.pFrom) + ' → ' + ymd(addDays(A.from, -1)) + '): ' + num(A.prevRaw) + ' طلب';
+  return '<div class="note" style="margin-bottom:12px">📋 التقرير: ' + ymd(A.from) + ' → ' + ymd(addDays(A.to, -1)) + ' (' + num(d) + ' يوم شغل، كل يوم ٦ص→٦ص) · اتحمّل ' + num(A.rawN) + ' طلب من الشيت' +
+    (A.exN ? ' · <b>استبعدنا ' + num(A.exN) + ' تجريبي</b>' : '') + '<br>' + pl + (A.prevRaw === 0 ? ' — يعني مفيش مقارنة ممكنة (الشيت مفيهوش طلبات قبل الفترة دي).' : '') + '</div>';
+}
 function anRender(A){
   const k = A.kpi, t = A.times; let h = '';
+  h += auditHead(A);
   if (A.truncated) h += '<div class="note" style="margin-bottom:12px">⚠️ الفترة كبيرة — اتعرض آخر ٥٠٠٠ طلب بس.</div>';
-  h += '<div class="stats kp">' + [[num(k.orders), 'إجمالي الطلبات'], [num(k.valid), 'طلبات سارية (غير ملغية)'], [num(k.delivered), 'تم التسليم'], [num(k.cancelled) + ' · ' + pct(k.cancelRate), 'ملغية'],
-    [money(k.sales), 'إجمالي المبيعات'], [money(k.aov), 'متوسط قيمة الطلب'], [money(k.discount), 'إجمالي الخصومات'], [money(k.fees), 'رسوم التوصيل'], [money(k.lost), 'مبيعات ضايعة بالإلغاء'], [num(k.items), 'عدد الأصناف المبيعة'], [num(k.customers), 'عملاء مختلفين']]
+  h += '<div class="stats kp">' + [[num(k.orders), 'إجمالي الطلبات'], [num(k.valid), 'طلبات غير ملغية'], [num(k.delivered), 'تم التسليم'], [num(k.cancelled) + ' · ' + pct(k.cancelRate), 'ملغية'],
+    [money(k.sales), 'إجمالي المبيعات (غير الملغية)'], [money(k.deliveredSales), 'منها اتسلّم'], [money(Math.max(0, k.sales - k.deliveredSales)), 'منها لسه ماتسلّمش'], [money(k.aov), 'متوسط قيمة الطلب'], [money(k.discount), 'إجمالي الخصومات'], [money(k.fees), 'رسوم التوصيل'], [money(k.lost), 'مبيعات ضايعة بالإلغاء'], [num(k.items), 'عدد الأصناف المبيعة (مجموع الكميات)'], [num(k.customers), 'عملاء مختلفين']]
     .map(c => '<div class="st"><b>' + c[0] + '</b><span>' + c[1] + '</span></div>').join('') + '</div>';
   if (A.prev) { const p = A.prev.kpi;
-    h += '<div class="stats cmp">' + [[money(k.sales), 'المبيعات', dlt(k.sales, p.sales)], [num(k.valid), 'الطلبات السارية', dlt(k.valid, p.valid)], [money(k.aov), 'متوسط الطلب', dlt(k.aov, p.aov)],
+    h += '<div class="stats cmp">' + [[money(k.sales), 'المبيعات', dlt(k.sales, p.sales)], [num(k.valid), 'الطلبات غير الملغية', dlt(k.valid, p.valid)], [money(k.aov), 'متوسط الطلب', dlt(k.aov, p.aov)],
       [num(k.customers), 'عملاء مختلفين', dlt(k.customers, p.customers)], [num(k.cancelled), 'ملغية', dlt(k.cancelled, p.cancelled, true)]]
       .map(c => '<div class="st"><b>' + c[0] + '</b><span>' + c[1] + '</span>' + c[2] + '</div>').join('') + '</div>'; }
+  h += auditHtml(A);
   h += sec('📈 المبيعات والطلبات يوم بيوم', '<div class="hint" style="margin:0 0 6px">الخط الأحمر = المبيعات (ج) · الأعمدة الزرقا = عدد الطلبات' + (A.prev ? ' · المقارنة فوق بالفترة اللي قبلها بنفس الطول' : '') + '</div>' + chartDaily(A.days));
   h += sec('🔥 خريطة الازدحام (يوم × ساعة)', heatmap(A.ok));
   h += '<div class="two">';
@@ -1066,12 +1113,13 @@ async function anExtra(os, from, to){
   h += sec('💤 عملاء غابوا (طلبوا ٢+ ومن ٣٠ يوم مطلبوش)', (to - from) / 864e5 < 60 ? '<div class="hint">اختار فترة ٦٠ يوم أو أكتر عشان القايمة دي تبقى مفيدة.</div>' : lapsed.length ? tbl(['العميل', 'الموبايل', 'الطلبات', 'الإجمالي', 'آخر طلب', ''], lapsed.map(c => [esc(c.name), '<span dir="ltr">' + esc(c.ph) + '</span>', num(c.n), money(c.amt), Math.round((Date.now() - c.last) / 864e5) + ' يوم', '<a href="https://wa.me/20' + c.ph.replace(/^0/, '') + '?text=' + encodeURIComponent('وحشتنا يا ' + c.name + ' 🐓 ريد روستر مستنيك — ') + '" target="_blank" rel="noopener">📲 واتساب</a>'])) : '<div class="hint">مفيش عملاء غابوا في الفترة دي 👏</div>');
   out.insertAdjacentHTML('beforeend', h);
   try {
-    const f = await post({action:'funnel', user, from:ymd(from), to:ymd(to - 1)});
+    const f = await post({action:'funnel', user, from:ymd(from - DAY_START_HOUR * 36e5), to:ymd(to - 1 - DAY_START_HOUR * 36e5)});   // أيام الشغل (٦ص→٦ص) زي باقي التقرير
     if (!f || !f.ok) throw 0;
     const c = f.counts, st = [['visit', '👀 فتحوا الموقع'], ['cart', '🛒 ضافوا للسلة'], ['checkout', '📝 فتحوا صفحة التأكيد'], ['submit', '👆 دوسوا تأكيد الطلب'], ['order', '✅ الطلب اتسجّل']], v = c.visit || 0;
     out.insertAdjacentHTML('beforeend', sec('🔻 مسار الطلب (من فتح الموقع للطلب)', v ? tbl(['المرحلة', 'العدد', 'من اللي قبلها', 'من اللي فتحوا الموقع'], st.map((s, i) => [s[1], num(c[s[0]]), i ? pct(c[st[i - 1][0]] ? c[s[0]] / c[st[i - 1][0]] : 0) : '—', pct(c[s[0]] / v)])) + bars(st.map(s => [s[1], c[s[0]]]), num) + (f.fixed ? '<div class="hint" style="margin-top:8px">⚠️ بعض الأرقام اتعدّلت تلقائيًا (مرحلة مينفعش تبقى أقل من اللي بعدها) لأن أحداث قديمة ضاعت قبل الإصلاح. الفترات الجديدة هتكون أدق.</div>' : '') + '<div class="hint" style="margin-top:8px">كل جلسة بتتحسب مرة واحدة في كل مرحلة. الأرقام بتبدأ من تاريخ رفع index.html الجديد.</div>' : '<div class="hint">لسه مفيش بيانات للفترة دي — الأرقام بتبدأ تتجمّع بعد ما ترفع index.html الجديد.</div>'));
   } catch (e) { out.insertAdjacentHTML('beforeend', sec('🔻 مسار الطلب', '<div class="hint">⚠️ مقدرناش نحمّل البيانات — تأكد إنك عملت Deploy ▸ New version لـ Code.gs.</div>')); }
 }
+$('anOut').addEventListener('change', e => { if (e.target && e.target.id === 'anExT') { anExT = e.target.checked; anRun(); } });
 async function anRun(){
   const pf = v => { const a = String(v).split('-').map(Number); return a.length === 3 && a[0] ? new Date(a[0], a[1] - 1, a[2], DAY_START_HOUR).getTime() : NaN; };
   const from = pf($('anFrom').value), to = addDays(pf($('anTo').value), 1);
@@ -1082,7 +1130,10 @@ async function anRun(){
     const [j, jp, sl] = await Promise.all([post({action:'adminReport', user, from, to}), post({action:'adminReport', user, from:pFrom, to:from}).catch(() => null), post({action:'staffList', user}).catch(() => null)]);
     if (sl && sl.ok) sl.staff.forEach(x => staffNames[x.username] = x.name);
     if (!j.ok) { $('anOut').innerHTML = '<div class="empty">' + (j.error === 'forbidden' ? '⛔ التحليلات للمدير بس' : '⚠️ مقدرناش نحمّل التقرير') + '</div>'; return; }
-    lastA = analyze(j.orders, from, to); lastA.truncated = j.truncated; lastA.prev = jp && jp.ok ? analyze(jp.orders, pFrom, from) : null; anRender(lastA); anExtra(j.orders, from, to);
+    const raw = j.orders, use = anExT ? raw.filter(o => !isTestOrder(o)) : raw, pUse = jp && jp.ok ? (anExT ? jp.orders.filter(o => !isTestOrder(o)) : jp.orders) : null;
+    lastA = analyze(use, from, to); lastA.truncated = j.truncated; lastA.prev = pUse ? analyze(pUse, pFrom, from) : null;
+    lastA.rawN = raw.length; lastA.exN = raw.length - use.length; lastA.prevRaw = jp && jp.ok ? jp.orders.length : null; lastA.pFrom = pFrom; lastA.audit = audit(raw);
+    anRender(lastA); anExtra(use, from, to);
   } catch (e) { $('anOut').innerHTML = '<div class="empty">⚠️ مفيش اتصال، جرّب تاني</div>'; }
 }
 
@@ -1113,7 +1164,7 @@ async function anExport(){
     };
     const N = '#,##0', P = '0.0%', D = 'yyyy-mm-dd hh:mm', R1 = '#,##0.0';
     const ws0 = sheet('ملخص', [['البند', 34], ['القيمة', 26]], [
-      ['الفترة (من)', ymd(A.from)], ['الفترة (إلى)', ymd(addDays(A.to, -1))], ['إجمالي الطلبات', k.orders], ['طلبات سارية (غير ملغية)', k.valid], ['تم التسليم', k.delivered], ['ملغية', k.cancelled], ['نسبة الإلغاء', k.cancelRate],
+      ['الفترة (من)', ymd(A.from)], ['الفترة (إلى)', ymd(addDays(A.to, -1))], ['إجمالي الطلبات', k.orders], ['طلبات غير ملغية', k.valid], ['تم التسليم', k.delivered], ['ملغية', k.cancelled], ['نسبة الإلغاء', k.cancelRate],
       ['إجمالي المبيعات (ج)', k.sales], ['مبيعات تم تسليمها (ج)', k.deliveredSales], ['متوسط قيمة الطلب (ج)', k.aov], ['إجمالي الخصومات (ج)', k.discount], ['رسوم التوصيل (ج)', k.fees], ['مبيعات ضايعة بالإلغاء (ج)', k.lost],
       ['عدد الأصناف المبيعة', k.items], ['عملاء مختلفين', k.customers], ['عملاء طلبوا أكتر من مرة', A.repeat], ['متوسط وقت التأكيد (دقيقة)', t.confirm], ['متوسط الوقت لحد خرج/جاهز (دقيقة)', t.ready], ['متوسط الوقت لحد التسليم (دقيقة)', t.done], ['توصيل خلال 60 دقيقة', t.within60]]);
     ws0.eachRow((r, i) => { if (i > 1) { const v = r.getCell(2).value; if (typeof v === 'number') r.getCell(2).numFmt = (i === 8 ? P : (i >= 17 && i <= 19) ? R1 : i === 20 ? P : N); r.getCell(2).alignment = {horizontal:'right'}; } });
