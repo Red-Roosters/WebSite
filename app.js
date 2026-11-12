@@ -2802,12 +2802,12 @@ try {
 
 /* ═══ الثيم الداكن (أسود × ذهبي) ═══ */
 (function(){
-  var KEY = 'rr_theme', root = document.documentElement, btn = document.getElementById('rrThemeBtn');
+  var KEY = 'rr_site_theme', root = document.documentElement, btn = document.getElementById('rrThemeBtn');
   function isDark(){ return root.getAttribute('data-theme') === 'dark'; }
   function paint(){
     var d = isDark();
     document.querySelectorAll('meta[name="theme-color"]').forEach(function(m){ if(!m.dataset.l) m.dataset.l = m.getAttribute('content'); m.setAttribute('content', d ? '#000000' : m.dataset.l); });
-    if(btn){ btn.textContent = d ? '☀️' : '🌙'; btn.setAttribute('aria-pressed', d ? 'true' : 'false'); btn.title = d ? 'الوضع العادي' : 'الوضع الداكن'; btn.setAttribute('aria-label', btn.title); }
+    if(btn){ btn.innerHTML = d ? "<svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"4.2\" fill=\"currentColor\" stroke=\"none\"/><path d=\"M12 2.5v2.4M12 19.1v2.4M2.5 12h2.4M19.1 12h2.4M5.3 5.3l1.7 1.7M17 17l1.7 1.7M18.7 5.3L17 7M7 17l-1.7 1.7\"/></svg>" : "<svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"currentColor\" aria-hidden=\"true\"><path d=\"M20.2 14.6A8.4 8.4 0 0 1 9.4 3.8a.6.6 0 0 0-.8-.7A9.3 9.3 0 1 0 20.9 15.4a.6.6 0 0 0-.7-.8z\"/></svg>"; btn.setAttribute('aria-pressed', d ? 'true' : 'false'); btn.title = d ? 'الوضع العادي' : 'الوضع الداكن'; btn.setAttribute('aria-label', btn.title); }
   }
   if(btn) btn.addEventListener('click', function(){
     var d = !isDark(); if(d) root.setAttribute('data-theme', 'dark'); else root.removeAttribute('data-theme');
