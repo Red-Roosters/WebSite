@@ -207,7 +207,7 @@ try {
     const toEn = s => String(s).replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
     const LS = {
         get(k, d) { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch (e) { return d; } },
-        set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+        set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); if (k === 'rr_cart') localStorage.setItem('rr_cart_t', String(Date.now())); } catch (e) {} }
     };
     // تطبيع النص العربي للبحث (يتجاهل التشكيل والهمزات والتاء المربوطة)
        const norm = s => toEn(String(s)).toLowerCase()
@@ -304,7 +304,7 @@ try {
     window.rrIsOpen = isOpenNow; window.rrClosedMsg = closedMsg;   /* السكربتات التانية تقرا نفس المواعيد (من الداشبورد) */
     /* شريط "مقفولين دلوقتي" أعلى الصفحة */
     (function closedBar() {
-        const bar = document.createElement('div');
+        const bar = document.createElement('div'); bar.className = 'rr-closed-bar';
         bar.style.cssText = 'display:none;background:#9E1B1B;color:#fff;text-align:center;font:800 .92rem Cairo,sans-serif;padding:9px 12px;position:relative;z-index:50';
         document.body.insertBefore(bar, document.body.firstChild);
         const sync = () => { const c = !isOpenNow(); bar.style.display = c ? 'block' : 'none'; if (c) bar.textContent = closedMsg(); };
@@ -452,6 +452,7 @@ try {
         $('cartDiscRow').style.display = d ? '' : 'none';
         $('cartDisc').textContent = '− ' + fmt(d);
         $('cartSubtotal').textContent = fmt(subtotal() - d);
+        try { paintFreeBar(); } catch (e) {}
         if (coupon) refreshCouponMsg();
         window.rrSync && window.rrSync();
     }
@@ -600,6 +601,7 @@ try {
             else if (areaVal.value !== '') { areaVal.value = ''; areaQ.value = ''; toast('⚠️ المنطقة اللي اخترتها مش متاحة للتوصيل دلوقتي — اختار منطقة تانية', 6000); }
         }
         paintNotice(); renderSummary(); window.rrSync && window.rrSync();
+        try { render(); } catch (e) {}
     }
     async function applyLoyalty(code) {
         setCouponMsg('⏳ بنتحقق من الكود...', true);
@@ -651,6 +653,7 @@ try {
     $('rrOverlay').addEventListener('click', closeAll);
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closeAll(); });
     function openCart() { closeAll(); openEl('cartDrawer'); }
+    window.rrOpenCart = openCart;
 
     /* ═══ زراير السلة (عائم + الهيدر) ═══ */
     const fab = document.createElement('button');
@@ -901,7 +904,21 @@ imChips.previousElementSibling.style.display = noChips ? 'none' : '';
     }
     document.querySelectorAll('#paygrid button').forEach(b => b.addEventListener('click', () => setPay(b.dataset.v)));
     document.addEventListener('click', e => { if (e.target.id === 'payCopy') { (navigator.clipboard ? navigator.clipboard.writeText(PAY_NUM) : Promise.reject()).then(() => toast('✅ تم نسخ الرقم'), () => toast('الرقم: ' + PAY_NUM)); } });
-    const curFee = () => pk() ? 0 : (areaVal.value === '' ? null : CONFIG.areas[+areaVal.value].fee);
+    /* ═══ التوصيل المجاني: لو المطعم مفعّله من الداشبورد، صافي الطلب (بعد الخصم) لما يوصل للحد → التوصيل ببلاش (دليفري بس) ═══ */
+    function pkNow() { const t = document.getElementById('f_type'); return !!t && t.value === 'pickup'; }
+    function freeCfg() { const f = window.RR_CFG && RR_CFG.free; return (f && f.on && +f.min > 0) ? { on: true, min: +f.min } : { on: false, min: 0 }; }
+    function freeApplies() { const f = freeCfg(); return f.on && !pkNow() && (subtotal() - discount()) >= f.min; }
+    function freeBarHtml() {
+        const f = freeCfg(); if (!f.on || pkNow() || !cart.length) return '';
+        const net = Math.max(0, subtotal() - discount()), left = Math.max(0, Math.ceil(f.min - net)), pct = Math.min(100, Math.round(net / f.min * 100));
+        return '<div class="free-bar' + (left ? '' : ' ok') + '" role="status"><div class="fb-t">' + (left ? '🛵 فاضل <b>' + fmt(left) + '</b> وتوصيلك ببلاش' : '🎉 مبروك! <b>توصيلك ببلاش</b>') + '</div><div class="fb-track"><i style="width:' + pct + '%"></i></div></div>';
+    }
+    function paintFreeBar() {
+        const f = document.getElementById('cartFoot'); if (!f) return;
+        let b = document.getElementById('freeBar'); if (!b) { b = document.createElement('div'); b.id = 'freeBar'; f.insertBefore(b, f.firstChild); }
+        b.innerHTML = freeBarHtml();
+    }
+    const curFee = () => pk() ? 0 : (areaVal.value === '' ? null : (freeApplies() ? 0 : CONFIG.areas[+areaVal.value].fee));
     function setType(v) {
         $('f_type').value = v;
         document.querySelectorAll('#otype button').forEach(b => b.classList.toggle('on', b.dataset.v === v));
@@ -935,9 +952,10 @@ imChips.previousElementSibling.style.display = noChips ? 'none' : '';
         const fee = curFee(), sub = subtotal(), d = discount();
         $('checkoutSummary').innerHTML =
             cart.map(i => `<div class="mini"><span>${i.qty} × ${esc(i.name)}${(i.opts && i.opts.length) ? ' <small>(' + esc(i.opts.join('، ')) + ')</small>' : ''}${i.note ? ' <small>📝 ' + esc(i.note) + '</small>' : ''}</span><span>${fmt(i.price * i.qty)}</span></div>`).join('') +
+            freeBarHtml() +
             `<div class="sum-row" style="margin-top:10px"><span>المجموع</span><span>${fmt(sub)}</span></div>` +
             (d ? `<div class="sum-row disc"><span>🎟️ خصم (${esc(coupon.code)})</span><span>− ${fmt(d)}</span></div>` : '') +
-            `<div class="sum-row"><span>${pk() ? 'استلام من الفرع' : 'التوصيل'}</span><span>${pk() ? 'بدون رسوم' : (fee === null ? 'اختار المنطقة' : fmt(fee))}</span></div>` +
+            `<div class="sum-row"><span>${pk() ? 'استلام من الفرع' : 'التوصيل'}</span><span>${pk() ? 'بدون رسوم' : (fee === null ? 'اختار المنطقة' : (fee === 0 && freeApplies() ? '<b class="free-tag">مجاني 🎉</b>' : fmt(fee)))}</span></div>` +
             `<div class="sum-row total"><span>الإجمالي</span><span>${fmt(sub - d + (fee || 0))}</span></div>` +
             (pk() ? '' : deliveryNote());
     }
@@ -1181,7 +1199,8 @@ imChips.previousElementSibling.style.display = noChips ? 'none' : '';
         if (!pickup && window.RR_CFG && RR_CFG.pause && RR_CFG.pause.on) { toast('⏸️ ' + (RR_CFG.pause.msg || 'التوصيل متوقف مؤقتًا') + ' — تقدر تختار الاستلام من الفرع', 7000); return; }
         const area = pickup ? { name: 'استلام من الفرع', fee: 0 } : CONFIG.areas[+areaVal.value];
         const fmtT = s => { const [h, m] = s.split(':').map(Number); return ((h % 12) || 12) + ':' + String(m).padStart(2, '0') + ' ' + (h >= 12 ? 'م' : 'ص'); };
-        const sub = subtotal(), d = discount(), total = sub - d + area.fee;
+        const fee = pickup ? 0 : curFee();   /* بتراعي التوصيل المجاني — والسيرفر بيتحقق منها */
+        const sub = subtotal(), d = discount(), total = sub - d + fee;
         const num = id => toEn(v(id));
 
         /* نفس رقم الطلب لو العميل ضغط تاني بعد فشل (والسيرفر بيمنع التكرار) — ولو السلة اتغيرت بنعمل رقم جديد */
@@ -1203,7 +1222,7 @@ imChips.previousElementSibling.style.display = noChips ? 'none' : '';
         let res = 'fail';
         try {
             res = await window.rrTrackSave({ id: orderId, name: v('f_name'), phone: num('f_phone'), phone2: pickup ? '' : num('f_phone2'), type: pickup ? 'pickup' : 'delivery', address: addr, area: pickup ? '' : area.name,
-                items: cart.map(i => ({ n: i.name, q: i.qty, p: i.price, o: i.opts || [], t: i.note || '' })), subtotal: sub, discount: d, coupon: d ? coupon.code : '', claim: claim, fee: area.fee, total: total, payment: $('f_pay').value, payref: $('f_pay').value === 'cash' ? '' : v('f_payref'), notes: v('f_notes'), sched: schedT || undefined, pick: pickT || undefined, lat: !pickup && RR_LOC ? RR_LOC.lat : undefined, lon: !pickup && RR_LOC ? RR_LOC.lon : undefined });
+                items: cart.map(i => ({ n: i.name, q: i.qty, p: i.price, o: i.opts || [], t: i.note || '' })), subtotal: sub, discount: d, coupon: d ? coupon.code : '', claim: claim, fee: fee, total: total, payment: $('f_pay').value, payref: $('f_pay').value === 'cash' ? '' : v('f_payref'), notes: v('f_notes'), sched: schedT || undefined, pick: pickT || undefined, lat: !pickup && RR_LOC ? RR_LOC.lat : undefined, lon: !pickup && RR_LOC ? RR_LOC.lon : undefined });
         } catch (err) {}
         if (res === 'ok') { /* السيرفر أكّد: بنكمّل الأنيميشن لحد «تم الطلب» وبعدين نقفل */ } else { sending = false; anim.reset(); }
         if (res === 'ok') rrEv('order');
@@ -2148,16 +2167,16 @@ try {
   }
   window.rrSync=function(){
     var a=A(); if(!a) return;
-    var pk=a.pk(), i=a.idx(), has=i!==''&&a.areas[+i], fee=pk?0:(has?a.areas[+i].fee:null);
+    var pk=a.pk(), i=a.idx(), has=i!==''&&a.areas[+i], fee=pk?0:(has?a.fee():null);
     document.getElementById('rrDelivIc').textContent=pk?'🏪':'🛵';
     document.querySelector('#rrDeliv small').textContent=pk?'الاستلام من':'التوصيل إلى';
     document.getElementById('rrDelivName').textContent=pk?'فرع فيصل المريوطية':(has?a.areas[+i].name:'اختار منطقتك');
-    document.getElementById('rrDelivFee').textContent=pk?'بدون رسوم':(has?'رسوم '+fmt(fee):'');
+    document.getElementById('rrDelivFee').textContent=pk?'بدون رسوم':(has?(fee===0?'توصيل مجاني 🎉':'رسوم '+fmt(fee)):'');
     if(has){ LSs('rr_area',String(i)); LSs('rr_area_n',a.areas[+i].name); window.RR_SAVED_AREA=a.areas[+i].name; }
     var r=cartRows(); if(!r) return;
     r.f.firstChild.textContent=pk?'🏪 استلام من الفرع':'🛵 التوصيل'+(has?' ('+a.areas[+i].name+')':'');
     if(fee===null){ r.f.lastChild.innerHTML='<b class="rr-link">اختار منطقتك</b>'; r.t.style.display='none'; }
-    else{ r.f.lastChild.textContent=pk?'بدون رسوم':fmt(fee); r.t.style.display=''; r.t.lastChild.textContent=fmt(a.net()+fee); }
+    else{ r.f.lastChild.textContent=pk?'بدون رسوم':(fee===0?'مجاني 🎉':fmt(fee)); r.t.style.display=''; r.t.lastChild.textContent=fmt(a.net()+fee); }
   };
   /* استرجاع آخر منطقة اختارها العميل */
   var a0=A(); if(a0){ var sn0=LSg('rr_area_n'), sv=LSg('rr_area'), si0=sn0?a0.areas.findIndex(function(x){return x.name===sn0}):(sv!==null?+sv:-1); if(a0.idx()===''&&si0>=0&&a0.areas[si0]) a0.set(si0); }
@@ -2252,7 +2271,7 @@ try {
         else m.map.panTo([d.lat,d.lon]); },60); }); }); }
 
   /* ── تعديل / إلغاء الطلب: مباشر خلال المدة، وبعدها بيتبعت «طلب» للمطعم وبنستنى رده ── */
-  var EDIT={}, ERR={expired:'عدّت مدة التعديل المباشر — ابعت طلب للمطعم.',locked:'الطلب اتجهّز أو خرج — ابعت طلب للمطعم.',closed:'الطلب خلص أو اتلغى.',pending:'عندك طلب لسه مستني رد المطعم.',busy:'محاولات كتير، جرّب بعد شوية.',nochange:'ماغيّرتش حاجة في الطلب.',bad_items:'في مشكلة في الأصناف، جرّب تاني.',empty:'لو عايز تلغي الطلب كله استخدم «إلغاء الطلب».',coupon_min:'التعديل ده هيخلّي الكوبون ميتطبّقش (الحد الأدنى). ابعت طلب للمطعم.',not_found:'مش لاقيين الطلب ده.',soldout:'في صنف مش متاح دلوقتي.',bad_price:'سعر صنف مش مظبوط — حدّث الصفحة وجرّب تاني.',bad_item:'في صنف مش معروف — حدّث الصفحة وجرّب تاني.'};
+  var EDIT={}, ERR={expired:'عدّت مدة التعديل المباشر — ابعت طلب للمطعم.',locked:'الطلب اتجهّز أو خرج — ابعت طلب للمطعم.',closed:'الطلب خلص أو اتلغى.',pending:'عندك طلب لسه مستني رد المطعم.',busy:'محاولات كتير، جرّب بعد شوية.',nochange:'ماغيّرتش حاجة في الطلب.',bad_items:'في مشكلة في الأصناف، جرّب تاني.',empty:'لو عايز تلغي الطلب كله استخدم «إلغاء الطلب».',coupon_min:'التعديل ده هيخلّي الكوبون ميتطبّقش (الحد الأدنى). ابعت طلب للمطعم.',free_min:'التعديل ده هيلغي التوصيل المجاني (الحد الأدنى). ابعت طلب للمطعم.',not_found:'مش لاقيين الطلب ده.',soldout:'في صنف مش متاح دلوقتي.',bad_price:'سعر صنف مش مظبوط — حدّث الصفحة وجرّب تاني.',bad_item:'في صنف مش معروف — حدّث الصفحة وجرّب تاني.'};
   function postJ(o){ var ctl=window.AbortController?new AbortController():null, to=ctl?setTimeout(function(){ctl.abort()},30000):0;
     return fetch(API,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(o),signal:ctl?ctl.signal:undefined}).then(function(r){return r.json()}).then(function(j){clearTimeout(to);return j},function(e){clearTimeout(to);throw e}); }
   function direct(o){return !!(o&&o.canEdit&&o._exp>Date.now());}
@@ -2748,3 +2767,52 @@ try {
   }
 })();
 } catch (e) { console.error("[app.js جزء 36]", e); }
+
+/* ═══ سلة متروكة: العميل رجع وسلته لسه محفوظة → رسالة «كمّل طلبك» ═══ */
+(function(){
+  var T0 = Date.now(), DAY = 864e5;
+  function readCart(){ try{ var c = JSON.parse(localStorage.getItem('rr_cart') || '[]'); return Array.isArray(c) ? c : []; }catch(e){ return []; } }
+  function esc(x){ return String(x).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+  function show(){
+    var cart = readCart(); if(!cart.length) return;
+    try{ if(sessionStorage.getItem('rr_back_shown')) return; }catch(e){}
+    var t = +localStorage.getItem('rr_cart_t') || 0;
+    if(!t){ try{ localStorage.setItem('rr_cart_t', String(Date.now())); }catch(e){} }
+    else if(Date.now() - t > 7 * DAY){ try{ localStorage.setItem('rr_cart', '[]'); }catch(e){} return; }   /* سلة أقدم من أسبوع: الأصناف والأسعار ممكن تكون اتغيّرت */
+    if(t > T0) return;                                         /* العميل ضاف حاجة في الزيارة دي: مايحتاجش تذكير */
+    var n = 0, total = 0; cart.forEach(function(i){ n += +i.qty || 0; total += (+i.price || 0) * (+i.qty || 0); });
+    var b = document.createElement('div'); b.id = 'rrBack'; b.setAttribute('role', 'status');
+    b.innerHTML = '<div class="bk-t"><b>👋 أهلاً بعودتك! سلتك لسه محفوظة</b><small>' + n + ' صنف · ' + Math.round(total) + ' ج.م</small></div><button type="button" class="bk-go">كمّل طلبك ←</button><button type="button" class="bk-x" aria-label="إغلاق">✕</button>';
+    document.body.appendChild(b);
+    try{ sessionStorage.setItem('rr_back_shown', '1'); }catch(e){}
+    requestAnimationFrame(function(){ b.classList.add('show'); });
+    function close(){ b.classList.remove('show'); setTimeout(function(){ b.remove(); }, 400); }
+    b.querySelector('.bk-x').onclick = close;
+    b.querySelector('.bk-go').onclick = function(){ close(); if(window.rrOpenCart) window.rrOpenCart(); };
+    setTimeout(close, 20000);
+  }
+  /* بنستنى بوب أب الخصم يتقفل الأول عشان مانغطّيش على بعض */
+  var tries = 0, iv = setInterval(function(){
+    tries++; var pm = document.getElementById('promoModal');
+    if(tries > 40){ clearInterval(iv); return; }
+    if(tries < 3 || (pm && pm.classList.contains('open'))) return;
+    clearInterval(iv); show();
+  }, 600);
+})();
+
+/* ═══ الثيم الداكن (أسود × ذهبي) ═══ */
+(function(){
+  var KEY = 'rr_theme', root = document.documentElement, btn = document.getElementById('rrThemeBtn');
+  function isDark(){ return root.getAttribute('data-theme') === 'dark'; }
+  function paint(){
+    var d = isDark();
+    document.querySelectorAll('meta[name="theme-color"]').forEach(function(m){ if(!m.dataset.l) m.dataset.l = m.getAttribute('content'); m.setAttribute('content', d ? '#000000' : m.dataset.l); });
+    if(btn){ btn.textContent = d ? '☀️' : '🌙'; btn.setAttribute('aria-pressed', d ? 'true' : 'false'); btn.title = d ? 'الوضع العادي' : 'الوضع الداكن'; btn.setAttribute('aria-label', btn.title); }
+  }
+  if(btn) btn.addEventListener('click', function(){
+    var d = !isDark(); if(d) root.setAttribute('data-theme', 'dark'); else root.removeAttribute('data-theme');
+    try{ localStorage.setItem(KEY, d ? 'dark' : 'light'); }catch(e){}
+    paint();
+  });
+  paint();
+})();

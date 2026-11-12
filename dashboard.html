@@ -406,6 +406,12 @@ main.wide{max-width:none}
         <label>رقم واتساب المطعم اللي بيستقبل الأكواد<input id="seVfWa" type="tel" inputmode="numeric" dir="ltr" maxlength="15" placeholder="01XXXXXXXXX"></label>
       </div>
       <div class="hint">العميل بيشوف كود ويبعته من رقمه على الرقم ده، وانت بتأكد من زرار «📵 مستني تأكيد» اللي بيظهر فوق. الرقم بيتحقق مرة واحدة بس، وأي رقم اتسلّم له طلب قبل كده بيتعتبر متحقق. اضغط «💾 حفظ» بعد التغيير.</div>
+      <h2 style="margin-top:18px">🛵 التوصيل المجاني</h2>
+      <div class="cpf" style="margin-top:8px">
+        <label>الحالة<select id="seFreeOn"><option value="false">مقفول</option><option value="true">شغّال</option></select></label>
+        <label>الحد الأدنى للطلب (ج) — من هنا والتوصيل ببلاش<input id="seFreeMin" type="number" inputmode="numeric" min="1" step="5" placeholder="مثلاً 250"></label>
+      </div>
+      <div class="hint">بيتحسب على صافي الطلب بعد الخصم وبدون رسوم التوصيل، وبينطبق على الدليفري بس (مش الاستلام من الفرع). العميل بيشوف شريط «فاضل X ج وتوصيلك ببلاش» في السلة. اضغط «💾 حفظ» بعد التغيير.</div>
       <h2 style="margin-top:18px">✏️ تعديل/إلغاء العميل لطلبه</h2>
       <div class="cpf" style="margin-top:8px"><label>المدة اللي العميل يقدر فيها يعدّل أو يلغي بنفسه (بالدقايق — 0 = مقفول)<input type="number" id="seEditMin" min="0" max="60" placeholder="5"></label></div>
       <div class="hint">خلال المدة العميل بيعدّل الكميات أو يلغي والتعديل بيتنفّذ فورًا وبيجيلك تنبيه. بعد المدة بيبعت «طلب» بيظهرلك popup (رقم الطلب + اسمه + رقمه) وبتقبله أو ترفضه والعميل بيتبلّغ. بيتحفظ بزرار «💾 حفظ» اللي فوق (جنب مواعيد العمل).</div>
@@ -1616,7 +1622,7 @@ async function seLoad(){
     const c = j.settings; $('seOpen').value = c.open_at; $('seClose').value = c.close_at; $('seBusy').value = c.busy_extra || 0; $('seBusyMsg').value = c.busy_msg || ''; $('sePauseMsg').value = c.pause_msg || '';
     $('seHours').checked = c.hours_on === 'true'; $('sePause').checked = c.pause_on === 'true';
     $('seRefOn').checked = c.ref_on !== 'false'; $('seRefPts').value = c.ref_points || 500; $('seRefCap').value = c.ref_cap || 20;
-    $('sePayCash').checked = c.pay_cash !== 'false'; $('sePayWallet').checked = c.pay_wallet !== 'false'; $('sePayInsta').checked = c.pay_instapay !== 'false'; $('sePayMsg').value = c.pay_msg || ''; $('seOtKey').value = c.ot_key || ''; $('seDrivers').value = c.drivers || ''; $('seEditMin').value = (c.edit_min === undefined || c.edit_min === '') ? 5 : c.edit_min; $('seVfMode').value = c.vf_mode || 'off'; $('seVfWa').value = c.vf_wa ? String(c.vf_wa).replace(/^20/, '0') : ''; updOtUrl(); dvRender();
+    $('sePayCash').checked = c.pay_cash !== 'false'; $('sePayWallet').checked = c.pay_wallet !== 'false'; $('sePayInsta').checked = c.pay_instapay !== 'false'; $('sePayMsg').value = c.pay_msg || ''; $('seOtKey').value = c.ot_key || ''; $('seDrivers').value = c.drivers || ''; $('seEditMin').value = (c.edit_min === undefined || c.edit_min === '') ? 5 : c.edit_min; $('seFreeOn').value = c.free_on === 'true' ? 'true' : 'false'; $('seFreeMin').value = +c.free_min > 0 ? c.free_min : ''; $('seVfMode').value = c.vf_mode || 'off'; $('seVfWa').value = c.vf_wa ? String(c.vf_wa).replace(/^20/, '0') : ''; updOtUrl(); dvRender();
     seAreas = j.areas.map(a => Object.assign({}, a)); seBuiltin = !!j.builtin; seAreaRender();
   } catch (e) { $('seAreas').innerHTML = '<div class="empty">⚠️ مفيش اتصال</div>'; }
   bkLoad(); bellLoad(); blLoad();
@@ -1625,8 +1631,8 @@ function updOtUrl(){ $('seOtUrl').textContent = $('seOtKey').value.trim() ? API 
 $('seOtKey').oninput = updOtUrl;
 $('seSave').onclick = async () => {
   try {
-    const j = await post({action:'settingsSave', user, settings:{hours_on:$('seHours').checked, open_at:$('seOpen').value, close_at:$('seClose').value, busy_extra:+$('seBusy').value || 0, busy_msg:$('seBusyMsg').value.trim(), pause_on:$('sePause').checked, pause_msg:$('sePauseMsg').value.trim(), ref_on:$('seRefOn').checked, ref_points:+$('seRefPts').value || 0, ref_cap:+$('seRefCap').value || 20, pay_cash:$('sePayCash').checked, pay_wallet:$('sePayWallet').checked, pay_instapay:$('sePayInsta').checked, pay_msg:$('sePayMsg').value.trim(), ot_key:$('seOtKey').value.trim(), drivers:$('seDrivers').value.trim(), edit_min:$('seEditMin').value === '' ? 5 : +$('seEditMin').value, vf_mode:$('seVfMode').value, vf_wa:$('seVfWa').value.trim()}});
-    toast(j.ok ? '✅ اتحفظت الإعدادات' : (j.error === 'bad_time' ? 'المواعيد غير صحيحة' : j.error === 'no_pay' ? '⚠️ لازم طريقة دفع واحدة شغّالة على الأقل' : j.error === 'no_wa' ? '⚠️ اكتب رقم واتساب صالح لو التحقق شغّال' : '⚠️ حصل خطأ'));
+    const j = await post({action:'settingsSave', user, settings:{hours_on:$('seHours').checked, open_at:$('seOpen').value, close_at:$('seClose').value, busy_extra:+$('seBusy').value || 0, busy_msg:$('seBusyMsg').value.trim(), pause_on:$('sePause').checked, pause_msg:$('sePauseMsg').value.trim(), ref_on:$('seRefOn').checked, ref_points:+$('seRefPts').value || 0, ref_cap:+$('seRefCap').value || 20, pay_cash:$('sePayCash').checked, pay_wallet:$('sePayWallet').checked, pay_instapay:$('sePayInsta').checked, pay_msg:$('sePayMsg').value.trim(), ot_key:$('seOtKey').value.trim(), drivers:$('seDrivers').value.trim(), edit_min:$('seEditMin').value === '' ? 5 : +$('seEditMin').value, free_on:$('seFreeOn').value, free_min:$('seFreeMin').value === '' ? 0 : +$('seFreeMin').value, vf_mode:$('seVfMode').value, vf_wa:$('seVfWa').value.trim()}});
+    toast(j.ok ? '✅ اتحفظت الإعدادات' : (j.error === 'bad_time' ? 'المواعيد غير صحيحة' : j.error === 'no_pay' ? '⚠️ لازم طريقة دفع واحدة شغّالة على الأقل' : j.error === 'no_free_min' ? '⚠️ اكتب الحد الأدنى للتوصيل المجاني (أكبر من صفر)' : j.error === 'no_wa' ? '⚠️ اكتب رقم واتساب صالح لو التحقق شغّال' : '⚠️ حصل خطأ'));
   } catch (e) { toast('⚠️ مفيش اتصال'); }
 };
 /* ═══ تحقق أرقام العملاء (واتساب): الموظف بيطابق الرقم والكود مع رسايل واتساب المطعم ═══ */
