@@ -1466,11 +1466,7 @@ try {
   function clearSearch(){inp.value='';run('')}
   var t; inp.addEventListener('input',function(){clearTimeout(t);t=setTimeout(function(){run(inp.value)},120)});
  
-  /* 3 ─ trust strip under the hero */
-  var hero=$('#home .hero');
-  if(hero){var tr=document.createElement('div');tr.className='trust';
-    tr.innerHTML='<div><b>🛵</b>توصيل سريع<small>من 30 ج.م حسب المنطقة</small></div><div><b>💵</b>كاش عند الاستلام<small>من غير أي مصاريف</small></div><div><b>🍗</b>دجاج طازج<small>بتتحضّر لما تطلب</small></div>';
-    hero.after(tr);}
+  /* 3 ─ (اتشال) شريط الثقة تحت الهيرو */
  
   /* 4 ─ round "+" buttons need an accessible name */
   $$('.add-cart-btn').forEach(function(b){
@@ -1760,8 +1756,7 @@ try {
 (function(){
   var grid=document.querySelector('#home .category-grid'); if(!grid||document.getElementById('rrHs')) return;
   var wrap=document.createElement('div');
-  wrap.innerHTML='<div class="rr-chips"><span>🛵 دليفري</span><span>🏪 استلام من فرع فيصل المريوطية</span><span>💵 كاش</span><span>📱 فودافون كاش</span><span>🏦 إنستا باي</span></div>'+
-    '<div class="rr-row-title"><h2>🔥 الأكثر طلباً</h2><small>اسحب ←</small></div><div class="rr-hs" id="rrHs"></div>'+
+  wrap.innerHTML='<div class="rr-row-title"><h2>🔥 الأكثر طلباً</h2><small>اسحب ←</small></div><div class="rr-hs" id="rrHs"></div>'+
     '<div class="rr-row-title"><h2>الأقسام</h2></div>';
   grid.parentNode.insertBefore(wrap,grid);
   var hs=document.getElementById('rrHs');
@@ -1862,11 +1857,7 @@ try {
 try {
 (function(){
   var hero=document.querySelector('#home .hero'), grid=document.querySelector('#home .category-grid');
-  if(hero&&!document.querySelector('.pro-benefits')){
-    var b=document.createElement('div'); b.className='pro-benefits';
-    b.innerHTML='<div><i>🛵</i><span><b>توصيل سريع</b><small>حتى 60 دقيقة من التأكيد</small></span></div><div><i>🍗</i><span><b>دجاج طازج</b><small>بيتحضّر لما تطلب</small></span></div><div><i>⭐</i><span><b>نقاط مع كل طلب</b><small>بدّلها بخصومات</small></span></div><div><i>💳</i><span><b>كاش أو تحويل</b><small>فودافون كاش وإنستا باي</small></span></div>';
-    hero.after(b);
-  }
+  /* (اتشال) مربعات المزايا الأربعة تحت الهيرو */
   if(grid&&!document.querySelector('.pro-loyal')){
     var l=document.createElement('div'); l.className='pro-loyal';
     l.innerHTML='<div class="pl-top"><span class="pl-star">⭐</span><div class="pl-txt"><span class="pl-tag">برنامج الولاء</span><h3>اجمع نقاط مع كل طلب</h3><p><b>50%</b> من قيمة كل طلب بتتحول لنقاط، وبدّلها بكود خصم على طلبك الجاي.</p></div><button type="button">⭐ شوف نقاطي</button></div><div class="pl-steps"><div><i>1</i><span><b>اطلب</b><small>من الموقع أو الفرع</small></span></div><div><i>2</i><span><b>اجمع</b><small>50% من الطلب نقاط</small></span></div><div><i>3</i><span><b>بدّل</b><small>بكود خصم لطلبك الجاي</small></span></div></div>';
