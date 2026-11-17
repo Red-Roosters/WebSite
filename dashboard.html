@@ -497,7 +497,8 @@ const SITE = SITE_OVERRIDE || new URL('./', location.href).href;   // رابط �
 /* أسباب الإلغاء اللي بتظهر في القايمة (بتظهر للعميل زي ما هي) — عدّل فيها براحتك */
 const CANCEL_REASONS = ['صنف من طلبك غير متوفر دلوقتي', 'عنوانك خارج نطاق التوصيل', 'الطلب جه خارج ساعات العمل', 'المحل مقفول مؤقتًا للصيانة',
   'ماقدرناش نأكد طريقة الدفع', 'ماقدرناش نوصلّك بالتليفون', 'اتلغى بناءً على طلبك', 'طلب مكرر (تكرار)', 'تجربة'];
-const POLL_MS = 10000, RING_MS = 3500, LATE_MIN = 60, DAY_START_HOUR = 6, PREP_MIN = 40;   // PREP_MIN: قبل ميعاد الطلب المجدول بكام دقيقة نبدأ التحضير (تنبيه)   // اليوم التشغيلي بيبدأ 6 الصبح
+const POLL_MS = 10000, RING_MS = 3500, LATE_MIN = 60, DAY_START_HOUR = 6, PREP_MIN = 40, UNATT_MIN = 3, DUP_MIN = 10, BIG_CASH = 600, CHECK_NEW_PHONE = true;   // UNATT_MIN: طلب جديد محدّش استلمه بعد كام دقيقة يبقى «مستني» · DUP_MIN: نفس الرقم في كام دقيقة = تكرار محتمل · BIG_CASH: حد المبلغ الكبير كاش (ج) · CHECK_NEW_PHONE: علامة «اتأكد بالتليفون» للرقم الجديد
+// PREP_MIN: قبل ميعاد الطلب المجدول بكام دقيقة نبدأ التحضير (تنبيه)   // اليوم التشغيلي بيبدأ 6 الصبح
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -544,21 +545,35 @@ function beep(){
   lastBeep = Date.now();
 }
 const newOrders = () => orders.filter(o => o.status === 'new');
+const unattended = () => orders.filter(o => o.status === 'new' && Date.now() - o.time > UNATT_MIN * 6e4);
+const unNotified = new Set();
+function beepUrgent(){   // صوت مختلف (سارينة سريعة) للطلب اللي مستني أكتر من UNATT_MIN
+  if (!sound || !audioOk()) return;
+  try {
+    [0, .18, .36, .54, .72, .9, 1.08, 1.26].forEach((d, i) => { const o = ac.createOscillator(), g = ac.createGain(); o.type = 'sawtooth'; o.frequency.value = i % 2 ? 1320 : 740;
+      g.gain.setValueAtTime(.0001, ac.currentTime + d); g.gain.exponentialRampToValueAtTime(.35, ac.currentTime + d + .02); g.gain.exponentialRampToValueAtTime(.0001, ac.currentTime + d + .15);
+      o.connect(g); g.connect(ac.destination); o.start(ac.currentTime + d); o.stop(ac.currentTime + d + .17); });
+  } catch (e) {}
+  lastBeep = Date.now();
+}
 function ringTick(){
   const n = newOrders().length, m = changes.length;
   syncAlert();
   if (!n && !m) return;
-  flip = !flip; document.title = (flip ? (n ? '🔔 ' : '✏️ ') : '(' + (n + m) + ') ') + (n ? 'طلب جديد!' : 'تعديل من عميل!');
+  const un = unattended();
+  un.forEach(o => { if (!unNotified.has(o.id)) { unNotified.add(o.id); toast('🚨 طلب #' + o.id + ' (' + o.name + ') مستني من أكتر من ' + UNATT_MIN + ' دقايق'); pushNotify('🚨 طلب مستني — ريد روستر', '#' + o.id + ' · ' + o.name + ' · ' + o.total + ' ج — محدّش استلمه'); } });
+  flip = !flip; document.title = (flip ? (n ? (un.length ? '🚨 ' : '🔔 ') : '✏️ ') : '(' + (n + m) + ') ') + (n ? (un.length ? 'طلب مستني!' : 'طلب جديد!') : 'تعديل من عميل!');
   if (sound) {
     if (!audioOk()) $('unlock').classList.remove('hide'); else $('unlock').classList.add('hide');
-    if (Date.now() - lastBeep > 1500) beep();
+    if (Date.now() - lastBeep > 1500) (un.length ? beepUrgent() : beep());
     try { navigator.vibrate && navigator.vibrate([300, 150, 300]); } catch (e) {}
   }
 }
 function syncAlert(){
   const n = newOrders().length, m = changes.length, bar = $('alertBar'), cb = $('chBar');
   bar.classList.toggle('hide', !n);
-  if (n) bar.textContent = '🔔 ' + n + ' طلب جديد مستني تأكيدك — اضغط هنا';
+  const un = unattended().length; bar.classList.toggle('urgent', un > 0);
+  if (n) bar.textContent = un ? '🚨 ' + un + ' طلب مستني من أكتر من ' + UNATT_MIN + ' دقايق ومحدّش استلمه — اضغط هنا' : '🔔 ' + n + ' طلب جديد مستني تأكيدك — اضغط هنا';
   cb.classList.toggle('hide', !m);
   if (m) cb.textContent = '✏️ ' + m + ' تعديل / طلب من العملاء مستني — اضغط هنا';
   if (!n && !m) { document.title = 'لوحة طلبات ريد روستر'; $('unlock').classList.add('hide'); }
@@ -689,12 +704,41 @@ function miniHtml(o){
     '</span><span class="mt">' + o.total + ' ج</span><i class="chev"></i><small>' + clock(o.time) + ' · ' + (o.type === 'pickup' ? 'استلام من الفرع' : 'دليفري') + '</small></summary>' + cardHtml(o) + '</details>';
 }
 $('grid').addEventListener('toggle', e => { const d = e.target; if (d.classList && d.classList.contains('mini')) { d.open ? openIds.add(d.dataset.mid) : openIds.delete(d.dataset.mid); } }, true);
+/* ═══ تنبيهات ذكية على الكارت: طلب مستني / تكرار محتمل / اتأكد بالتليفون ═══ */
+let rxOk = new Set(); try { rxOk = new Set(JSON.parse(localStorage.getItem('rr_rx_ok') || '[]')); } catch (e) {}
+const rxSave = () => { try { localStorage.setItem('rr_rx_ok', JSON.stringify([...rxOk].slice(-400))); } catch (e) {} };
+const phs = o => [o.phone, o.phone2].filter(Boolean);
+const sig = o => (o.items || []).map(i => i.n + 'x' + i.q).sort().join('|');
+function rxInfo(o){
+  const r = {};
+  const sib = orders.find(s => s.id !== o.id && s.status !== 'cancelled' && Math.abs(s.time - o.time) <= DUP_MIN * 6e4 && phs(s).some(p => phs(o).includes(p)));
+  if (sib && !rxOk.has('d' + o.id)) r.dup = sib;
+  if (['new','confirmed','preparing'].includes(o.status) && o.payment === 'cash' && !rxOk.has('v' + o.id)) {
+    const why = [], verified = vfState.mode !== 'off' && !vfState.unv.has(o.phone);
+    if (o.total >= BIG_CASH) why.push('مبلغ كبير كاش (' + o.total + ' ج)');
+    if (CHECK_NEW_PHONE && !verified && !orders.some(s => s.id !== o.id && s.time < o.time && phs(s).includes(o.phone))) why.push('رقم جديد');
+    if (why.length) r.chk = why.join(' + ');
+  }
+  return r;
+}
+function rxHtml(o){
+  if (!ACTIVE.includes(o.status)) return '';
+  const r = rxInfo(o); let h = '';
+  if (o.status === 'new' && Date.now() - o.time > UNATT_MIN * 6e4) h += '<div class="rx un">🚨 بقاله ' + Math.floor((Date.now() - o.time) / 6e4) + ' دقيقة من غير ما حد يستلمه</div>';
+  if (r.dup) { const m = Math.round(Math.abs(r.dup.time - o.time) / 6e4);
+    h += '<div class="rx dup">🔁 تكرار محتمل: نفس الرقم عمل طلب <b>#' + esc(r.dup.id) + '</b> ' + (m < 1 ? 'في نفس الدقيقة' : 'بفرق ' + m + ' د') + (sig(r.dup) === sig(o) ? ' <b>وبنفس الأصناف</b>' : '') +
+      '<button type="button" class="rxb" data-rx="d" data-o="' + esc(o.id) + '" data-s="' + esc(r.dup.id) + '">مش مكرر ✓</button></div>'; }
+  if (r.chk) h += '<div class="rx chk">☎️ اتأكد بالتليفون قبل التحضير — ' + esc(r.chk) + '<button type="button" class="rxb" data-rx="v" data-o="' + esc(o.id) + '">اتأكدت ✓</button></div>';
+  return h;
+}
+document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-rx]'); if (!b) return; e.preventDefault();
+  rxOk.add(b.dataset.rx + b.dataset.o); if (b.dataset.s) rxOk.add('d' + b.dataset.s); rxSave(); keepScroll(render); });
 function cardHtml(o){
   const lim = o.sched ? 10 : LATE_MIN, mins = (Date.now() - eff(o)) / 60000, late = ACTIVE.includes(o.status) && mins > lim, ns = nextStep(o);
-  return '<article class="card ' + o.status + (late ? ' late' : '') + (o.sched ? ' sch' : '') + ((pend.get(o.id) || {}).busy ? ' saving' : '') + '" data-id="' + esc(o.id) + '">' +
+  return '<article class="card ' + o.status + (late ? ' late' : '') + (o.status === 'new' && Date.now() - o.time > UNATT_MIN * 6e4 ? ' unatt' : '') + (o.sched ? ' sch' : '') + ((pend.get(o.id) || {}).busy ? ' saving' : '') + '" data-id="' + esc(o.id) + '">' +
     '<div class="top"><span class="oid">#' + esc(o.id) + '</span><span class="chip ' + o.status + '">' + esc(lbl(o)) + '</span></div>' +
     schedHtml(o) + '<div class="sub"><span>🕒 ' + (o.sched ? 'اتطلب ' : '') + clock(o.time) + ' · ' + ago(o.time) + '</span><span>' + (o.type === 'pickup' ? '🏪 استلام من الفرع' : '🛵 دليفري') + '</span>' + lastBy(o) + edBadge(o) + (late ? '<span class="late">⏰ عدّى ' + lim + ' دقيقة</span>' : '') + '</div>' +
-    '<div class="who"' + (role === 'manager' ? ' data-prof="' + esc(o.phone) + '" data-nm="' + esc(o.name) + '" title="ملف العميل"' : '') + '><i class="av">' + esc((o.name || '?').trim().charAt(0)) + '</i><span>' + esc(o.name) + '</span></div>' + flagHtml(o) +
+    '<div class="who"' + (role === 'manager' ? ' data-prof="' + esc(o.phone) + '" data-nm="' + esc(o.name) + '" title="ملف العميل"' : '') + '><i class="av">' + esc((o.name || '?').trim().charAt(0)) + '</i><span>' + esc(o.name) + '</span></div>' + flagHtml(o) + rxHtml(o) +
     '<div class="ph"><a class="n" href="#" data-copy="' + esc(o.phone) + '" title="اضغط للنسخ">📋 ' + esc(o.phone) + '</a><a class="cl2" href="tel:' + esc(o.phone) + '" title="اتصال">📞</a>' + (o.phone2 ? '<a class="n" href="#" data-copy="' + esc(o.phone2) + '" title="اضغط للنسخ">📋 ' + esc(o.phone2) + '</a><a class="cl2" href="tel:' + esc(o.phone2) + '" title="اتصال">📞</a>' : '') + '<a class="wa" target="_blank" rel="noopener" href="' + waLink(o) + '">💬 ابعت تحديث للعميل</a></div>' +
     '<div class="addr">📍 ' + esc(o.address) + '</div>' +
     '<div class="items">' + o.items.map(i => '<div class="it"><span><span class="q">' + i.q + '×</span>' + esc(i.n) +
@@ -3040,6 +3084,16 @@ html[data-theme="dark"] .st small.dn{color:#ff8a8a!important}
 html[data-theme="dark"] .nv-ind{background:linear-gradient(135deg,#F0CF6B,#C99A1E)!important;box-shadow:0 10px 24px -8px rgba(212,175,55,.8)!important}
 html[data-theme="dark"] label.ck,html[data-theme="dark"] .ck{color:#E8D9A8!important}
 @media print{html[data-theme="dark"] body{background:#fff!important}}
+
+/* تنبيهات ذكية */
+.rx{display:flex;flex-wrap:wrap;align-items:center;gap:6px;border-radius:12px;padding:8px 12px;font-size:.88rem;font-weight:800;line-height:1.5;border:1px solid}
+.rx.un{background:rgba(217,43,43,.12);border-color:rgba(217,43,43,.55);color:#b3261e}
+.rx.dup{background:rgba(124,58,237,.1);border-color:rgba(124,58,237,.45);color:#6b2fcf}
+.rx.chk{background:rgba(232,89,12,.12);border-color:rgba(232,89,12,.55);color:#b24300}
+.rxb{font:inherit;font-size:.8rem;font-weight:800;padding:3px 10px;border-radius:999px;border:1px solid currentColor;background:transparent;color:inherit;cursor:pointer;margin-inline-start:auto}
+.card.unatt{border-color:#d92b2b!important;box-shadow:0 0 0 2px rgba(217,43,43,.35)}
+html body #alertBar.urgent{background:#8f0d0d!important;color:#fff!important}
+html[data-theme="dark"] .rx.un{color:#ff8a80}html[data-theme="dark"] .rx.dup{color:#c4a4ff}html[data-theme="dark"] .rx.chk{color:#ffb074}
 </style>
 <script>
 (function(){
