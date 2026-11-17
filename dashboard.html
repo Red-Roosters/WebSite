@@ -495,8 +495,9 @@ const API  = 'https://script.google.com/macros/s/AKfycbzoNNPfliuE1Cp87iylF0GtJGx
 const SITE_OVERRIDE = '';   // اختياري: لو الموقع على لينك مختلف عن مكان الداشبورد اكتبه هنا (مثال: 'https://example.com/')
 const SITE = SITE_OVERRIDE || new URL('./', location.href).href;   // رابط الموقع اللي بيتبعت للعميل للتتبع — بيتاخد تلقائي من مكان الداشبورد (نفس فولدر index.html)
 /* أسباب الإلغاء اللي بتظهر في القايمة (بتظهر للعميل زي ما هي) — عدّل فيها براحتك */
-const CANCEL_REASONS = ['صنف من طلبك غير متوفر دلوقتي', 'عنوانك خارج نطاق التوصيل', 'الطلب جه خارج ساعات العمل', 'المحل مقفول مؤقتًا للصيانة',
-  'ماقدرناش نأكد طريقة الدفع', 'ماقدرناش نوصلّك بالتليفون', 'اتلغى بناءً على طلبك', 'طلب مكرر (تكرار)', 'تجربة'];
+const CANCEL_REASONS = ['ماقدرناش نوصلّك بالتليفون', 'صنف من طلبك غير متوفر دلوقتي', 'عنوانك خارج نطاق التوصيل', 'طلب مكرر (تكرار)',
+  'الطلب جه خارج ساعات العمل', 'المحل مقفول مؤقتًا للصيانة', 'ماقدرناش نأكد طريقة الدفع', 'اتلغى بناءً على طلبك', 'تجربة'];
+const CANCEL_QUICK = ['📵 العميل ماردش', '🍗 صنف خلص', '📍 بعيد عن النطاق', '🔁 طلب مكرر'];   // عناوين مختصرة للأربع أسباب الأولانيين (النص المحفوظ والظاهر للعميل هو نفسه اللي في CANCEL_REASONS)
 const POLL_MS = 10000, RING_MS = 3500, LATE_MIN = 60, DAY_START_HOUR = 6, PREP_MIN = 40, UNATT_MIN = 3, DUP_MIN = 10, BIG_CASH = 600, CHECK_NEW_PHONE = true;   // UNATT_MIN: طلب جديد محدّش استلمه بعد كام دقيقة يبقى «مستني» · DUP_MIN: نفس الرقم في كام دقيقة = تكرار محتمل · BIG_CASH: حد المبلغ الكبير كاش (ج) · CHECK_NEW_PHONE: علامة «اتأكد بالتليفون» للرقم الجديد
 // PREP_MIN: قبل ميعاد الطلب المجدول بكام دقيقة نبدأ التحضير (تنبيه)   // اليوم التشغيلي بيبدأ 6 الصبح
 
@@ -727,11 +728,12 @@ function rxHtml(o){
   if (o.status === 'new' && Date.now() - o.time > UNATT_MIN * 6e4) h += '<div class="rx un">🚨 بقاله ' + Math.floor((Date.now() - o.time) / 6e4) + ' دقيقة من غير ما حد يستلمه</div>';
   if (r.dup) { const m = Math.round(Math.abs(r.dup.time - o.time) / 6e4);
     h += '<div class="rx dup">🔁 تكرار محتمل: نفس الرقم عمل طلب <b>#' + esc(r.dup.id) + '</b> ' + (m < 1 ? 'في نفس الدقيقة' : 'بفرق ' + m + ' د') + (sig(r.dup) === sig(o) ? ' <b>وبنفس الأصناف</b>' : '') +
-      '<button type="button" class="rxb" data-rx="d" data-o="' + esc(o.id) + '" data-s="' + esc(r.dup.id) + '">مش مكرر ✓</button></div>'; }
+      '<button type="button" class="rxb" data-rx="d" data-o="' + esc(o.id) + '" data-s="' + esc(r.dup.id) + '">مش مكرر ✓</button>' + (['new','confirmed','preparing'].includes(o.status) ? '<button type="button" class="rxb" data-rx="c" data-o="' + esc(o.id) + '">🔁 ألغِ كمكرر</button>' : '') + '</div>'; }
   if (r.chk) h += '<div class="rx chk">☎️ اتأكد بالتليفون قبل التحضير — ' + esc(r.chk) + '<button type="button" class="rxb" data-rx="v" data-o="' + esc(o.id) + '">اتأكدت ✓</button></div>';
   return h;
 }
 document.addEventListener('click', e => { const b = e.target.closest && e.target.closest('[data-rx]'); if (!b) return; e.preventDefault();
+  if (b.dataset.rx === 'c') { if (confirm('إلغاء #' + b.dataset.o + ' كطلب مكرر؟ (فيه تراجع ٥ ثواني)')) setStatus(b.dataset.o, 'cancelled', 'طلب مكرر (تكرار)'); return; }
   rxOk.add(b.dataset.rx + b.dataset.o); if (b.dataset.s) rxOk.add('d' + b.dataset.s); rxSave(); keepScroll(render); });
 function cardHtml(o){
   const lim = o.sched ? 10 : LATE_MIN, mins = (Date.now() - eff(o)) / 60000, late = ACTIVE.includes(o.status) && mins > lim, ns = nextStep(o);
@@ -894,7 +896,33 @@ function pickDriver(){
     document.body.appendChild(ov);
   });
 }
-async function setStatus(id, st, reason, driver){
+/* ═══ تراجع: ٥ ثواني بعد أي تغيير حالة ═══
+   - «تم التسليم / ملغي»: الحفظ على السيرفر (وإشعار العميل) بيتأجّل لحد ما الـ٥ ثواني يخلصوا، فالتراجع بيلغيه قبل ما يتبعت (ويشتغل للموظف كمان).
+   - باقي الحالات: بتتحفظ فورًا، والتراجع بيرجّع الحالة اللي قبلها، وإشعار العميل بيتأخّر ٥ ثواني عشان ما يوصلوش إشعارين.
+   لو قفلت الصفحة أو غيّرت التاب قبل ما الوقت يخلص، التغيير بيتحفظ فورًا. */
+const UNDO_MS = 5000, FINAL_ST = ['delivered', 'cancelled'];
+let U = null;
+function undoBar(){ let b = $('undoBar'); if (b) return b; b = document.createElement('div'); b.id = 'undoBar'; b.className = 'hide';
+  b.innerHTML = '<span></span><button type="button">↩︎ تراجع</button><i></i>'; document.body.appendChild(b); b.querySelector('button').onclick = undoDo; return b; }
+function undoShow(u){ undoClear(true); U = u; const b = undoBar(); b.querySelector('span').textContent = '#' + u.id + ' ← ' + LABEL[u.st]; b.classList.remove('hide');
+  const bar = b.querySelector('i'); bar.style.animation = 'none'; void bar.offsetWidth; bar.style.animation = ''; u.timer = setTimeout(() => undoClear(true), UNDO_MS); }
+function undoClear(commit){ const u = U; if (!u) return; U = null; clearTimeout(u.timer); undoBar().classList.add('hide');
+  if (commit) { if (u.hold && u.hold.r) u.hold.r(); if (u.pushFn) u.pushFn(); } u.pushFn = null; }
+function undoDo(){ const u = U; if (!u) return; U = null; clearTimeout(u.timer); undoBar().classList.add('hide');
+  const o = orders.find(x => x.id === u.id), p = pend.get(u.id);
+  if (u.hold) {
+    u.hold.undone = true; clearTimeout(u.hold.t); if (u.hold.r) u.hold.r();
+    if (p && p.st === u.st) p.st = undefined;
+    if (o && o.status === u.st) { o.status = u.prev.s; o.reason = u.prev.r; o.updated = u.prev.u; }
+    render(); toast('↩︎ اتراجعنا عن #' + u.id + ' — الحالة رجعت ' + LABEL[u.prev.s]);
+  } else {
+    u.cancelled = true; u.pushFn = null;
+    setStatus(u.id, u.prev.s, u.prev.s === 'cancelled' ? (u.prev.r || 'تراجع') : undefined, undefined, null, true);
+  }
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') undoClear(true); });
+window.addEventListener('pagehide', () => undoClear(true));
+async function setStatus(id, st, reason, driver, after, noUndo){
   const o = orders.find(x => x.id === id); if (!o) return;
   if (st === 'cancelled' && reason === undefined) return openCancel(id);   // الأول بنسأل عن السبب
   const prev = {s: o.status, r: o.reason, u: o.updated}, rs = st === 'cancelled' ? reason : '';
@@ -902,16 +930,23 @@ async function setStatus(id, st, reason, driver){
   o.status = st; o.reason = rs; o.updated = p.upd; render();
   const mv = document.querySelector('.card[data-id="' + id + '"]');
   if (mv) { mv.classList.add('moved'); const c = mv.closest('.col'); if (c) c.scrollIntoView({behavior:'smooth', inline:'center', block:'nearest'}); }
-  toast('⏳ بنحفظ ' + id + ' ← ' + LABEL[st] + '...');
+  const hold = !noUndo && FINAL_ST.includes(st) ? {} : null, u = noUndo ? null : {id, st, prev, hold};
+  if (u) undoShow(u); else toast('⏳ بنحفظ ' + id + ' ← ' + LABEL[st] + '...');
   chain[id] = (chain[id] || Promise.resolve()).then(async () => {
     try {
+      if (hold) { if (hold.undone) return; await new Promise(r => { hold.r = r; hold.t = setTimeout(r, UNDO_MS + 300); }); if (hold.undone) return; }
       const j = await post({action:'setStatus', user, id, status:st, reason:rs, deferPush:true, driver});
       if (!j.ok) throw new Error(j.error || 'fail');
       p.t = Date.now(); if (p.st === st) p.upd = j.updated || p.upd;
       toast('✅ ' + id + ' ← ' + LABEL[st]);
-      if (!j.same) post({action:'pushStatus', user, id, status:st, reason:rs}).catch(() => {});   // إشعار العميل في الخلفية (مش بيعطّل الشاشة)
+      if (after) { try { after(); } catch (e) {} }
+      if (!j.same && !noUndo) {   // إشعار العميل في الخلفية (التراجع نفسه مابيبعتش إشعار) (مش بيعطّل الشاشة)
+        const push = () => post({action:'pushStatus', user, id, status:st, reason:rs}).catch(() => {});
+        if (u && !hold && U === u) u.pushFn = push; else if (!(u && u.cancelled)) push();
+      }
     } catch (e) {
       if (p.st === st) { p.st = undefined; const x = orders.find(y => y.id === id); if (x) { x.status = prev.s; x.reason = prev.r; x.updated = prev.u; } }
+      if (U === u) undoClear(false);
       toast(String(e.message) === 'forbidden' ? '⛔ مش مسموح للموظف يعدّل طلب منتهي' : '⚠️ معرفناش نحفظ التغيير، جرّب تاني'); load();
     } finally { p.busy--; render(); }
   });
@@ -934,7 +969,7 @@ function cxReason(){ return cxPick === 'other' ? $('cxOther').value.trim() : cxP
 function cxSync(){ $('cxOk').disabled = !cxReason(); }
 function openCancel(id){
   cxId = id; cxPick = null; $('cxFlag').checked = false; $('cxId').textContent = '#' + id; $('cxOther').value = ''; $('cxOther').classList.add('hide');
-  $('cxList').innerHTML = CANCEL_REASONS.map((r, i) => '<button type="button" class="rs" data-i="' + i + '">' + esc(r) + '</button>').join('') + '<button type="button" class="rs" data-i="other">✍️ سبب تاني...</button>';
+  $('cxList').innerHTML = CANCEL_REASONS.map((r, i) => '<button type="button" class="rs' + (i < 4 ? ' q' : '') + '" data-i="' + i + '">' + (i < 4 ? '<b>' + esc(CANCEL_QUICK[i]) + '</b><small>' + esc(r) + '</small>' : esc(r)) + '</button>').join('') + '<button type="button" class="rs" data-i="other">✍️ سبب تاني...</button>';
   $('cx').classList.remove('hide'); cxSync();
 }
 function closeCancel(){ $('cx').classList.add('hide'); cxId = null; }
@@ -948,7 +983,7 @@ $('cxOther').addEventListener('input', cxSync);
 $('cxNo').onclick = closeCancel;
 $('cx').addEventListener('click', e => { if (e.target === $('cx')) closeCancel(); });
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && cxId) closeCancel(); });
-$('cxOk').onclick = () => { const r = cxReason(), id = cxId, fl = $('cxFlag').checked; if (!r) return; closeCancel(); setStatus(id, 'cancelled', r); if (fl) { const oo = orders.find(x => x.id === id); if (oo) custFlag(oo.phone, 'strike', true); } };
+$('cxOk').onclick = () => { const r = cxReason(), id = cxId, fl = $('cxFlag').checked; if (!r) return; closeCancel(); const oo = orders.find(x => x.id === id); setStatus(id, 'cancelled', r, undefined, fl && oo ? () => custFlag(oo.phone, 'strike', true) : null); };
 
 
 /* ═══ الأدوار والتنقل ═══ */
@@ -3094,6 +3129,15 @@ html[data-theme="dark"] label.ck,html[data-theme="dark"] .ck{color:#E8D9A8!impor
 .card.unatt{border-color:#d92b2b!important;box-shadow:0 0 0 2px rgba(217,43,43,.35)}
 html body #alertBar.urgent{background:#8f0d0d!important;color:#fff!important}
 html[data-theme="dark"] .rx.un{color:#ff8a80}html[data-theme="dark"] .rx.dup{color:#c4a4ff}html[data-theme="dark"] .rx.chk{color:#ffb074}
+
+/* تراجع + أزرار الإلغاء السريعة */
+#undoBar{position:fixed;z-index:120;left:50%;transform:translateX(-50%);bottom:84px;display:flex;align-items:center;gap:14px;background:#1f1a17;color:#fff;border-radius:999px;padding:10px 12px 12px 20px;font-weight:800;box-shadow:0 14px 34px -10px rgba(0,0,0,.6);overflow:hidden;max-width:92vw}
+#undoBar.hide{display:none}
+#undoBar button{font:inherit;font-weight:900;border:0;border-radius:999px;padding:8px 18px;background:#F0CF6B;color:#000;cursor:pointer}
+#undoBar i{position:absolute;left:0;right:0;bottom:0;height:3px;background:#F0CF6B;transform-origin:right;animation:undoT 5s linear forwards}
+@keyframes undoT{to{transform:scaleX(0)}}
+.rs.q{display:flex;flex-direction:column;gap:2px}.rs.q b{font-size:1rem}.rs.q small{font-weight:600;opacity:.7;font-size:.78rem}
+.rxb+.rxb{margin-inline-start:0}
 </style>
 <script>
 (function(){
