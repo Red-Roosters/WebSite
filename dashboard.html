@@ -262,6 +262,8 @@ main.wide{max-width:none}
 .cx .ck input{width:auto;flex:0 0 auto}
 .lri{padding:9px 0;border-top:1px dashed #ddd;font-size:.92rem}.lri:first-child{border-top:0}
 .sp-ok{color:var(--green)}.sp-bad{color:#c01048}.sp-warn{color:#8a6100}
+#alChip.al-hi{animation:alPulse 1.4s ease-in-out infinite}@keyframes alPulse{50%{box-shadow:0 0 0 6px rgba(217,43,43,.28)}}
+@media(prefers-reduced-motion:reduce){#alChip.al-hi{animation:none}}
 </style>
 </head>
 <body>
@@ -285,6 +287,7 @@ main.wide{max-width:none}
     <span id="who"></span>
     <button class="ib hide" id="lrChip" type="button">⭐ 0</button>
     <button class="ib hide" id="pbChip" type="button">🔕 الإشعارات واقفة</button>
+    <button class="ib hide" id="alChip" type="button">🚨 0 تنبيه</button>
     <button class="ib hide" id="vfChip" type="button">📵 0 رقم مستني تأكيد</button>
     <button class="ib act hide" id="vOrders">🗂️ الطلبات</button>
     <button class="ib hide" id="vMenu">🚫 الأصناف</button>
@@ -408,6 +411,21 @@ main.wide{max-width:none}
         <label>رقم واتساب المطعم اللي بيستقبل الأكواد<input id="seVfWa" type="tel" inputmode="numeric" dir="ltr" maxlength="15" placeholder="01XXXXXXXXX"></label>
       </div>
       <div class="hint">العميل بيشوف كود ويبعته من رقمه على الرقم ده، وانت بتأكد من زرار «📵 مستني تأكيد» اللي بيظهر فوق. الرقم بيتحقق مرة واحدة بس، وأي رقم اتسلّم له طلب قبل كده بيتعتبر متحقق. اضغط «💾 حفظ» بعد التغيير.</div>
+      <h2 style="margin-top:18px">🚨 تنبيهات التشغيل</h2>
+      <div class="cpf" style="margin-top:8px">
+        <label>طلب جديد مستني تأكيد بعد (دقيقة)<input id="seAlNew" type="number" inputmode="numeric" min="2" max="120" step="1" placeholder="10"></label>
+        <label>طلب واقف في نفس الحالة بعد (ساعة)<input id="seAlStuck" type="number" inputmode="numeric" min="1" max="24" step="1" placeholder="2"></label>
+        <label>مفيش أي طلب لمدة (ساعة) — صفر يقفلها<input id="seAlQuiet" type="number" inputmode="numeric" min="0" max="12" step="1" placeholder="0"></label>
+        <label>إيميل التنبيهات (اختياري)<input id="seAlMail" type="email" dir="ltr" maxlength="80" placeholder="you@gmail.com"></label>
+      </div>
+      <div class="hint">التنبيهات بتظهر في الداشبورد فورًا (زرار 🚨 فوق). عشان توصلك بالإيميل وانت مش فاتح الداشبورد: افتح محرر Apps Script ▸ شغّل دالة <b>setupAlerts</b> مرة واحدة ووافق على الصلاحيات. «مفيش طلبات» بتتفعّل بس لو في الأيام اللي فاتت كان بيجيلك طلبات في نفس الوقت.</div>
+      <h2 style="margin-top:18px">⭐ آراء العملاء على الموقع</h2>
+      <div class="cpf" style="margin-top:8px">
+        <label>الحالة<select id="seRevOn"><option value="false">مخفية</option><option value="true">ظاهرة</option></select></label>
+        <label>أقل تقييم لعرض التعليق<select id="seRevMin"><option value="5">٥ نجوم بس</option><option value="4">٤ نجوم فأكتر</option><option value="3">٣ نجوم فأكتر</option></select></label>
+        <label>أقل عدد تقييمات لإظهار القسم<input id="seRevN" type="number" inputmode="numeric" min="1" max="1000" step="1" placeholder="10"></label>
+      </div>
+      <div class="hint">المتوسط المعروض للعميل حقيقي (من كل التقييمات)، والتعليقات اللي بتظهر بس اللي فوق الحد، بالاسم الأول فقط. تقدر تخبّي أي تعليق من «⭐ تقييمات العملاء» (زرار 🙈). اضغط «💾 حفظ» بعد التغيير.</div>
       <h2 style="margin-top:18px">🛵 التوصيل المجاني</h2>
       <div class="cpf" style="margin-top:8px">
         <label>الحالة<select id="seFreeOn"><option value="false">مقفول</option><option value="true">شغّال</option></select></label>
@@ -500,6 +518,7 @@ main.wide{max-width:none}
   <div id="stlLog"></div>
   <div class="cxa"><button class="btn ghost" id="stlX" type="button">إغلاق</button></div>
 </div></div>
+<div id="alM" class="cx hide" role="dialog" aria-modal="true" aria-label="تنبيهات التشغيل"><div class="cxb" style="width:min(560px,100%)"><h2>🚨 تنبيهات التشغيل</h2><p>طلبات محتاجة تدخّل دلوقتي. التنبيه بيختفي لوحده أول ما الطلب يتأكد أو يتحرّك.</p><div id="alList"></div><div class="cxa"><button class="btn ghost" id="alX" type="button">إغلاق</button></div></div></div>
 <div id="vfM" class="cx hide" role="dialog" aria-modal="true" aria-label="تأكيد أرقام العملاء"><div class="cxb" style="width:min(520px,100%)"><h2>📵 أرقام مستنية تأكيد</h2><p>افتح واتساب المطعم وتأكد إن فيه رسالة من <b>نفس الرقم</b> فيها <b>نفس الكود</b>، وبعدين دوس ✅. لو الرقم أو الكود مش مطابق دوس ❌.</p><div id="vfList"></div><div class="cxa"><button class="btn ghost" id="vfX" type="button">إغلاق</button></div></div></div>
 <div id="toast"></div>
 
@@ -623,7 +642,7 @@ async function loadNow(){
     overlay(j.orders);
     setLive(true); role = j.role || 'staff'; myName = j.name || user; applyRole();
     const fresh = j.orders.filter(o => known && !known.has(o.id) && o.status === 'new');
-    known = new Set(j.orders.map(o => o.id)); orders = j.orders; flags = j.flags || {}; drivers = j.drivers || []; dseen = j.dseen || {}; dpos = j.dpos || {}; dasg = j.dasg || {}; chips(j); vfUpdate(j.vf);
+    known = new Set(j.orders.map(o => o.id)); orders = j.orders; flags = j.flags || {}; drivers = j.drivers || []; dseen = j.dseen || {}; dpos = j.dpos || {}; dasg = j.dasg || {}; chips(j); vfUpdate(j.vf); alUpdate(j.alerts);
     if (Array.isArray(j.soldout) && !soBusy && Date.now() - soLast > 4000) { soList = j.soldout; mnRender(); }
     { const nw = Date.now(); chDone.forEach((t, k) => { if (nw - t > 90000) chDone.delete(k); }); }
     changes = (j.changes || []).filter(c => !chDone.has(c.cid));   // اللي لسه بنرد عليه ماينفعش يرجع من تحديث قديم
@@ -1204,6 +1223,7 @@ function analyze(list, from, to){
   const wm = by(ok, o => new Date(bizStart(eff(o))).getDay()); A.wdays = [6, 0, 1, 2, 3, 4, 5].map(d => { const a = wm.get(d) || []; return {k:WD[d], n:a.length, amt:sum(a, o => o.total)}; });
   const im = new Map(); ok.forEach(o => o.items.forEach(i => { const e = im.get(i.n) || {k:i.n, q:0, amt:0}; e.q += +i.q || 0; e.amt += (+i.q || 0) * (+i.p || 0); im.set(i.n, e); }));
   A.items = [...im.values()].sort((x, y) => y.q - x.q);
+  A.pairs = pairStats(ok);
   A.areas = [...by(ok.filter(o => o.type !== 'pickup'), o => String(o.address).split(' - ')[0] || '—')].map(([k, a]) => ({k, n:a.length, amt:sum(a, o => o.total)})).sort((x, y) => y.n - x.n);
   A.types = ['delivery', 'pickup'].map(t => { const a = ok.filter(o => (o.type === 'pickup' ? 'pickup' : 'delivery') === t); return {k:t === 'pickup' ? 'استلام من الفرع' : 'توصيل', n:a.length, amt:sum(a, o => o.total)}; });
   A.coupons = [...by(ok.filter(o => o.coupon || o.discount > 0), o => /^RR-/.test(o.coupon) ? 'كود نقاط ولاء' : (o.coupon || 'خصم بدون كود'))].map(([k, a]) => ({k, n:a.length, disc:sum(a, o => o.discount), amt:sum(a, o => o.total)})).sort((x, y) => y.n - x.n);
@@ -1300,6 +1320,25 @@ function auditHead(A){
   return '<div class="note" style="margin-bottom:12px">📋 التقرير: ' + ymd(A.from) + ' → ' + ymd(addDays(A.to, -1)) + ' (' + num(d) + ' يوم شغل، كل يوم ٦ص→٦ص) · اتحمّل ' + num(A.rawN) + ' طلب من الشيت' +
     (A.exN ? ' · <b>استبعدنا ' + num(A.exN) + ' تجريبي</b>' : '') + '<br>' + pl + (A.prevRaw === 0 ? ' — يعني مفيش مقارنة ممكنة (الشيت مفيهوش طلبات قبل الفترة دي).' : '') + '</div>';
 }
+/* ═══ أصناف بتتباع مع بعض: نفس منطق اقتراحات السلة على الموقع (الارتباط/lift) على فترة التقرير ═══ */
+function pairStats(ok){
+  const N = ok.length; if (N < 10) return [];
+  const cnt = {}, pr = {};
+  ok.forEach(o => {
+    const ns = [...new Set((o.items || []).map(i => String(i.n || '').replace(/\s*\(.*\)\s*$/, '').trim()).filter(Boolean))].slice(0, 12);
+    ns.forEach(a => { cnt[a] = (cnt[a] || 0) + 1; ns.forEach(b => { if (a < b) { const k = a + '\u0001' + b; pr[k] = (pr[k] || 0) + 1; } }); });
+  });
+  return Object.keys(pr).map(k => { const [a, b] = k.split('\u0001'), ab = pr[k], lift = (ab / N) / ((cnt[a] / N) * (cnt[b] / N));
+      return {a, b, ab, pa:ab / cnt[a], pb:ab / cnt[b], lift}; })
+    .filter(x => x.ab >= 3 && x.lift >= 1.15).sort((x, y) => y.ab * Math.sqrt(y.lift) - x.ab * Math.sqrt(x.lift)).slice(0, 10);
+}
+function pairsHtml(A){
+  const p = A.pairs || [];
+  return sec('🧺 أصناف بتتباع مع بعض', p.length
+    ? tbl(['الصنفين', 'مع بعض', 'من طلبات الأول', 'من طلبات التاني', 'قوة الارتباط'], p.map(x => [esc(x.a) + ' <b>+</b> ' + esc(x.b), num(x.ab) + ' طلب', pct(x.pa), pct(x.pb), '×' + x.lift.toFixed(1)]))
+      + '<div class="hint">«قوة الارتباط» = كام مرة الصنفين بيتطلبوا مع بعض أكتر من المتوقع لو الاختيار عشوائي (×١ = مفيش علاقة). الأصناف دي بتتقترح تلقائي للعميل في السلة تحت «🔥 ناس كتير بتطلب معاه»، وأعلى زوج فيهم مرشّح كومبو أو عرض.</div>'
+    : '<div class="empty">الداتا في الفترة دي قليلة على إنها تطلّع أصناف بتتباع مع بعض (محتاج على الأقل ١٠ طلبات وزوج اتطلب ٣ مرات).</div>');
+}
 function anRender(A){
   const k = A.kpi, t = A.times; let h = '';
   h += auditHead(A);
@@ -1324,6 +1363,7 @@ function anRender(A){
   h += sec('⏰ أوقات الذروة (عدد الطلبات بالساعة)', bars(A.hours.map(x => [(x.k % 12 || 12) + (x.k < 12 ? ' ص' : ' م'), x.n]), num));
   h += sec('🗓️ حسب أيام الأسبوع', tbl(['اليوم', 'الطلبات', 'المبيعات'], A.wdays.map(d => [d.k, num(d.n), money(d.amt)])) + bars(A.wdays.map(d => [d.k, d.n]), num));
   h += sec('🍗 أكتر الأصناف مبيعًا', tbl(['الصنف', 'الكمية', 'الإيراد'], A.items.slice(0, 15).map(i => [esc(i.k), num(i.q), money(i.amt)])));
+  h += pairsHtml(A);
   h += sec('📍 المناطق (توصيل)', tbl(['المنطقة', 'الطلبات', 'المبيعات'], A.areas.slice(0, 15).map(a => [esc(a.k), num(a.n), money(a.amt)])));
   h += sec('🛵 توصيل مقابل استلام', tbl(['النوع', 'الطلبات', 'المبيعات'], A.types.map(a => [a.k, num(a.n), money(a.amt)])));
   h += sec('🎟️ الكوبونات والخصومات', tbl(['الكود', 'الطلبات', 'إجمالي الخصم', 'إجمالي الطلبات'], A.coupons.map(c => [esc(c.k), num(c.n), money(c.disc), money(c.amt)])));
@@ -1877,7 +1917,8 @@ async function seLoad(){
     const c = j.settings; $('seOpen').value = c.open_at; $('seClose').value = c.close_at; $('seBusy').value = c.busy_extra || 0; $('seBusyMsg').value = c.busy_msg || ''; $('sePauseMsg').value = c.pause_msg || '';
     $('seHours').checked = c.hours_on === 'true'; $('sePause').checked = c.pause_on === 'true';
     $('seRefOn').checked = c.ref_on !== 'false'; $('seRefPts').value = c.ref_points || 500; $('seRefCap').value = c.ref_cap || 20;
-    $('sePayCash').checked = c.pay_cash !== 'false'; $('sePayWallet').checked = c.pay_wallet !== 'false'; $('sePayInsta').checked = c.pay_instapay !== 'false'; $('sePayMsg').value = c.pay_msg || ''; $('seOtKey').value = c.ot_key || ''; $('seDrivers').value = c.drivers || ''; $('seEditMin').value = (c.edit_min === undefined || c.edit_min === '') ? 5 : c.edit_min; $('seFreeOn').value = c.free_on === 'true' ? 'true' : 'false'; $('seFreeMin').value = +c.free_min > 0 ? c.free_min : ''; $('seVfMode').value = c.vf_mode || 'off'; $('seVfWa').value = c.vf_wa ? String(c.vf_wa).replace(/^20/, '0') : ''; updOtUrl(); dvRender();
+    $('sePayCash').checked = c.pay_cash !== 'false'; $('sePayWallet').checked = c.pay_wallet !== 'false'; $('sePayInsta').checked = c.pay_instapay !== 'false'; $('sePayMsg').value = c.pay_msg || ''; $('seOtKey').value = c.ot_key || ''; $('seDrivers').value = c.drivers || ''; $('seEditMin').value = (c.edit_min === undefined || c.edit_min === '') ? 5 : c.edit_min; $('seAlNew').value = c.al_new_min || 10; $('seAlStuck').value = c.al_stuck_h || 2; $('seAlQuiet').value = +c.al_quiet_h > 0 ? c.al_quiet_h : 0; $('seAlMail').value = c.alert_email || ''; $('seRevOn').value = c.rev_on === 'true' ? 'true' : 'false'; $('seRevMin').value = c.rev_min || '4'; $('seRevN').value = c.rev_minn || 10;
+  $('seFreeOn').value = c.free_on === 'true' ? 'true' : 'false'; $('seFreeMin').value = +c.free_min > 0 ? c.free_min : ''; $('seVfMode').value = c.vf_mode || 'off'; $('seVfWa').value = c.vf_wa ? String(c.vf_wa).replace(/^20/, '0') : ''; updOtUrl(); dvRender();
     seAreas = j.areas.map(a => Object.assign({}, a)); seBuiltin = !!j.builtin; seAreaRender();
   } catch (e) { $('seAreas').innerHTML = '<div class="empty">⚠️ مفيش اتصال</div>'; }
   bkLoad(); bellLoad(); blLoad();
@@ -1886,10 +1927,34 @@ function updOtUrl(){ $('seOtUrl').textContent = $('seOtKey').value.trim() ? API 
 $('seOtKey').oninput = updOtUrl;
 $('seSave').onclick = async () => {
   try {
-    const j = await post({action:'settingsSave', user, settings:{hours_on:$('seHours').checked, open_at:$('seOpen').value, close_at:$('seClose').value, busy_extra:+$('seBusy').value || 0, busy_msg:$('seBusyMsg').value.trim(), pause_on:$('sePause').checked, pause_msg:$('sePauseMsg').value.trim(), ref_on:$('seRefOn').checked, ref_points:+$('seRefPts').value || 0, ref_cap:+$('seRefCap').value || 20, pay_cash:$('sePayCash').checked, pay_wallet:$('sePayWallet').checked, pay_instapay:$('sePayInsta').checked, pay_msg:$('sePayMsg').value.trim(), ot_key:$('seOtKey').value.trim(), drivers:$('seDrivers').value.trim(), edit_min:$('seEditMin').value === '' ? 5 : +$('seEditMin').value, free_on:$('seFreeOn').value, free_min:$('seFreeMin').value === '' ? 0 : +$('seFreeMin').value, vf_mode:$('seVfMode').value, vf_wa:$('seVfWa').value.trim()}});
-    toast(j.ok ? '✅ اتحفظت الإعدادات' : (j.error === 'bad_time' ? 'المواعيد غير صحيحة' : j.error === 'no_pay' ? '⚠️ لازم طريقة دفع واحدة شغّالة على الأقل' : j.error === 'no_free_min' ? '⚠️ اكتب الحد الأدنى للتوصيل المجاني (أكبر من صفر)' : j.error === 'no_wa' ? '⚠️ اكتب رقم واتساب صالح لو التحقق شغّال' : '⚠️ حصل خطأ'));
+    const j = await post({action:'settingsSave', user, settings:{hours_on:$('seHours').checked, open_at:$('seOpen').value, close_at:$('seClose').value, busy_extra:+$('seBusy').value || 0, busy_msg:$('seBusyMsg').value.trim(), pause_on:$('sePause').checked, pause_msg:$('sePauseMsg').value.trim(), ref_on:$('seRefOn').checked, ref_points:+$('seRefPts').value || 0, ref_cap:+$('seRefCap').value || 20, pay_cash:$('sePayCash').checked, pay_wallet:$('sePayWallet').checked, pay_instapay:$('sePayInsta').checked, pay_msg:$('sePayMsg').value.trim(), ot_key:$('seOtKey').value.trim(), drivers:$('seDrivers').value.trim(), edit_min:$('seEditMin').value === '' ? 5 : +$('seEditMin').value, al_new_min:+$('seAlNew').value || 10, al_stuck_h:+$('seAlStuck').value || 2, al_quiet_h:+$('seAlQuiet').value || 0, alert_email:$('seAlMail').value.trim(), rev_on:$('seRevOn').value, rev_min:+$('seRevMin').value || 4, rev_minn:+$('seRevN').value || 10, free_on:$('seFreeOn').value, free_min:$('seFreeMin').value === '' ? 0 : +$('seFreeMin').value, vf_mode:$('seVfMode').value, vf_wa:$('seVfWa').value.trim()}});
+    toast(j.ok ? '✅ اتحفظت الإعدادات' : (j.error === 'bad_time' ? 'المواعيد غير صحيحة' : j.error === 'no_pay' ? '⚠️ لازم طريقة دفع واحدة شغّالة على الأقل' : j.error === 'bad_email' ? '⚠️ إيميل التنبيهات مش صالح' : j.error === 'no_free_min' ? '⚠️ اكتب الحد الأدنى للتوصيل المجاني (أكبر من صفر)' : j.error === 'no_wa' ? '⚠️ اكتب رقم واتساب صالح لو التحقق شغّال' : '⚠️ حصل خطأ'));
   } catch (e) { toast('⚠️ مفيش اتصال'); }
 };
+/* ═══ تنبيهات التشغيل: طلب مستني تأكيد / عالق / مفيش طلبات (السيرفر بيحسبها مع كل تحديث) ═══ */
+let alState = [], alKnown = null;
+function alUpdate(list){
+  alState = Array.isArray(list) ? list : [];
+  const ch = $('alChip'), n = alState.length; ch.classList.toggle('hide', !n); ch.classList.toggle('al-hi', alState.some(a => a.sev === 'hi'));
+  ch.textContent = '🚨 ' + num(n) + ' تنبيه';
+  const ks = new Set(alState.map(a => a.k));
+  if (alKnown) { const nw = alState.filter(a => !alKnown.has(a.k)); if (nw.length) { toast('🚨 ' + nw[0].msg); if (nw.some(a => a.type !== 'new_wait')) beep(); } }   // طلب جديد مستني: السارينة المستعجلة بترن أصلًا
+  alKnown = ks;
+  if (!$('alM').classList.contains('hide')) alRender();
+}
+function alRender(){
+  const ic = {new_wait:'🔴', stuck:'🟠', quiet:'🔕'};
+  $('alList').innerHTML = alState.length ? alState.map(a => '<div class="lri"><b>' + (ic[a.type] || '🚨') + ' ' + esc(a.msg) + '</b>' +
+    (a.id ? '<div class="cxa" style="margin-top:8px"><button type="button" class="btn main" data-alo="' + esc(a.id) + '">🔎 افتح الطلب</button>' + (a.phone ? '<a class="btn ghost" href="tel:' + esc(a.phone) + '">📞 اتصل</a>' : '') + '</div>' : '') + '</div>').join('') : '<div class="empty">مفيش تنبيهات دلوقتي 👌</div>';
+}
+$('alChip').onclick = () => { alRender(); $('alM').classList.remove('hide'); };
+$('alX').onclick = () => $('alM').classList.add('hide');
+document.addEventListener('keydown', e => { if (e.key === 'Escape') $('alM').classList.add('hide'); });
+$('alM').addEventListener('click', e => {
+  if (e.target === $('alM')) { $('alM').classList.add('hide'); return; }
+  const b = e.target.closest('[data-alo]'); if (!b) return;
+  tab = 'all'; query = b.dataset.alo; $('q').value = query; $('alM').classList.add('hide'); render(); window.scrollTo({top:0, behavior:'smooth'});
+});
 /* ═══ تحقق أرقام العملاء (واتساب): الموظف بيطابق الرقم والكود مع رسايل واتساب المطعم ═══ */
 function vfUpdate(v){
   v = v || {mode:'off'}; vfState = {mode:v.mode || 'off', unv:new Set(v.unv || []), pend:v.pend || []};
@@ -2355,6 +2420,7 @@ let rtData = [], rtF = 'all', rtN = 30;
 function rtCard(x){
   return '<div class="rcd' + (x.stars <= 2 ? ' low' : '') + '"><div class="rh"><span>' + stars5(x.stars) + ' <b dir="ltr">#' + esc(x.id) + '</b></span><small style="color:#6B6B6B">' + new Date(x.time).toLocaleString('ar-EG', {day:'numeric', month:'short', hour:'numeric', minute:'2-digit'}) + '</small></div>'
     + (x.comment ? '<div class="rc">💬 ' + esc(x.comment) + '</div>' : '<div class="dvt">من غير تعليق</div>')
+    + (x.comment ? '<div style="margin-top:6px"><button type="button" class="btn ghost tiny" data-rvh="' + esc(x.id) + '" data-h="' + (x.hide ? 0 : 1) + '">' + (x.hide ? '👁️ رجّعه يظهر على الموقع' : '🙈 اخفيه من الموقع') + '</button>' + (x.hide ? ' <small style="color:#6B6B6B">مخفي حاليًا</small>' : '') + '</div>' : '')
     + (x.o ? '<div style="margin-top:6px">' + stBadge(x.o) + '</div>' + orderFull(x.o) : '<div class="hint">تفاصيل الطلب #' + esc(x.id) + ' مش موجودة في السجل.</div>') + '</div>';
 }
 function rtRender(){
@@ -2367,7 +2433,15 @@ function rtRender(){
     + (list.length ? list.slice(0, rtN).map(rtCard).join('') : '<div class="empty">مفيش تقييمات بالفلتر ده</div>')
     + (list.length > rtN ? '<button type="button" class="btn ghost" id="rtMore">عرض ' + Math.min(30, list.length - rtN) + ' كمان (فاضل ' + (list.length - rtN) + ')</button>' : '');
 }
-$('rtOut').addEventListener('click', e => {
+$('rtOut').addEventListener('click', async e => {
+  const hb = e.target.closest('[data-rvh]');
+  if (hb && !hb.disabled) {
+    hb.disabled = true;
+    try { const j = await post({action:'revHide', user, id:hb.dataset.rvh, hide:hb.dataset.h === '1'}); if (!j.ok) throw new Error(j.error || 'fail');
+      const x = rtData.find(r => r.id === hb.dataset.rvh); if (x) x.hide = hb.dataset.h === '1'; rtRender(); toast(hb.dataset.h === '1' ? '🙈 اتخبّى من الموقع' : '👁️ رجع يظهر على الموقع'); }
+    catch (er) { hb.disabled = false; toast(String(er.message) === 'bad_action' ? '⚠️ حدّث Code.gs واعمل Deploy ▸ New version' : '⚠️ معرفناش ننفّذ'); }
+    return;
+  }
   const f = e.target.closest('#rtSeg button'); if (f) { rtF = f.dataset.f; rtN = 30; rtRender(); return; }
   if (e.target.closest('#rtMore')) { rtN += 30; rtRender(); }
 });
@@ -2661,7 +2735,7 @@ main{padding-top:20px!important}
 (function(){
   var sb=document.getElementById('sb'), bar=document.querySelector('#app .bar'); if(!sb||!bar) return;
   var tools=document.createElement('div'); tools.className='nv-tools';
-  ['lrChip','pbChip','vfChip','live','who','snd','themeBtn','rf','out'].forEach(function(id){var e=document.getElementById(id); if(e) tools.appendChild(e);});
+  ['lrChip','pbChip','alChip','hlBtn','vfChip','live','who','snd','sndCfg','themeBtn','rf','out'].forEach(function(id){var e=document.getElementById(id); if(e) tools.appendChild(e);});
   sb.appendChild(tools);
   var h1=bar.querySelector('h1'), ey=document.createElement('div'), sub=document.createElement('div');
   ey.className='eyebrow'; sub.className='hsub';

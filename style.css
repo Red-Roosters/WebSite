@@ -2920,6 +2920,25 @@ html[lang="en"] body{font-family:"Cairo","Tajawal",sans-serif}
 /* زرار القلب (المفضلة) على الديسكتوب/التابلت: كان على بُعد ٨٤px من اليمين فيقع فوق اسم الصنف — اتنقل لركن الكارت فوق الصورة زي الموبايل */
 @media(min-width:701px){.plate-card .rr-fav{left:8px!important;right:auto!important;top:8px!important}}
 
+/* شارة «برنامج الولاء»: كانت بترث قاعدة شارة «مميز» بتاعة كروت المنيو (position:absolute) فبتطير فوق العنوان والنجمة — دلوقتي بيبان كشارة نظيفة فوق العنوان */
+.pro-loyal .pl-tag{position:static!important;top:auto!important;right:auto!important;left:auto!important;z-index:auto!important;display:inline-flex!important;align-items:center;gap:7px;margin:0 0 9px!important;padding:5px 14px 5px 12px!important;border-radius:50px!important;background:linear-gradient(135deg,rgba(245,166,35,.22),rgba(245,166,35,.1))!important;border:1px solid rgba(245,166,35,.55)!important;color:#FFD66B!important;font:800 .76rem/1.3 "Cairo","Tajawal",sans-serif!important;letter-spacing:.2px;box-shadow:0 6px 16px -10px rgba(245,166,35,.8)}
+.pro-loyal .pl-tag::before{content:"";flex:none;width:7px;height:7px;border-radius:50%;background:#F5A623;box-shadow:0 0 0 3px rgba(245,166,35,.28)}
+
+/* ── آراء العملاء ── */
+.rr-rev{margin:6px 0 30px}
+.rr-rev .rv-sum{display:flex;align-items:center;gap:8px;font-family:"Cairo","Tajawal",sans-serif}
+.rr-rev .rv-sum b{font:900 1.35rem "Tajawal",sans-serif;color:var(--v-ink,#1E1411)}
+.rr-rev .rv-sum .rv-cnt{color:#6B6B6B;font-weight:700;font-size:.85rem}
+.rv-stars i,.rv-st i{font-style:normal;color:#D9D2CC;letter-spacing:1px}
+.rv-stars i.on,.rv-st i.on{color:#F5A623}
+.rv-row{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x proximity;padding:4px 2px 14px;-webkit-overflow-scrolling:touch}
+.rv-card{flex:0 0 min(300px,82%);scroll-snap-align:start;background:#fff;border:1px solid rgba(30,20,17,.09);border-radius:18px;padding:14px 16px;box-shadow:0 10px 24px -18px rgba(30,20,17,.5);display:flex;flex-direction:column;gap:8px}
+.rv-card p{margin:0;font:600 .92rem/1.7 "Cairo","Tajawal",sans-serif;color:#1E1411;flex:1}
+.rv-card .rv-ft{display:flex;justify-content:space-between;align-items:baseline;font-family:"Cairo","Tajawal",sans-serif;font-size:.8rem;color:#6B6B6B}
+.rv-card .rv-ft b{color:#1E1411}
+@media(min-width:701px){.rv-card{flex-basis:320px}}
+@media(max-width:700px){.rr-rev .rr-row-title{flex-wrap:wrap;gap:4px 14px}.rr-rev .rv-sum{flex-wrap:wrap;gap:4px 8px}}
+
 
 /* ══════════ الثيم الداكن — أسود × ذهبي ══════════ */
 html[data-theme="dark"]{color-scheme:dark;
@@ -3734,3 +3753,14 @@ html[data-theme="dark"] .info-banner h4,html[data-theme="dark"] .siniya-info-ban
 /* القلب في الداكن: دايرة غامقة بإطار ذهبي، ولما يتفضّل بيتملي ذهبي */
 html[data-theme="dark"] .rr-fav{background:rgba(10,9,5,.78)!important;border:1px solid rgba(212,175,55,.5)!important;color:#F0CF6B!important;-webkit-text-fill-color:#F0CF6B!important}
 html[data-theme="dark"] .rr-fav.on{background:linear-gradient(135deg,#F0CF6B,#C99A1E)!important;border-color:transparent!important;color:#1a1407!important;-webkit-text-fill-color:#1a1407!important}
+
+html[data-theme="dark"] .pro-loyal .pl-tag{background:linear-gradient(135deg,rgba(212,175,55,.24),rgba(212,175,55,.1))!important;border-color:rgba(212,175,55,.6)!important;color:#F0CF6B!important;box-shadow:0 6px 16px -10px rgba(212,175,55,.8)}
+html[data-theme="dark"] .pro-loyal .pl-tag::before{background:#D4AF37;box-shadow:0 0 0 3px rgba(212,175,55,.3)}
+
+/* آراء العملاء — داكن */
+html[data-theme="dark"] .rv-card{background:#14110a!important;border-color:rgba(212,175,55,.28)!important;box-shadow:0 14px 28px -20px rgba(212,175,55,.35)}
+html[data-theme="dark"] .rv-card p,html[data-theme="dark"] .rv-card .rv-ft b{color:#F5EBCB!important}
+html[data-theme="dark"] .rv-card .rv-ft,html[data-theme="dark"] .rr-rev .rv-sum .rv-cnt{color:#A8997A!important}
+html[data-theme="dark"] .rr-rev .rv-sum b{color:#F0CF6B!important}
+html[data-theme="dark"] .rv-stars i,html[data-theme="dark"] .rv-st i{color:rgba(212,175,55,.25)}
+html[data-theme="dark"] .rv-stars i.on,html[data-theme="dark"] .rv-st i.on{color:#F0CF6B}

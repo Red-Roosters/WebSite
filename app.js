@@ -2807,3 +2807,51 @@ try {
   });
   paint();
 })();
+
+/* ═══ آراء العملاء على الموقع + تذكير بالتقييم بعد التوصيل ═══
+   القسم بيظهر بس لو المطعم فعّله من الداشبورد وعدد التقييمات وصل للحد؛ المتوسط حقيقي والتعليقات بالاسم الأول فقط. */
+(function(){
+  var API = window.RR_API; if(!API) return;
+  function url(q){ return API + (API.indexOf('?') > -1 ? '&' : '?') + q; }
+  function esc(x){ return String(x == null ? '' : x).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+  function ago(t){ var d = Math.floor((Date.now() - t) / 864e5);
+    if(d < 1) return 'النهارده'; if(d === 1) return 'امبارح'; if(d === 2) return 'من يومين'; if(d <= 10) return 'من ' + d + ' أيام';
+    var w = Math.floor(d / 7); if(d < 30) return w === 1 ? 'من أسبوع' : w === 2 ? 'من أسبوعين' : 'من ' + w + ' أسابيع';
+    var m = Math.floor(d / 30); return m === 1 ? 'من شهر' : m === 2 ? 'من شهرين' : m <= 10 ? 'من ' + m + ' شهور' : 'من ' + m + ' شهر'; }
+  function stars(n){ var s = ''; for(var i = 1; i <= 5; i++) s += '<i' + (i <= n ? ' class="on"' : '') + '>★</i>'; return s; }
+  function renderReviews(j){
+    if(!j || !j.ok || !j.on || !j.items || !j.items.length || document.getElementById('rrReviews')) return;
+    var anchor = document.querySelector('.pro-loyal'); if(!anchor || !anchor.parentNode) return;
+    var sec = document.createElement('section'); sec.id = 'rrReviews'; sec.className = 'rr-rev'; sec.setAttribute('aria-label', 'آراء العملاء');
+    sec.innerHTML = '<div class="rr-row-title"><h2>⭐ آراء عملائنا</h2><div class="rv-sum"><b>' + Number(j.avg).toFixed(1) + '</b><span class="rv-stars" aria-hidden="true">' + stars(Math.round(j.avg)) + '</span><span class="rv-cnt">من ' + esc(j.count) + ' تقييم</span></div></div>' +
+      '<div class="rv-row">' + j.items.map(function(x){ return '<article class="rv-card"><div class="rv-st" role="img" aria-label="' + (+x.s || 0) + ' من 5">' + stars(+x.s || 0) + '</div><p>' + esc(x.c) + '</p><div class="rv-ft"><b>' + esc(x.n) + '</b><small>' + ago(+x.t) + '</small></div></article>'; }).join('') + '</div>';
+    anchor.parentNode.insertBefore(sec, anchor.nextSibling);
+  }
+  var tries = 0, iv = setInterval(function(){
+    tries++; if(tries > 40){ clearInterval(iv); return; }
+    if(!window.RR_CFG) return;
+    if(!(RR_CFG.rev && RR_CFG.rev.on)){ clearInterval(iv); return; }
+    if(!document.querySelector('.pro-loyal')) return;
+    clearInterval(iv);
+    fetch(url('action=reviews')).then(function(r){ return r.json(); }).then(renderReviews).catch(function(){});
+  }, 500);
+
+  /* تذكير: طلبك اتسلّم ولسه ماتقيّمش (من حالات الطلبات اللي التتبع بيحدّثها) */
+  function lsj(k){ try{ var v = JSON.parse(localStorage.getItem(k) || '[]'); return Array.isArray(v) ? v : []; }catch(e){ return []; } }
+  function pendingRate(){ var a = lsj('rr_orders'), r = lsj('rr_rated'); for(var i = 0; i < a.length; i++){ var e = a[i]; if(e && e.status === 'delivered' && r.indexOf(e.id) < 0 && Date.now() - (+e.t || 0) < 3 * 864e5) return e; } return null; }
+  function showRate(){
+    try{ if(sessionStorage.getItem('rr_rate_shown')) return; }catch(e){}
+    if(lsj('rr_cart').length || document.getElementById('rrBack')) return;     /* السلة المتروكة ليها أولوية، ومايتعرضوش مع بعض */
+    var e = pendingRate(); if(!e) return;
+    var b = document.createElement('div'); b.id = 'rrBack'; b.setAttribute('role', 'status');
+    b.innerHTML = '<div class="bk-t"><b>⭐ وصلك طلبك #' + esc(e.id) + '؟</b><small>قيّم تجربتك — بتاخد ١٠ ثواني</small></div><button type="button" class="bk-go">قيّم دلوقتي ←</button><button type="button" class="bk-x" aria-label="إغلاق">✕</button>';
+    document.body.appendChild(b);
+    try{ sessionStorage.setItem('rr_rate_shown', '1'); }catch(e2){}
+    requestAnimationFrame(function(){ b.classList.add('show'); });
+    function close(){ b.classList.remove('show'); setTimeout(function(){ b.remove(); }, 400); }
+    b.querySelector('.bk-x').onclick = close;
+    b.querySelector('.bk-go').onclick = function(){ close(); var t = document.getElementById('rrTkBtn'); if(t) t.click(); };
+    setTimeout(close, 20000);
+  }
+  [6000, 20000, 50000].forEach(function(ms){ setTimeout(showRate, ms); });
+})();
