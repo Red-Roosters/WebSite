@@ -393,69 +393,94 @@ main.wide{max-width:none}
       <div class="hint">بعد ما تضيف الطيار دوس «📲 ابعت اللينك» (واتساب) أو «🔗 نسخ» — ده لينك صفحته (طلباته + زرار تم التسليم)، بيتبعت له مرة واحدة. الكود بتاعه (Tracker ID) هو اللي بيتكتب في تطبيق OwnTracks عشان العميل يشوف مكانه على الخريطة.</div></div>
   </main>
   <main id="seMain" class="hide">
-    <div class="panel"><h2>⏰ المواعيد ووضع التشغيل</h2>
-      <div class="cpf">
-        <label>بيفتح الساعة<input type="time" id="seOpen"></label>
-        <label>بيقفل الساعة<input type="time" id="seClose"></label>
-        <label>زيادة وقت التوصيل وقت الزحمة (دقيقة)<input type="number" id="seBusy" min="0" max="180" placeholder="0"></label>
-        <label>رسالة الزحمة (بتظهر للعميل)<input id="seBusyMsg" maxlength="120" placeholder="مثلاً: ضغط كبير دلوقتي، شكرًا لصبرك"></label>
-        <label>رسالة وقف التوصيل<input id="sePauseMsg" maxlength="120" placeholder="مثلاً: التوصيل واقف نص ساعة"></label>
-      </div>
-      <div class="frm" style="margin-top:12px;align-items:center">
-        <label class="ck"><input type="checkbox" id="seHours"> مواعيد العمل شغّالة (لو مقفولة الموقع بيقبل طلبات في أي وقت)</label>
-        <label class="ck"><input type="checkbox" id="sePause"> ⏸️ وقف التوصيل مؤقتًا (الاستلام من الفرع شغال)</label>
-        <button class="btn main" id="seSave" type="button">💾 حفظ</button></div>
-      <h2 style="margin-top:18px">📱 تحقق رقم العميل (واتساب)</h2>
-      <div class="cpf" style="margin-top:8px">
-        <label>التحقق<select id="seVfMode"><option value="off">مقفول (من غير تحقق)</option><option value="flag">اختياري — الطلب يتقبل بعلامة «غير متحقق»</option><option value="require">إجباري — مفيش طلب من غير تحقق</option></select></label>
-        <label>رقم واتساب المطعم اللي بيستقبل الأكواد<input id="seVfWa" type="tel" inputmode="numeric" dir="ltr" maxlength="15" placeholder="01XXXXXXXXX"></label>
-      </div>
-      <div class="hint">العميل بيشوف كود ويبعته من رقمه على الرقم ده، وانت بتأكد من زرار «📵 مستني تأكيد» اللي بيظهر فوق. الرقم بيتحقق مرة واحدة بس، وأي رقم اتسلّم له طلب قبل كده بيتعتبر متحقق. اضغط «💾 حفظ» بعد التغيير.</div>
-      <h2 style="margin-top:18px">🚨 تنبيهات التشغيل</h2>
-      <div class="cpf" style="margin-top:8px">
-        <label>طلب جديد مستني تأكيد بعد (دقيقة)<input id="seAlNew" type="number" inputmode="numeric" min="2" max="120" step="1" placeholder="10"></label>
-        <label>طلب واقف في نفس الحالة بعد (ساعة)<input id="seAlStuck" type="number" inputmode="numeric" min="1" max="24" step="1" placeholder="2"></label>
-        <label>مفيش أي طلب لمدة (ساعة) — صفر يقفلها<input id="seAlQuiet" type="number" inputmode="numeric" min="0" max="12" step="1" placeholder="0"></label>
-        <label>إيميل التنبيهات (اختياري)<input id="seAlMail" type="email" dir="ltr" maxlength="80" placeholder="you@gmail.com"></label>
-      </div>
-      <div class="hint">التنبيهات بتظهر في الداشبورد فورًا (زرار 🚨 فوق). عشان توصلك بالإيميل وانت مش فاتح الداشبورد: افتح محرر Apps Script ▸ شغّل دالة <b>setupAlerts</b> مرة واحدة ووافق على الصلاحيات. «مفيش طلبات» بتتفعّل بس لو في الأيام اللي فاتت كان بيجيلك طلبات في نفس الوقت.</div>
-      <h2 style="margin-top:18px">⭐ آراء العملاء على الموقع</h2>
-      <div class="cpf" style="margin-top:8px">
-        <label>الحالة<select id="seRevOn"><option value="false">مخفية</option><option value="true">ظاهرة</option></select></label>
-        <label>أقل تقييم لعرض التعليق<select id="seRevMin"><option value="5">٥ نجوم بس</option><option value="4">٤ نجوم فأكتر</option><option value="3">٣ نجوم فأكتر</option></select></label>
-        <label>أقل عدد تقييمات لإظهار القسم<input id="seRevN" type="number" inputmode="numeric" min="1" max="1000" step="1" placeholder="10"></label>
-      </div>
-      <div class="hint">المتوسط المعروض للعميل حقيقي (من كل التقييمات)، والتعليقات اللي بتظهر بس اللي فوق الحد، بالاسم الأول فقط. تقدر تخبّي أي تعليق من «⭐ تقييمات العملاء» (زرار 🙈). اضغط «💾 حفظ» بعد التغيير.</div>
-      <h2 style="margin-top:18px">🛵 التوصيل المجاني</h2>
-      <div class="cpf" style="margin-top:8px">
-        <label>الحالة<select id="seFreeOn"><option value="false">مقفول</option><option value="true">شغّال</option></select></label>
-        <label>الحد الأدنى للطلب (ج) — من هنا والتوصيل ببلاش<input id="seFreeMin" type="number" inputmode="numeric" min="1" step="5" placeholder="مثلاً 250"></label>
-      </div>
-      <div class="hint">بيتحسب على صافي الطلب بعد الخصم وبدون رسوم التوصيل، وبينطبق على الدليفري بس (مش الاستلام من الفرع). العميل بيشوف شريط «فاضل X ج وتوصيلك ببلاش» في السلة. اضغط «💾 حفظ» بعد التغيير.</div>
-      <h2 style="margin-top:18px">✏️ تعديل/إلغاء العميل لطلبه</h2>
-      <div class="cpf" style="margin-top:8px"><label>المدة اللي العميل يقدر فيها يعدّل أو يلغي بنفسه (بالدقايق — 0 = مقفول)<input type="number" id="seEditMin" min="0" max="60" placeholder="5"></label></div>
-      <div class="hint">خلال المدة العميل بيعدّل الكميات أو يلغي والتعديل بيتنفّذ فورًا وبيجيلك تنبيه. بعد المدة بيبعت «طلب» بيظهرلك popup (رقم الطلب + اسمه + رقمه) وبتقبله أو ترفضه والعميل بيتبلّغ. بيتحفظ بزرار «💾 حفظ» اللي فوق (جنب مواعيد العمل).</div>
-      <h2 style="margin-top:18px">💳 طرق الدفع</h2>
-      <div class="frm" style="margin-top:8px;align-items:center">
-        <label class="ck"><input type="checkbox" id="sePayCash"> 💵 كاش عند الاستلام</label>
-        <label class="ck"><input type="checkbox" id="sePayWallet"> 📱 محفظة إلكترونية (فودافون كاش)</label>
-        <label class="ck"><input type="checkbox" id="sePayInsta"> 🏦 إنستا باي</label></div>
-      <div class="cpf" style="margin-top:8px"><label>رسالة تظهر للعميل على الطريقة المقفولة (اختياري)<input id="sePayMsg" maxlength="60" placeholder="مثلاً: متوقفة مؤقتًا"></label></div>
-      <div class="hint">شيل العلامة من أي طريقة وبعدين اضغط حفظ عشان توقفها، وحطها تاني عشان تشغّلها. لازم طريقة واحدة شغّالة على الأقل. السيرفر بيرفض أي طلب بطريقة مقفولة حتى لو الصفحة عند العميل لسه قديمة.</div>
-      <details style="margin-top:8px"><summary style="cursor:pointer;font-weight:800">⚙️ إعدادات متقدمة (OwnTracks)</summary>
-      <div class="cpf" style="margin-top:8px">
-        <label>مفتاح سري (بيتعمل تلقائي مع أول طيار)<input id="seOtKey" dir="ltr" maxlength="40" autocomplete="off" placeholder="مثلاً: rr2026secret"></label>
-        <label>قايمة الطيارين (نص — بتتعدّل تلقائي من فوق، متلمسهاش إلا لو عارف بتعمل إيه)<input id="seDrivers" maxlength="600" placeholder="AH:أحمد:01012345678, MO:محمد"></label></div>
-      <div class="hint">رابط OwnTracks (Mode: HTTP): <b id="seOtUrl" dir="ltr" style="user-select:all;word-break:break-all"></b></div></details>
-      <div class="hint">التغيير بيظهر على الموقع خلال دقيقة تقريبًا، والسيرفر هو اللي بيطبّقه. وقت الزحمة: الرقم اللي هنا بيتضاف على الوقت المتوقع اللي العميل بيشوفه. السيرفر بيدّي ٥ دقايق سماح بعد ميعاد القفل.</div></div>
-    <div class="panel"><h2>🗺️ مناطق التوصيل والرسوم</h2><div id="seAreas">⏳...</div></div>
-    <div class="panel"><h2>🎁 دعوة صديق</h2>
-      <div class="cpf"><label>مكافأة اللي دعا (نقطة)<input type="number" id="seRefPts" min="0" max="5000" placeholder="500"></label><label>أقصى مكافآت لكل عميل في ٣٠ يوم<input type="number" id="seRefCap" min="1" max="100" placeholder="20"></label></div>
-      <div class="frm" style="margin-top:12px;align-items:center"><label class="ck"><input type="checkbox" id="seRefOn"> البرنامج شغّال</label><button class="btn main" id="seRefSave" type="button">💾 حفظ</button></div>
-      <div class="hint">العميل بيبعت لصاحبه لينك من "نقاطي". الصاحب بياخد خصم أول طلب بكوبون <b dir="ltr">FRIEND</b> (قيمته وحده الأدنى من تبويب الكوبونات)، واللي دعا بياخد النقاط بعد ما طلب صاحبه يتسلّم. الخصم بيشتغل بس لعميل جديد فعلًا (رقم وجهاز مالهمش طلبات قبل كده). ١٠ نقاط = ١ جنيه والاستبدال بمضاعفات ٢٠٠٠.</div></div>
-    <div class="panel"><h2>🔔 حالة إشعارات العملاء</h2><div id="seBell">⏳...</div></div>
+    <nav class="setnav" id="seNav" aria-label="أقسام الإعدادات">
+      <button type="button" data-go="seC1">⏰ التشغيل</button><button type="button" data-go="seC2">💳 الدفع</button><button type="button" data-go="seC3">🛵 التوصيل المجاني</button><button type="button" data-go="seC4">✏️ تعديل الطلب</button><button type="button" data-go="seC5">📱 التحقق</button><button type="button" data-go="seC6">⭐ الآراء</button><button type="button" data-go="seC7">🎁 الإحالة</button><button type="button" data-go="seC8">🚨 التنبيهات</button><button type="button" data-go="seC-areas">🗺️ المناطق</button><button type="button" data-go="seC-bell">🔔 الإشعارات</button><button type="button" data-go="seC-bk">💾 النسخ الاحتياطي</button>
+    </nav>
+    <div class="setgrid">
+      <section class="panel setc w" id="seC1">
+        <div class="seh"><span class="sei">⏰</span><div><h2>المواعيد ووضع التشغيل</h2><p class="sed">إمتى الموقع يقبل طلبات، ووقف التوصيل وقت الزحمة.</p></div></div>
+        <div class="togs">
+          <label class="tog"><span><b>مواعيد العمل شغّالة</b><small>لو مقفولة الموقع بيقبل طلبات في أي وقت</small></span><input type="checkbox" id="seHours"></label>
+          <label class="tog"><span><b>⏸️ وقف التوصيل مؤقتًا</b><small>الاستلام من الفرع يفضل شغّال</small></span><input type="checkbox" id="sePause"></label>
+        </div>
+        <div class="cpf" style="margin-top:14px">
+          <label>بيفتح الساعة<input type="time" id="seOpen"></label>
+          <label>بيقفل الساعة<input type="time" id="seClose"></label>
+          <label>زيادة وقت التوصيل وقت الزحمة (دقيقة)<input type="number" id="seBusy" min="0" max="180" placeholder="0"></label>
+          <label class="fw">رسالة الزحمة (بتظهر للعميل)<input id="seBusyMsg" maxlength="120" placeholder="مثلاً: ضغط كبير دلوقتي، شكرًا لصبرك"></label>
+          <label class="fw">رسالة وقف التوصيل<input id="sePauseMsg" maxlength="120" placeholder="مثلاً: التوصيل واقف نص ساعة"></label>
+        </div>
+        <div class="hint">التغيير بيظهر على الموقع خلال دقيقة تقريبًا، والسيرفر هو اللي بيطبّقه. وقت الزحمة: الرقم اللي هنا بيتضاف على الوقت المتوقع اللي العميل بيشوفه. السيرفر بيدّي ٥ دقايق سماح بعد ميعاد القفل.</div>
+      </section>
+      <section class="panel setc" id="seC2">
+        <div class="seh"><span class="sei">💳</span><div><h2>طرق الدفع</h2><p class="sed">شغّل أو وقّف أي طريقة، ولازم واحدة على الأقل تفضل شغّالة.</p></div></div>
+        <div class="togs one">
+          <label class="tog"><span><b>💵 كاش عند الاستلام</b></span><input type="checkbox" id="sePayCash"></label>
+          <label class="tog"><span><b>📱 محفظة إلكترونية</b><small>فودافون كاش</small></span><input type="checkbox" id="sePayWallet"></label>
+          <label class="tog"><span><b>🏦 إنستا باي</b></span><input type="checkbox" id="sePayInsta"></label>
+        </div>
+        <div class="cpf" style="margin-top:14px"><label class="fw">رسالة تظهر للعميل على الطريقة المقفولة (اختياري)<input id="sePayMsg" maxlength="60" placeholder="مثلاً: متوقفة مؤقتًا"></label></div>
+        <div class="hint">السيرفر بيرفض أي طلب بطريقة مقفولة حتى لو الصفحة عند العميل لسه قديمة.</div>
+      </section>
+      <section class="panel setc" id="seC3">
+        <div class="seh"><span class="sei">🛵</span><div><h2>التوصيل المجاني</h2><p class="sed">من حد معيّن للطلب التوصيل ببلاش.</p></div></div>
+        <div class="cpf">
+          <label>الحالة<select id="seFreeOn"><option value="false">مقفول</option><option value="true">شغّال</option></select></label>
+          <label>الحد الأدنى للطلب (ج)<input id="seFreeMin" type="number" inputmode="numeric" min="1" step="5" placeholder="مثلاً 250"></label>
+        </div>
+        <div class="hint">بيتحسب على صافي الطلب بعد الخصم وبدون رسوم التوصيل، وبينطبق على الدليفري بس (مش الاستلام من الفرع). العميل بيشوف شريط «فاضل X ج وتوصيلك ببلاش» في السلة.</div>
+      </section>
+      <section class="panel setc" id="seC4">
+        <div class="seh"><span class="sei">✏️</span><div><h2>تعديل/إلغاء العميل لطلبه</h2><p class="sed">المدة اللي العميل يقدر يعدّل أو يلغي فيها بنفسه.</p></div></div>
+        <div class="cpf"><label>المدة بالدقايق (0 = مقفول)<input type="number" id="seEditMin" min="0" max="60" placeholder="5"></label></div>
+        <div class="hint">خلال المدة العميل بيعدّل الكميات أو يلغي والتعديل بيتنفّذ فورًا وبيجيلك تنبيه. بعد المدة بيبعت «طلب» بيظهرلك popup (رقم الطلب + اسمه + رقمه) وبتقبله أو ترفضه والعميل بيتبلّغ.</div>
+      </section>
+      <section class="panel setc" id="seC5">
+        <div class="seh"><span class="sei">📱</span><div><h2>تحقق رقم العميل (واتساب)</h2><p class="sed">العميل يأكّد رقمه بكود قبل ما طلبه يتقبل.</p></div></div>
+        <div class="cpf">
+          <label class="fw">التحقق<select id="seVfMode"><option value="off">مقفول (من غير تحقق)</option><option value="flag">اختياري — الطلب يتقبل بعلامة «غير متحقق»</option><option value="require">إجباري — مفيش طلب من غير تحقق</option></select></label>
+          <label class="fw">رقم واتساب المطعم اللي بيستقبل الأكواد<input id="seVfWa" type="tel" inputmode="numeric" dir="ltr" maxlength="15" placeholder="01XXXXXXXXX"></label>
+        </div>
+        <div class="hint">العميل بيشوف كود ويبعته من رقمه على الرقم ده، وانت بتأكد من زرار «📵 مستني تأكيد» اللي بيظهر فوق. الرقم بيتحقق مرة واحدة بس، وأي رقم اتسلّم له طلب قبل كده بيتعتبر متحقق.</div>
+      </section>
+      <section class="panel setc" id="seC6">
+        <div class="seh"><span class="sei">⭐</span><div><h2>آراء العملاء على الموقع</h2><p class="sed">عرض متوسط التقييم وأحسن التعليقات للزوار.</p></div></div>
+        <div class="cpf">
+          <label>الحالة<select id="seRevOn"><option value="false">مخفية</option><option value="true">ظاهرة</option></select></label>
+          <label>أقل تقييم لعرض التعليق<select id="seRevMin"><option value="5">٥ نجوم بس</option><option value="4">٤ نجوم فأكتر</option><option value="3">٣ نجوم فأكتر</option></select></label>
+          <label class="fw">أقل عدد تقييمات لإظهار القسم<input id="seRevN" type="number" inputmode="numeric" min="1" max="1000" step="1" placeholder="10"></label>
+        </div>
+        <div class="hint">المتوسط المعروض للعميل حقيقي (من كل التقييمات)، والتعليقات اللي بتظهر بس اللي فوق الحد، بالاسم الأول فقط. تقدر تخبّي أي تعليق من «⭐ تقييمات العملاء» (زرار 🙈).</div>
+      </section>
+      <section class="panel setc" id="seC7">
+        <div class="seh"><span class="sei">🎁</span><div><h2>دعوة صديق</h2><p class="sed">مكافأة للعميل اللي بيجيب عميل جديد.</p></div></div>
+        <div class="togs one"><label class="tog"><span><b>البرنامج شغّال</b></span><input type="checkbox" id="seRefOn"></label></div>
+        <div class="cpf" style="margin-top:14px"><label>مكافأة اللي دعا (نقطة)<input type="number" id="seRefPts" min="0" max="5000" placeholder="500"></label><label>أقصى مكافآت لكل عميل في ٣٠ يوم<input type="number" id="seRefCap" min="1" max="100" placeholder="20"></label></div>
+        <button class="hide" id="seRefSave" type="button" tabindex="-1" aria-hidden="true"></button>
+        <div class="hint">العميل بيبعت لصاحبه لينك من "نقاطي". الصاحب بياخد خصم أول طلب بكوبون <b dir="ltr">FRIEND</b> (قيمته وحده الأدنى من تبويب الكوبونات)، واللي دعا بياخد النقاط بعد ما طلب صاحبه يتسلّم. الخصم بيشتغل بس لعميل جديد فعلًا (رقم وجهاز مالهمش طلبات قبل كده). ١٠ نقاط = ١ جنيه والاستبدال بمضاعفات ٢٠٠٠.</div>
+      </section>
+      <section class="panel setc w" id="seC8">
+        <div class="seh"><span class="sei">🚨</span><div><h2>تنبيهات التشغيل</h2><p class="sed">إمتى الداشبورد ينبّهك لطلب مستني أو واقف أو سكون غير معتاد.</p></div></div>
+        <div class="cpf">
+          <label>طلب جديد مستني تأكيد بعد (دقيقة)<input id="seAlNew" type="number" inputmode="numeric" min="2" max="120" step="1" placeholder="10"></label>
+          <label>طلب واقف في نفس الحالة بعد (ساعة)<input id="seAlStuck" type="number" inputmode="numeric" min="1" max="24" step="1" placeholder="2"></label>
+          <label>مفيش أي طلب لمدة (ساعة) — صفر يقفلها<input id="seAlQuiet" type="number" inputmode="numeric" min="0" max="12" step="1" placeholder="0"></label>
+          <label>إيميل التنبيهات (اختياري)<input id="seAlMail" type="email" dir="ltr" maxlength="80" placeholder="you@gmail.com"></label>
+        </div>
+        <div class="hint">التنبيهات بتظهر في الداشبورد فورًا (زرار 🚨 فوق). عشان توصلك بالإيميل وانت مش فاتح الداشبورد: افتح محرر Apps Script ▸ شغّل دالة <b>setupAlerts</b> مرة واحدة ووافق على الصلاحيات. «مفيش طلبات» بتتفعّل بس لو في الأيام اللي فاتت كان بيجيلك طلبات في نفس الوقت.</div>
+        <details class="seadv"><summary>⚙️ إعدادات متقدمة (OwnTracks)</summary>
+          <div class="cpf" style="margin-top:10px">
+            <label>مفتاح سري (بيتعمل تلقائي مع أول طيار)<input id="seOtKey" dir="ltr" maxlength="40" autocomplete="off" placeholder="مثلاً: rr2026secret"></label>
+            <label>قايمة الطيارين (نص — بتتعدّل تلقائي من فوق، متلمسهاش إلا لو عارف بتعمل إيه)<input id="seDrivers" maxlength="600" placeholder="AH:أحمد:01012345678, MO:محمد"></label></div>
+          <div class="hint">رابط OwnTracks (Mode: HTTP): <b id="seOtUrl" dir="ltr" style="user-select:all;word-break:break-all"></b></div>
+        </details>
+      </section>
+    </div>
+    <div class="panel" id="seC-areas"><h2>🗺️ مناطق التوصيل والرسوم</h2><div id="seAreas">⏳...</div></div>
+    <div class="panel" id="seC-bell"><h2>🔔 حالة إشعارات العملاء</h2><div id="seBell">⏳...</div></div>
     <div class="panel"><h2>🚫 الأرقام المحظورة والتنبيهات</h2><div id="seBl">⏳...</div></div>
-    <div class="panel"><h2>💾 النسخ الاحتياطي والتقرير اليومي</h2><div id="seBk">⏳...</div></div>
+    <div class="panel" id="seC-bk"><h2>💾 النسخ الاحتياطي والتقرير اليومي</h2><div id="seBk">⏳...</div></div>
+    <div class="sebar" id="seBar"><span class="sedirty" id="seDirty">✓ كل التغييرات محفوظة</span><button class="btn main" id="seSave" type="button">💾 حفظ كل الإعدادات</button></div>
   </main>
   <main id="stMain" class="hide">
     <div class="panel"><h2>➕ إنشاء حساب موظف</h2>
@@ -1928,6 +1953,7 @@ $('seOtKey').oninput = updOtUrl;
 $('seSave').onclick = async () => {
   try {
     const j = await post({action:'settingsSave', user, settings:{hours_on:$('seHours').checked, open_at:$('seOpen').value, close_at:$('seClose').value, busy_extra:+$('seBusy').value || 0, busy_msg:$('seBusyMsg').value.trim(), pause_on:$('sePause').checked, pause_msg:$('sePauseMsg').value.trim(), ref_on:$('seRefOn').checked, ref_points:+$('seRefPts').value || 0, ref_cap:+$('seRefCap').value || 20, pay_cash:$('sePayCash').checked, pay_wallet:$('sePayWallet').checked, pay_instapay:$('sePayInsta').checked, pay_msg:$('sePayMsg').value.trim(), ot_key:$('seOtKey').value.trim(), drivers:$('seDrivers').value.trim(), edit_min:$('seEditMin').value === '' ? 5 : +$('seEditMin').value, al_new_min:+$('seAlNew').value || 10, al_stuck_h:+$('seAlStuck').value || 2, al_quiet_h:+$('seAlQuiet').value || 0, alert_email:$('seAlMail').value.trim(), rev_on:$('seRevOn').value, rev_min:+$('seRevMin').value || 4, rev_minn:+$('seRevN').value || 10, free_on:$('seFreeOn').value, free_min:$('seFreeMin').value === '' ? 0 : +$('seFreeMin').value, vf_mode:$('seVfMode').value, vf_wa:$('seVfWa').value.trim()}});
+    if (j.ok) seMark(false);
     toast(j.ok ? '✅ اتحفظت الإعدادات' : (j.error === 'bad_time' ? 'المواعيد غير صحيحة' : j.error === 'no_pay' ? '⚠️ لازم طريقة دفع واحدة شغّالة على الأقل' : j.error === 'bad_email' ? '⚠️ إيميل التنبيهات مش صالح' : j.error === 'no_free_min' ? '⚠️ اكتب الحد الأدنى للتوصيل المجاني (أكبر من صفر)' : j.error === 'no_wa' ? '⚠️ اكتب رقم واتساب صالح لو التحقق شغّال' : '⚠️ حصل خطأ'));
   } catch (e) { toast('⚠️ مفيش اتصال'); }
 };
@@ -2152,6 +2178,20 @@ async function bellLoad(){
   } catch (e) { $('seBell').innerHTML = '<div class="empty">⚠️ مفيش اتصال</div>'; }
 }
 $('seRefSave').onclick = () => $('seSave').click();
+
+/* ═══ شاشة الإعدادات: شريط حفظ ثابت + تنبيه التغييرات غير المحفوظة ═══ */
+let seIsDirty = false;
+const SE_IDS = new Set(['seOpen','seClose','seBusy','seBusyMsg','sePauseMsg','seHours','sePause','sePayCash','sePayWallet','sePayInsta','sePayMsg','seOtKey','seDrivers','seEditMin','seAlNew','seAlStuck','seAlQuiet','seAlMail','seRevOn','seRevMin','seRevN','seFreeOn','seFreeMin','seVfMode','seVfWa','seRefPts','seRefCap','seRefOn']);
+function seMark(on){ seIsDirty = !!on; $('seBar').classList.toggle('dirty', seIsDirty); $('seDirty').textContent = seIsDirty ? '● فيه تغييرات لسه ماتحفظتش' : '✓ كل التغييرات محفوظة'; }
+['input', 'change'].forEach(ev => $('seMain').addEventListener(ev, e => { if (SE_IDS.has(e.target.id)) seMark(true); }));
+{ const h = $('seSave').onclick; $('seSave').onclick = async () => { const b = $('seSave'); if (b.disabled) return; b.disabled = true; const t = b.textContent; b.textContent = '⏳ بنحفظ...'; try { await h(); } finally { b.disabled = false; b.textContent = t; } }; }
+{ const l0 = seLoad; seLoad = async function(){ try { await l0(); } finally { seMark(false); } }; }
+{ const v0 = setView; setView = function(v){
+    if (view === 'settings' && v !== 'settings' && seIsDirty && user && !confirm('فيه تغييرات في الإعدادات ماتحفظتش. تكمل من غير حفظ؟')) return;
+    document.body.classList.toggle('se-open', v === 'settings'); return v0(v); }; }
+window.addEventListener('beforeunload', e => { if (seIsDirty) { e.preventDefault(); e.returnValue = ''; } });
+document.addEventListener('keydown', e => { if ((e.ctrlKey || e.metaKey) && (e.key === 's' || e.key === 'S') && view === 'settings') { e.preventDefault(); $('seSave').click(); } });
+$('seNav').addEventListener('click', e => { const b = e.target.closest('[data-go]'); if (!b) return; const t = document.getElementById(b.dataset.go); if (t) t.scrollIntoView({behavior:'smooth', block:'start'}); });
 
 /* ═══ الأرشفة (ضمن لوحة النسخ الاحتياطي) ═══ */
 function archHtml(a){
@@ -3406,6 +3446,47 @@ html[data-theme="dark"] #sndPop{background:#14110a;color:#F0CF6B;border-color:#D
 html[data-theme="dark"] .rx.cpn{color:#ff9fcf}
 .lri.lrd{opacity:.65}.lrb{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:8px}.lrok{font-weight:800;color:#0B6E4F}
 .cmpl{margin-top:6px;font-size:.82rem;display:flex;flex-direction:column;gap:3px;opacity:.85}
+
+/* ═══ شاشة الإعدادات: كروت + شريط حفظ ثابت ═══ */
+#seMain{max-width:1100px}
+.setnav{display:flex;gap:6px;overflow-x:auto;padding:2px 2px 12px;scrollbar-width:thin}
+.setnav button{flex:0 0 auto;border:1.5px solid var(--line);background:#fff;color:var(--ink);border-radius:999px;padding:7px 14px;font:800 .82rem "Cairo",sans-serif;cursor:pointer;white-space:nowrap}
+.setnav button:hover{border-color:var(--red);color:var(--red)}
+.setgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start;margin-bottom:14px}
+.setgrid>.setc{margin-bottom:0;scroll-margin-top:12px}.setgrid>.setc.w{grid-column:1/-1}
+#seMain .panel{scroll-margin-top:12px}
+@media(max-width:860px){.setgrid{grid-template-columns:minmax(0,1fr)}}
+.seh{display:flex;gap:12px;align-items:center;margin-bottom:14px}
+.sei{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;background:#FDECEC;font-size:1.3rem;flex:none}
+.setc h2{margin:0;font-size:1.05rem}.sed{margin:2px 0 0;font-size:.8rem;color:var(--mute);line-height:1.5}
+#seMain .cpf{grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
+#seMain .cpf label{font-size:.84rem}#seMain .cpf .fw{grid-column:1/-1}
+.setc .hint{font-size:.78rem;line-height:1.75;margin-top:14px;padding:10px 12px;background:rgba(0,0,0,.035);border-radius:12px}
+.togs{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px}.togs.one{grid-template-columns:minmax(0,1fr)}
+.tog{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 14px;border:1.5px solid var(--line);border-radius:14px;cursor:pointer;font-size:.92rem;font-weight:800;margin:0;background:transparent}
+.tog small{display:block;font-weight:600;color:var(--mute);font-size:.76rem;margin-top:1px}
+.tog input{-webkit-appearance:none;appearance:none;width:46px;height:27px;border-radius:99px;background:#cdc6c0;position:relative;flex:none;cursor:pointer;transition:background .2s;margin:0;border:0}
+.tog input::after{content:"";position:absolute;top:3px;inset-inline-start:3px;width:21px;height:21px;border-radius:50%;background:#fff;transition:inset-inline-start .2s;box-shadow:0 1px 3px rgba(0,0,0,.35)}
+.tog input:checked{background:var(--green)}.tog input:checked::after{inset-inline-start:22px}
+.tog input:focus-visible{outline:3px solid rgba(37,99,235,.45);outline-offset:2px}
+.seadv{margin-top:14px;border-top:1px dashed var(--line);padding-top:12px}.seadv summary{cursor:pointer;font-weight:800}
+.sebar{position:sticky;bottom:12px;z-index:45;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:#fff;border:1.5px solid var(--line);border-radius:18px;padding:10px 14px calc(10px + env(safe-area-inset-bottom,0px));box-shadow:0 16px 36px -16px rgba(0,0,0,.45);margin-top:14px}
+.sebar .btn{flex:0 0 auto;min-width:200px;padding:12px 22px}.sebar .btn:disabled{opacity:.7}
+.sedirty{font-weight:800;font-size:.88rem;color:var(--mute)}
+.sebar.dirty{border-color:var(--amber);background:#FFF8E6}.sebar.dirty .sedirty{color:#8a5a00}
+body.se-open #toast{bottom:92px}
+html[data-theme="dark"] .setnav button{background:rgba(20,17,8,.9);color:#F0CF6B;border-color:rgba(212,175,55,.3)}
+html[data-theme="dark"] .sei{background:rgba(212,175,55,.14)}
+html[data-theme="dark"] .setc .hint{background:rgba(212,175,55,.06)}
+html[data-theme="dark"] .tog input{background:#4a4332}html[data-theme="dark"] .tog input:checked{background:#5fd6a0}
+html[data-theme="dark"] .sebar{background:rgba(20,17,8,.97);border-color:rgba(212,175,55,.3)}
+html[data-theme="dark"] .sebar.dirty{background:rgba(60,44,6,.97);border-color:#E8B923}html[data-theme="dark"] .sebar.dirty .sedirty{color:#F0CF6B}
+
+/* عشان الشريط الثابت (sticky) يشتغل: overflow-x:hidden على body بيخلّيه scroll container وبيكسر الـsticky، فبنستبدله بـclip (نفس القص بدون ما يعمل scroll container) */
+@supports (overflow:clip){html,body{overflow-x:clip}}
+
+/* موبايل: شريط التنقل ثابت تحت (٦٤px + ١٢px) فشريط الحفظ لازم يقعد فوقه */
+@media(max-width:900px){.sebar{bottom:88px}body.se-open #toast{bottom:164px}}
 </style>
 <script>
 (function(){
