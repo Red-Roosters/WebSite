@@ -583,13 +583,27 @@ try {
             }
         } catch (e) {}
         try { const j = await (await fetch(apiUrl('action=eta'))).json(); if (j && j.ok && j.eta) { window.RR_ETA_LIVE = j.eta; renderSummary(); } } catch (e) {}
-        try { await loadServerConfig(); } catch (e) {}
+        /* الإعدادات (توصيل مجاني/مناطق/مواعيد) بتتحمّل مستقلة من تحت (cfgEnsure) — مش ورا الطلبات اللي فوق */
         try { const j = await (await fetch(apiUrl('action=suggest'))).json(); if (j && j.ok) { window.RR_SG = j; render(); } } catch (e) {}
     })();
+    /* تحميل الإعدادات بشكل مستقل ومتكرر: فوري عند فتح الصفحة، بإعادة محاولة لو فشل أو اتأخر، وتجديد لما العميل يرجع للصفحة أو يفتح الدفع أو كل ٥ دقايق.
+       قبل كده كانت بتستنى طلبين قبلها ومن غير مهلة، فلو أي واحد بطّأ كان العميل بيكمّل من غير إعدادات التوصيل المجاني ويتحسب عليه رسوم. */
+    let cfgP = null, cfgTries = 0;
+    function cfgEnsure(force) {
+        if (cfgP) return cfgP;
+        if (!force && window.RR_CFG && Date.now() - (window.RR_CFG_T || 0) < 90000) return Promise.resolve();
+        cfgP = Promise.race([loadServerConfig(), new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), 15000))])
+            .then(() => { cfgTries = 0; }, () => { if (++cfgTries <= 4) setTimeout(() => cfgEnsure(true), 3000 * cfgTries); })
+            .then(() => { cfgP = null; });
+        return cfgP;
+    }
+    cfgEnsure(true);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) cfgEnsure(false); });
+    setInterval(() => { if (!document.hidden) cfgEnsure(false); }, 300000);
     /* إعدادات من الشيت: مواعيد · مناطق ورسوم · زحمة · وقف التوصيل (لو الشيت فاضي بنكمّل بالقيم المكتوبة في الموقع) */
     async function loadServerConfig() {
         const j = await (await fetch(apiUrl('action=config'))).json(); if (!j || !j.ok) return;
-        window.RR_CFG = j;
+        window.RR_CFG = j; window.RR_CFG_T = Date.now();
         try { applyPayCfg(); } catch (e) {}
         try { window.rrSchedShow && rrSchedShow(); } catch (e) {}
         if (j.hours) { CONFIG.hours.enabled = !!j.hours.enabled; if (j.hours.open) CONFIG.hours.open = j.hours.open; if (j.hours.close) CONFIG.hours.close = j.hours.close; if (window.rrSync) window.rrSync(); if (window.rrTick) window.rrTick(); }
@@ -954,13 +968,14 @@ imChips.previousElementSibling.style.display = noChips ? 'none' : '';
             cart.map(i => `<div class="mini"><span>${i.qty} × ${esc(i.name)}${(i.opts && i.opts.length) ? ' <small>(' + esc(i.opts.join('، ')) + ')</small>' : ''}${i.note ? ' <small>📝 ' + esc(i.note) + '</small>' : ''}</span><span>${fmt(i.price * i.qty)}</span></div>`).join('') +
             freeBarHtml() +
             `<div class="sum-row" style="margin-top:10px"><span>المجموع</span><span>${fmt(sub)}</span></div>` +
-            (d ? `<div class="sum-row disc"><span>🎟️ خصم (${esc(coupon.code)})</span><span>− ${fmt(d)}</span></div>` : '') +
+            (d ? `<div class="sum-row disc"><span>🎟️ خصم (${esc(coupon.code)})</span><span>− ${fmt(d)}</span></div>` : (coupon && coupon.def.min && sub < coupon.def.min ? `<div class="sum-row" style="color:#c0392b;font-weight:800"><span>⚠️ كوبون ${esc(coupon.code)} مش مطبّق — محتاج طلب ${fmt(coupon.def.min)} على الأقل</span><span>ناقص ${fmt(coupon.def.min - sub)}</span></div>` : '')) +
             `<div class="sum-row"><span>${pk() ? 'استلام من الفرع' : 'التوصيل'}</span><span>${pk() ? 'بدون رسوم' : (fee === null ? 'اختار المنطقة' : (fee === 0 && freeApplies() ? '<b class="free-tag">مجاني 🎉</b>' : fmt(fee)))}</span></div>` +
             `<div class="sum-row total"><span>الإجمالي</span><span>${fmt(sub - d + (fee || 0))}</span></div>` +
             (pk() ? '' : deliveryNote());
     }
 
     $('goCheckout').addEventListener('click', () => {
+        cfgEnsure(false);
         if (!isOpenNow() && !schedCfg().on) { toast(closedMsg()); return; }
         if (CONFIG.minOrder && subtotal() < CONFIG.minOrder) { toast(`أقل قيمة للطلب ${fmt(CONFIG.minOrder)}`); return; }
         { const so = soInCart(); if (so.length) { toast(soMsg(so), 6500); return; } refreshSoldout(); }
@@ -1194,6 +1209,11 @@ imChips.previousElementSibling.style.display = noChips ? 'none' : '';
         if (!window.rrTrackSave) { toast('⚠️ في مشكلة مؤقتة، كلمنا على 0237721525', 6000); return; }
         if (!(await rrVerifyGate(toEn($('f_phone').value.trim())))) return;   /* تحقق الرقم (لو المطعم مفعّله) */
 
+        { const feeBefore = curFee();
+          if (!window.RR_CFG || Date.now() - (window.RR_CFG_T || 0) > 180000) {
+              await Promise.race([cfgEnsure(true), new Promise(r => setTimeout(r, 5000))]);
+              if ((curFee() || 0) > (feeBefore || 0)) { toast('⚠️ رسوم التوصيل اتحدّثت — راجع الإجمالي وأكّد الطلب تاني', 7000); return; }
+          } }
         const v = id => $(id).value.trim();
         const pickup = pk();
         if (!pickup && window.RR_CFG && RR_CFG.pause && RR_CFG.pause.on) { toast('⏸️ ' + (RR_CFG.pause.msg || 'التوصيل متوقف مؤقتًا') + ' — تقدر تختار الاستلام من الفرع', 7000); return; }
@@ -1201,6 +1221,7 @@ imChips.previousElementSibling.style.display = noChips ? 'none' : '';
         const fmtT = s => { const [h, m] = s.split(':').map(Number); return ((h % 12) || 12) + ':' + String(m).padStart(2, '0') + ' ' + (h >= 12 ? 'م' : 'ص'); };
         const fee = pickup ? 0 : curFee();   /* بتراعي التوصيل المجاني — والسيرفر بيتحقق منها */
         const sub = subtotal(), d = discount(), total = sub - d + fee;
+        if (coupon && !d && coupon.def.min && sub < coupon.def.min) { toast('⚠️ كوبون ' + coupon.code + ' بيشتغل لطلبات ' + fmt(coupon.def.min) + ' أو أكتر (طلبك دلوقتي ' + fmt(sub) + ') — الخصم مش مطبّق. زوّد أصناف أو شيل الكوبون وأكّد تاني', 9000); return; }
         const num = id => toEn(v(id));
 
         /* نفس رقم الطلب لو العميل ضغط تاني بعد فشل (والسيرفر بيمنع التكرار) — ولو السلة اتغيرت بنعمل رقم جديد */
