@@ -654,7 +654,7 @@ function overlay(list){
     if (p.paid !== undefined) { if (!p.busy && (o.paid === p.paid || now - p.t > 20000)) p.paid = undefined; else o.paid = p.paid; }
     if (p.st === undefined && p.paid === undefined && !p.busy) pend.delete(o.id); });
 }
-let loading = false, loadT = 0;
+let loading = false, loadT = 0, lastSig = '', lastRenderT = 0;   // lastSig: بصمة آخر بيانات اترسمت — لو التحديث الجديد نفس البيانات منعيدش بناء الشاشة
 async function load(){
   if (loading && Date.now() - loadT < 25000) return true;   // مفيش تحديثين فوق بعض
   loading = true; loadT = Date.now();
@@ -672,7 +672,9 @@ async function loadNow(){
     { const nw = Date.now(); chDone.forEach((t, k) => { if (nw - t > 90000) chDone.delete(k); }); }
     changes = (j.changes || []).filter(c => !chDone.has(c.cid));   // اللي لسه بنرد عليه ماينفعش يرجع من تحديث قديم
     const freshCh = changes.filter(c => chKnown && !chKnown.has(c.cid)); chKnown = new Set(changes.map(c => c.cid));
-    keepScroll(() => { render(); drvBarRender(); updateDrvMap(); dvRender(); chRender(); });
+    const sig = JSON.stringify([j.orders, j.flags, j.drivers, j.changes, j.soldout, j.vf, j.alerts, j.low, j.follow, role, myName]);   // من غير مواقع الطيارين/ثواني آخر ظهور (بتتغيّر كل مرة)
+    if (sig === lastSig && Date.now() - lastRenderT < 45000) { dvCheck(); hlCompute(); drvBarRender(); updateDrvMap(); syncAlert(); }
+    else { lastSig = sig; lastRenderT = Date.now(); keepScroll(() => { render(); drvBarRender(); updateDrvMap(); dvRender(); chRender(); }); }
     if (freshCh.length) { toast('✏️ ' + freshCh.map(c => (CHK_S[c.kind] || '') + ' #' + c.id + ' — ' + c.name).join('، ')); pushNotify('✏️ تعديل من عميل — ريد روستر', freshCh.map(c => (CHK_S[c.kind] || '') + ' #' + c.id + ' · ' + c.name).join('\n')); chOpen(); ringTick(); }
     { const dn = orders.filter(isDue), fd = dn.filter(o => !dueKnown.has(o.id)); dn.forEach(o => dueKnown.add(o.id));   // طلب مجدول قرّب ميعاده: تنبيه مرة واحدة
       if (fd.length) { toast('⏰ طلب مجدول قرّب: ' + fd.map(o => '#' + o.id + ' ' + clock(o.sched)).join('، ')); pushNotify('⏰ طلب مجدول قرّب — ريد روستر', fd.map(o => o.name + ' · ' + clock(o.sched)).join('\n')); beep(); } }
@@ -762,9 +764,10 @@ function render(){
 }
 function miniHtml(o){
   return '<details class="mini" data-mid="' + esc(o.id) + '"' + (openIds.has(o.id) ? ' open' : '') + '><summary><span class="oid">#' + esc(o.id) + '</span><span class="mn">' + esc(o.name) +
-    '</span><span class="mt">' + o.total + ' ج</span><i class="chev"></i><small>' + clock(o.time) + ' · ' + (o.type === 'pickup' ? 'استلام من الفرع' : 'دليفري') + '</small></summary>' + cardHtml(o) + '</details>';
+    '</span><span class="mt">' + o.total + ' ج</span><i class="chev"></i><small>' + clock(o.time) + ' · ' + (o.type === 'pickup' ? 'استلام من الفرع' : 'دليفري') + '</small></summary>' + (openIds.has(o.id) ? cardHtml(o) : '') + '</details>';   // الجسم الكامل بيتبني عند الفتح بس (أخف بكتير على الموبايل)
 }
-$('grid').addEventListener('toggle', e => { const d = e.target; if (d.classList && d.classList.contains('mini')) { d.open ? openIds.add(d.dataset.mid) : openIds.delete(d.dataset.mid); } }, true);
+$('grid').addEventListener('toggle', e => { const d = e.target; if (d.classList && d.classList.contains('mini')) {
+  if (d.open) { openIds.add(d.dataset.mid); if (!d.querySelector('.card')) { const o = orders.find(x => x.id === d.dataset.mid); if (o) d.insertAdjacentHTML('beforeend', cardHtml(o)); } } else openIds.delete(d.dataset.mid); } }, true);
 /* ═══ مين ألغى الطلب (من سجل الطلب) ═══ */
 function cxSrc(o){
   if (!o || o.status !== 'cancelled') return null;
@@ -3487,6 +3490,9 @@ html[data-theme="dark"] .sebar.dirty{background:rgba(60,44,6,.97);border-color:#
 
 /* موبايل: شريط التنقل ثابت تحت (٦٤px + ١٢px) فشريط الحفظ لازم يقعد فوقه */
 @media(max-width:900px){.sebar{bottom:88px}body.se-open #toast{bottom:164px}}
+
+/* أداء: الكروت اللي مش ظاهرة على الشاشة مابيتحسبش لها layout ولا رسم */
+#grid .card{content-visibility:auto;contain-intrinsic-height:auto 320px}   /* الارتفاع بس — لو حددنا العرض كمان الكروت بتطلع من العمود */
 </style>
 <script>
 (function(){
