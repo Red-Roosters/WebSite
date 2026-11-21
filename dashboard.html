@@ -3567,6 +3567,36 @@ html[data-theme="dark"] #rrTip{background:#000;color:#F0CF6B;border:1px solid rg
   #app #sb .nv-tools.rail #hlBtn::after{top:5px;right:5px}
 }
 @media(min-width:901px) and (max-height:700px){ #app #sb .sb-brand{display:none!important} #app #sb .nv-tools.rail #who::after{display:none} }
+
+/* ═══ تظبيط زرارين السايد بار (حالة النظام + تحديث): توسيط الأيقونة + شكل أحسن ═══ */
+@keyframes rrDotPulse{0%,100%{box-shadow:0 0 0 2.5px #0c2a23,0 0 0 2.5px rgba(52,211,153,0)}50%{box-shadow:0 0 0 2.5px #0c2a23,0 0 0 7px rgba(52,211,153,.28)}}
+@media(min-width:901px){
+  /* السبب: gap:12px موروث من #sb .ib كان بيزحزح الأيقونة ~6px عن المنتصف (بين الأيقونة والنص المخفي) */
+  #app #sb .nv-tools.rail>.ib{gap:0!important;column-gap:0!important;place-content:center!important}
+  #app #sb .nv-tools.rail>.ib::before{margin:0!important;width:22px;height:22px;transition:transform .45s cubic-bezier(.3,.7,.3,1)}
+  #app #sb .nv-tools.rail>.ib:active{transform:scale(.94)!important}
+
+  /* حالة النظام: زجاجي هادي بحلقة خفيفة */
+  #app #sb .nv-tools.rail #hlBtn{background:rgba(159,227,200,.09)!important;box-shadow:inset 0 0 0 1px rgba(159,227,200,.22)!important;color:#cfeee0!important}
+  #app #sb .nv-tools.rail #hlBtn:hover{background:rgba(159,227,200,.2)!important;color:#fff!important;box-shadow:inset 0 0 0 1px rgba(159,227,200,.5)!important}
+  #app #sb .nv-tools.rail #hlBtn::after{width:9px;height:9px;animation:rrDotPulse 2.2s ease-in-out infinite}
+  #app #sb .nv-tools.rail #hlBtn.bad::after{animation:none}
+
+  /* تحديث: برتقاني متدرّج بتوهّج ناعم، وبتلف نص لفة عند الوقوف عليها */
+  #app #sb .nv-tools.rail #rf{background:linear-gradient(145deg,#ffb687,#f59e6b)!important;color:#2b1407!important;
+    box-shadow:0 10px 20px -8px rgba(245,158,107,.85),inset 0 1px 0 rgba(255,255,255,.4)!important}
+  #app #sb .nv-tools.rail #rf:hover{filter:none;background:linear-gradient(145deg,#ffc29a,#f7a876)!important;box-shadow:0 12px 24px -8px rgba(245,158,107,.95),inset 0 1px 0 rgba(255,255,255,.5)!important}
+  #app #sb .nv-tools.rail #rf:hover::before{transform:rotate(180deg)}
+
+  /* دارك مود */
+  html[data-theme="dark"] #app #sb .nv-tools.rail #hlBtn{background:rgba(212,175,55,.1)!important;box-shadow:inset 0 0 0 1px rgba(212,175,55,.3)!important;color:#E9D48A!important}
+  html[data-theme="dark"] #app #sb .nv-tools.rail #hlBtn:hover{background:rgba(212,175,55,.22)!important;color:#F0CF6B!important}
+  html[data-theme="dark"] #app #sb .nv-tools.rail #rf{box-shadow:0 10px 20px -8px rgba(212,175,55,.8),inset 0 1px 0 rgba(255,255,255,.35)!important}
+}
+@media(min-width:901px) and (max-height:860px){
+  #app #sb .nv-tools.rail>.ib::before{width:20px;height:20px}
+}
+@media(prefers-reduced-motion:reduce){#app #sb .nv-tools.rail #hlBtn::after{animation:none}}
 </style>
 <script>
 (function(){
