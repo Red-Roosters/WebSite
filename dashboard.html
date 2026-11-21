@@ -667,12 +667,12 @@ async function loadNow(){
     overlay(j.orders);
     setLive(true); role = j.role || 'staff'; myName = j.name || user; applyRole();
     const fresh = j.orders.filter(o => known && !known.has(o.id) && o.status === 'new');
-    known = new Set(j.orders.map(o => o.id)); orders = j.orders; flags = j.flags || {}; drivers = j.drivers || []; dseen = j.dseen || {}; dpos = j.dpos || {}; dasg = j.dasg || {}; chips(j); vfUpdate(j.vf); alUpdate(j.alerts);
+    known = new Set(j.orders.map(o => o.id)); orders = j.orders; flags = j.flags || {}; drivers = j.drivers || []; dseen = j.dseen || {}; dpos = j.dpos || {}; dasg = j.dasg || {}; knownPh = new Set(j.known || []); chips(j); vfUpdate(j.vf); alUpdate(j.alerts);
     if (Array.isArray(j.soldout) && !soBusy && Date.now() - soLast > 4000) { soList = j.soldout; mnRender(); }
     { const nw = Date.now(); chDone.forEach((t, k) => { if (nw - t > 90000) chDone.delete(k); }); }
     changes = (j.changes || []).filter(c => !chDone.has(c.cid));   // اللي لسه بنرد عليه ماينفعش يرجع من تحديث قديم
     const freshCh = changes.filter(c => chKnown && !chKnown.has(c.cid)); chKnown = new Set(changes.map(c => c.cid));
-    const sig = JSON.stringify([j.orders, j.flags, j.drivers, j.changes, j.soldout, j.vf, j.alerts, j.low, j.follow, role, myName]);   // من غير مواقع الطيارين/ثواني آخر ظهور (بتتغيّر كل مرة)
+    const sig = JSON.stringify([j.orders, j.flags, j.drivers, j.changes, j.soldout, j.vf, j.alerts, j.low, j.follow, j.known, role, myName]);   // من غير مواقع الطيارين/ثواني آخر ظهور (بتتغيّر كل مرة)
     if (sig === lastSig && Date.now() - lastRenderT < 45000) { dvCheck(); hlCompute(); drvBarRender(); updateDrvMap(); syncAlert(); }
     else { lastSig = sig; lastRenderT = Date.now(); keepScroll(() => { render(); drvBarRender(); updateDrvMap(); dvRender(); chRender(); }); }
     if (freshCh.length) { toast('✏️ ' + freshCh.map(c => (CHK_S[c.kind] || '') + ' #' + c.id + ' — ' + c.name).join('، ')); pushNotify('✏️ تعديل من عميل — ريد روستر', freshCh.map(c => (CHK_S[c.kind] || '') + ' #' + c.id + ' · ' + c.name).join('\n')); chOpen(); ringTick(); }
@@ -921,6 +921,7 @@ $('cmpQ').addEventListener('click', e => { const b = e.target.closest('button');
 $('cmpOk').onclick = cmpDo; $('cmpNo').onclick = cmpClose; $('cmp').addEventListener('click', e => { if (e.target === $('cmp')) cmpClose(); });
 
 /* ═══ تنبيهات ذكية على الكارت: طلب مستني / تكرار محتمل / اتأكد بالتليفون ═══ */
+let knownPh = new Set();   // أرقام ليها طلبات أقدم من آخر ٣٠٠ (السيرفر بيبعتها)
 let rxOk = new Set(); try { rxOk = new Set(JSON.parse(localStorage.getItem('rr_rx_ok') || '[]')); } catch (e) {}
 const rxSave = () => { try { localStorage.setItem('rr_rx_ok', JSON.stringify([...rxOk].slice(-400))); } catch (e) {} };
 const phs = o => [o.phone, o.phone2].filter(Boolean);
@@ -936,7 +937,7 @@ function rxInfo(o){
   if (['new','confirmed','preparing'].includes(o.status) && o.payment === 'cash' && !rxOk.has('v' + o.id)) {
     const why = [], verified = vfState.mode !== 'off' && !vfState.unv.has(o.phone);
     if (o.total >= BIG_CASH) why.push('مبلغ كبير كاش (' + o.total + ' ج)');
-    if (CHECK_NEW_PHONE && !verified && !orders.some(s => s.id !== o.id && s.time < o.time && phs(s).includes(o.phone))) why.push('رقم جديد');
+    if (CHECK_NEW_PHONE && !verified && !knownPh.has(o.phone) && !orders.some(s => s.id !== o.id && s.time < o.time && phs(s).includes(o.phone))) why.push('رقم جديد');
     if (why.length) r.chk = why.join(' + ');
   }
   return r;
