@@ -3505,10 +3505,11 @@ html[data-theme="dark"] #rrTip{background:#000;color:#F0CF6B;border:1px solid rg
 @media(min-width:901px){
   /* — الأزرار السريعة (تحت أيقونات التنقل) — */
   #app #sb .nv-tools.rail{display:flex!important;flex-direction:column!important;align-items:center!important;flex-wrap:nowrap!important;gap:8px!important;width:100%!important;flex:none!important;order:99!important;margin:auto 0 0!important;padding:14px 0 0!important;border-top:1px solid rgba(255,255,255,.14)!important;overflow:visible!important}
-  #app #sb .nv-tools.rail>.ib{position:relative!important;display:grid!important;place-items:center!important;flex:none!important;width:46px!important;height:46px!important;min-width:0!important;padding:0!important;margin:0!important;border-radius:50%!important;border:0!important;background:transparent!important;color:rgba(255,255,255,.78)!important;font-size:0!important;line-height:0!important;overflow:visible!important;box-shadow:none!important;cursor:pointer;transition:background .2s,color .2s,transform .15s}
+  #app #sb .nv-tools.rail>.ib{position:relative!important;display:flex!important;align-items:center!important;justify-content:center!important;flex:none!important;width:46px!important;height:46px!important;min-width:0!important;padding:0!important;margin:0!important;border-radius:50%!important;border:0!important;background:transparent!important;color:rgba(255,255,255,.78)!important;font-size:0!important;line-height:0!important;overflow:visible!important;box-shadow:none!important;cursor:pointer;transition:background .2s,color .2s,transform .15s}
   #app #sb .nv-tools.rail>.ib.hide{display:none!important}
   #app #sb .nv-tools.rail>.ib::before,#rrUm .ib::before{content:"";display:block;flex:none;width:21px;height:21px;background:currentColor;-webkit-mask:var(--ic) center/contain no-repeat;mask:var(--ic) center/contain no-repeat}
   #app #sb .nv-tools.rail>.ib:hover{background:rgba(255,255,255,.12)!important;color:#fff!important;transform:scale(1.06)}
+  #app #sb .nv-tools.rail #hlBtn{background:rgba(255,255,255,.08)!important}
   #app #sb .nv-tools.rail #rf{background:var(--org)!important;color:#2b1407!important}
   #app #sb .nv-tools.rail #rf:hover{filter:brightness(1.06)}
   #app #sb .nv-tools.rail #lrChip,#app #sb .nv-tools.rail #pbChip,#app #sb .nv-tools.rail #alChip,#app #sb .nv-tools.rail #vfChip{background:rgba(245,158,107,.2)!important;color:var(--org)!important;box-shadow:0 0 0 2px rgba(245,158,107,.45)!important}
@@ -3523,6 +3524,7 @@ html[data-theme="dark"] #rrTip{background:#000;color:#F0CF6B;border:1px solid rg
   html[data-theme="dark"] #app #sb .nv-tools.rail{border-top-color:rgba(212,175,55,.3)!important}
   html[data-theme="dark"] #app #sb .nv-tools.rail>.ib{color:#D9BF73!important}
   html[data-theme="dark"] #app #sb .nv-tools.rail>.ib:hover{background:rgba(212,175,55,.16)!important;color:#F0CF6B!important}
+  html[data-theme="dark"] #app #sb .nv-tools.rail #hlBtn{background:rgba(212,175,55,.1)!important}
   html[data-theme="dark"] #app #sb .nv-tools.rail #rf{background:linear-gradient(135deg,#F0CF6B,#C99A1E)!important;color:#000!important}
   html[data-theme="dark"] #app #sb .nv-tools.rail #lrChip,html[data-theme="dark"] #app #sb .nv-tools.rail #pbChip,html[data-theme="dark"] #app #sb .nv-tools.rail #alChip,html[data-theme="dark"] #app #sb .nv-tools.rail #vfChip{background:rgba(240,207,107,.2)!important;color:#F0CF6B!important;box-shadow:0 0 0 2px rgba(240,207,107,.5)!important}
   html[data-theme="dark"] #app #sb .nv-tools.rail #hlBtn::after{box-shadow:0 0 0 2.5px #0b0905}
