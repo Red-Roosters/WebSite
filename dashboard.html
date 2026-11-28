@@ -1045,18 +1045,46 @@ function drvWa(o, dv){
   return 'https://wa.me/20' + String(dv.phone).replace(/^0/, '') + '?text=' + encodeURIComponent(txt);
 }
 const dlBtn = x => role === 'manager' && x.tok ? '<button type="button" class="btn tiny ghost" data-dl="' + esc(x.id) + '" title="نسخ رابط صفحة الطيار">🔗</button>' : '';
-$('drvBar').addEventListener('click', e => { if (e.target.closest('[data-stl="open"]')) { stlOpen(); return; } const b = e.target.closest('[data-dl]'); if (!b) return; const x = drivers.find(v => v.id === b.dataset.dl); if (x && x.tok) { copyText(new URL('driver.html', location.href).href + '?d=' + x.id + '&t=' + x.tok); toast('✅ اتنسخ رابط صفحة ' + x.name + ' — ابعته له واتساب (مرة واحدة)'); } });
+$('drvBar').addEventListener('click', e => { if (e.target.closest('[data-amap]')) { openAllDrvMap(); return; } if (e.target.closest('[data-stl="open"]')) { stlOpen(); return; } const b = e.target.closest('[data-dl]'); if (!b) return; const x = drivers.find(v => v.id === b.dataset.dl); if (x && x.tok) { copyText(new URL('driver.html', location.href).href + '?d=' + x.id + '&t=' + x.tok); toast('✅ اتنسخ رابط صفحة ' + x.name + ' — ابعته له واتساب (مرة واحدة)'); } });
+/* ===== خريطة كل الطيارين (شغّالة حتى لو مفيش طلبات) ===== */
+let am = null;
+function dmCssEnsure(){ if (!document.getElementById('dmCss')) { const s = document.createElement('style'); s.id = 'dmCss'; s.textContent = '.rr-dm{width:46px;height:46px;border-radius:50%;background:#9E1B1B;border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;font-size:24px;line-height:1;position:relative}.rr-dm:after{content:"";position:absolute;inset:-6px;border-radius:50%;border:2px solid rgba(158,27,27,.5);animation:rrdm 1.6s ease-out infinite}.rr-dm.h{background:#1d3f8f}.rr-dm.h:after{display:none}@keyframes rrdm{from{transform:scale(.8);opacity:1}to{transform:scale(1.5);opacity:0}}'; document.head.appendChild(s); } }
+function openAllDrvMap(focusId){
+  closeAllDrvMap(); dmCssEnsure();
+  const ov = document.createElement('div'); ov.className = 'cx';
+  ov.innerHTML = '<div style="background:#fff;color:#222;border-radius:16px;padding:14px;width:min(640px,100%);direction:rtl;font-family:inherit"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><b>🗺️ مكان الطيارين دلوقتي</b><button type="button" id="amX" style="border:0;background:#f1eeee;border-radius:50%;width:34px;height:34px;font-size:1.1rem;cursor:pointer">✕</button></div><div id="amM" style="height:min(55vh,420px);border-radius:12px;overflow:hidden;direction:ltr"></div><div id="amI" style="font-size:.9rem;margin-top:8px;line-height:2"></div></div>';
+  ov.addEventListener('click', e => { if (e.target === ov || e.target.id === 'amX') { closeAllDrvMap(); return; } const b = e.target.closest('[data-af]'); if (b && am && am.map && dpos[b.dataset.af]) am.map.setView(dpos[b.dataset.af], 16); });
+  document.body.appendChild(ov);
+  am = {ov, mk: {}, fit: false, focus: focusId || null};
+  dmLoad(() => { if (!am) return; am.map = L.map($('amM')); L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {maxZoom: 19, attribution: '© OpenStreetMap'}).addTo(am.map); am.map.setView([30.0, 31.2], 11); updateAllDrvMap(); });
+}
+function closeAllDrvMap(){ if (am) { try { am.map && am.map.remove(); } catch (e) {} am.ov.remove(); am = null; } }
+function updateAllDrvMap(){
+  if (!am || !am.map) return;
+  const pts = [];
+  drivers.forEach(dv => {
+    const p = dpos[dv.id], label = esc(dv.name) + (dseen[dv.id] != null ? ' · ' + dAge(dseen[dv.id]) : '');
+    if (p) {
+      pts.push(p);
+      if (!am.mk[dv.id]) { am.mk[dv.id] = L.marker(p, {icon: dmIcon(false)}).addTo(am.map); am.mk[dv.id].bindTooltip(label, {permanent: true, direction: 'top', offset: [0, -26]}); }
+      else { am.mk[dv.id].setLatLng(p); am.mk[dv.id].setTooltipContent(label); }
+    } else if (am.mk[dv.id]) { am.map.removeLayer(am.mk[dv.id]); delete am.mk[dv.id]; }
+  });
+  if (pts.length && !am.fit) { am.fit = true; const f = am.focus && dpos[am.focus]; if (f) am.map.setView(f, 16); else if (pts.length === 1) am.map.setView(pts[0], 16); else am.map.fitBounds(pts, {padding: [50, 50], maxZoom: 16}); }
+  $('amI').innerHTML = drivers.length ? drivers.map(dv => { const n = orders.filter(o => o.status === 'out' && dasg[o.id] === dv.id).length; return '<div>' + dDot(dv.id) + ' <b>' + esc(dv.name) + '</b>' + (n ? ' · ' + n + ' طلب' : ' · مفيش طلبات') + (dseen[dv.id] != null ? ' · آخر إشارة ' + dAge(dseen[dv.id]) : ' · مفيش إشارة') + (dpos[dv.id] ? ' <button type="button" data-af="' + esc(dv.id) + '" style="border:1px solid #ddd;background:#fff;border-radius:999px;padding:2px 10px;cursor:pointer;font-weight:700">📍 روح له</button>' : '') + '</div>'; }).join('') : 'مفيش طيارين متسجلين';
+}
 function drvBarRender(){
   const bar = $('drvBar'); if (!bar) return;
   if (!drivers.length) { bar.classList.add('hide'); return; }
   const live = drivers.filter(x => dseen[x.id] != null && dseen[x.id] < 120).length;
   bar.classList.remove('hide');
-  bar.innerHTML = '<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 10px"><b>🛵 الطيارين (' + live + ' لايف):</b><button type="button" data-stl="open" style="padding:6px 12px;border-radius:999px;background:#0B6E4F;color:#fff;border:0;font-weight:800;font-size:.85rem;cursor:pointer">💵 تسوية الطيارين</button>' + drivers.map(x => {
+  bar.innerHTML = '<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 10px"><b>🛵 الطيارين (' + live + ' لايف):</b><button type="button" data-stl="open" style="padding:6px 12px;border-radius:999px;background:#0B6E4F;color:#fff;border:0;font-weight:800;font-size:.85rem;cursor:pointer">💵 تسوية الطيارين</button><button type="button" data-amap="1" style="padding:6px 12px;border-radius:999px;background:#1d3f8f;color:#fff;border:0;font-weight:800;font-size:.85rem;cursor:pointer">🗺️ خريطة الطيارين</button>' + drivers.map(x => {
     const n = orders.filter(o => o.status === 'out' && dasg[o.id] === x.id).length, p = dpos[x.id];
     const t = dDot(x.id) + ' ' + esc(x.name) + (n ? ' · ' + n + ' طلب' : '') + (dseen[x.id] != null ? ' · ' + dAge(dseen[x.id]) : '');
     const st = 'padding:6px 12px;border-radius:999px;background:#fff;border:1px solid #ddd;font-weight:700;font-size:.85rem;color:inherit;text-decoration:none';
     return dlBtn(x) + (p ? '<a href="https://www.google.com/maps?q=' + p[0] + ',' + p[1] + '" target="_blank" rel="noopener" style="' + st + '">' + t + ' 📍</a>' : '<span style="' + st + '">' + t + '</span>');
   }).join('') + '</div><div style="font-size:.75rem;opacity:.65;margin-bottom:8px">🟢 لايف (آخر ٢ دقيقة) · 🟠 قديم · ⚪ مفيش إشارة — دوس على الطيار تشوف مكانه على الخريطة</div>';
+  try { updateAllDrvMap(); } catch (e) {}
 }
 /* ═══ تسوية كاش الطيارين ═══ */
 let stlData = null;
