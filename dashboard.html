@@ -635,7 +635,7 @@ function syncAlert(){
   const un = unattended().length; bar.classList.toggle('urgent', un > 0);
   if (n) bar.textContent = un ? '🚨 ' + un + ' طلب مستني من أكتر من ' + UNATT_MIN + ' دقايق ومحدّش استلمه — اضغط هنا' : '🔔 ' + n + ' طلب جديد مستني تأكيدك — اضغط هنا';
   cb.classList.toggle('hide', !m);
-  if (m) cb.textContent = '✏️ ' + m + ' تعديل / طلب من العملاء مستني — اضغط هنا';
+  if (m) cb.textContent = '✏️ ' + m + ' تعديل / طلب / بلاغ مستني — اضغط هنا';
   if (!n && !m) { document.title = 'لوحة طلبات ريد روستر'; $('unlock').classList.add('hide'); }
 }
 $('alertBar').onclick = () => { tab = 'board'; setView('orders'); const c = document.querySelector('.c-new'); if (c) c.scrollIntoView({behavior:'smooth', inline:'center', block:'nearest'}); };
@@ -2363,8 +2363,8 @@ $('dvList').addEventListener('click', async e => {
 });
 
 /* ═══ تعديلات وطلبات العملاء (popup + تنبيه صوتي زي الطلب الجديد) ═══ */
-const CHK = {edit:'✏️ العميل عدّل طلبه (خلال المدة)', cancel:'❌ العميل ألغى طلبه (خلال المدة)', req_edit:'📨 طلب تعديل (بعد المدة)', req_cancel:'📨 طلب إلغاء (بعد المدة)'};
-const CHK_S = {edit:'تعديل', cancel:'إلغاء', req_edit:'طلب تعديل', req_cancel:'طلب إلغاء'};
+const CHK = {edit:'✏️ العميل عدّل طلبه (خلال المدة)', cancel:'❌ العميل ألغى طلبه (خلال المدة)', req_edit:'📨 طلب تعديل (بعد المدة)', req_cancel:'📨 طلب إلغاء (بعد المدة)', drvissue:'🛵 بلاغ من الطيار'};
+const CHK_S = {drvissue:'🛵 بلاغ طيار',edit:'تعديل', cancel:'إلغاء', req_edit:'طلب تعديل', req_cancel:'طلب إلغاء'};
 function chCard(c){
   const d = c.d || {}, o = orders.find(x => x.id === c.id), isReq = c.kind.indexOf('req_') === 0, cancel = /cancel$/.test(c.kind);
   const ln = (a, b) => '<div class="ln"><span>' + a + '</span><b>' + b + '</b></div>';
@@ -2372,6 +2372,7 @@ function chCard(c){
     + '<h4><span>' + (CHK[c.kind] || esc(c.kind)) + '</span><small>' + ago(c.t) + '</small></h4>'
     + ln('🔢 رقم الطلب', '#' + esc(c.id)) + ln('👤 العميل', esc(c.name)) + ln('📞 الموبايل', '<span dir="ltr">' + esc(c.phone) + '</span>')
     + (o ? ln('الحالة دلوقتي', esc(lbl(o))) : '')
+    + (c.kind === 'drvissue' ? ln('🛵 الطيار', esc(d.drv || '')) + ln('⚠️ المشكلة', '<b>' + esc(d.rl || '') + '</b>') : '')
     + ((d.diff && d.diff.length) ? '<div class="df">' + d.diff.map(esc).join('<br>') + (d.newTot != null ? '<br><b>الإجمالي: ' + esc(d.oldTot) + ' ← <span class="n">' + esc(d.newTot) + ' ج.م</span></b>' : '') + '</div>' : '')
     + (cancel && d.oldTot != null ? '<div class="df">قيمة الطلب: <b>' + esc(d.oldTot) + ' ج.م</b>' + (d.reason ? '<br>' + esc(d.reason) : '') + '</div>' : '')
     + (d.note ? '<div class="df">📝 ' + esc(d.note) + '</div>' : '')
